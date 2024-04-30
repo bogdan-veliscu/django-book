@@ -1,0 +1,12 @@
+__pycache__
+env
+*.sqlite3
+.coverage
+htmlcov
+
+# postgres
+.postgres
+
+.env
+
+
