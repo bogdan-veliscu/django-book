@@ -1,8 +1,14 @@
+ifneq (,$(wildcard ./.env))
+	include .env
+	export
+endif
 
-# help: ## display a help message detailing commands and their purpose
-# 	@echo "Commands:"
-# 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-30s\033[0m %s\n", $$1, $$2}'
-# 	@echo ""
+IMAGE_NAME = $(shell basename "`pwd`")
+IMAGE_TAG = $(shell poetry version -s)
+REGISTRY = $(shell echo $(REGISTRY_HOST))
+IMAGE = $(REGISTRY)/$(IMAGE_NAME):$(IMAGE_TAG)
+
+.PHONY: help
 
 help: ## Show this help message
 	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_-]+:.*?##/ \
@@ -17,7 +23,8 @@ install:init-env ## builds and start the dev container
 run: ## Run the application
 	docker compose up -d --build
 
-
+build: ## Build the Docker image
+	docker buildx build --platform linux/amd64 -t $(IMAGE) --load .
 
 init-env:
 	@test -f .env || (cp example.env .env && echo .env file initialized)
@@ -33,17 +40,22 @@ migrate: ## apply migrations in a clean container
 	docker compose run --rm app ./manage.py migrate
 
 ## [UTILS]
+install_local: ## Install the package locally
+	poetry install --with dev
+
+test_local: ## Run the tests locally
+	poetry run pytest
+
 
 shell:  ## start a django shell
 	docker compose run --rm app ./manage.py shell
 
 lint:  ## run linter
-	docker compose run --rm app flake8
+	docker compose run --rm app ruff .
 isort:  ## run isort
 	docker compose run --rm app isort .
 black:  ## run black
 	docker compose run --rm app black .
-
 
 
 
@@ -70,5 +82,3 @@ clean/py: ## remove Python test, coverage, file artifacts, and compiled message 
 	find . -name '*.pyc' -delete
 	find . -name '*.pyo' -delete
 	find . -name '*.mo' -delete
-
-
