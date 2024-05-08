@@ -1,10 +1,7 @@
 from django.contrib.auth import authenticate
-from django.shortcuts import render
 from rest_framework import status, views, viewsets
 from rest_framework.decorators import action, api_view
-from rest_framework.generics import RetrieveUpdateAPIView
 from rest_framework.permissions import (
-    AllowAny,
     IsAuthenticated,
     IsAuthenticatedOrReadOnly,
 )
