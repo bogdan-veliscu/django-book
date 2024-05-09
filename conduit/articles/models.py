@@ -38,6 +38,8 @@ class Article(models.Model):
     created = models.DateTimeField(auto_now_add=True)
     updated = models.DateTimeField(auto_now_add=True)
 
+    status = models.CharField(max_length=10)
+
     tags = TaggableManager(blank=True)
     favorites = models.ManyToManyField(
         settings.AUTH_USER_MODEL, related_name="favorites"
@@ -45,6 +47,16 @@ class Article(models.Model):
     slug = models.SlugField(unique=True, max_length=250)
 
     objects = ArticleManager()
+
+    class Meta:
+        ordering = ["-created"]
+        indexes = [
+            models.Index(fields=["-created", "-updated", "slug"]),
+            models.Index(fields=["slug", "tags"]),
+            models.Index(
+                fields=["author", "-created"], condition=models.Q(status="published")
+            ),
+        ]
 
     def save(self, *args, **kwargs):
         self.slug = slugify(self.title)
