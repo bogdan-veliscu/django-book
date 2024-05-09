@@ -104,20 +104,15 @@ argon2 = ["argon2-cffi (>=19.1.0)"]
 bcrypt = ["bcrypt"]
 
 [[package]]
-name = "django-environ"
-version = "0.11.2"
-description = "A package that allows you to utilize 12factor inspired environment variables to configure your Django application."
+name = "django-dotenv"
+version = "1.4.2"
+description = "foreman reads from .env. manage.py doesn't. Let's fix that."
 optional = false
-python-versions = ">=3.6,<4"
+python-versions = "*"
 files = [
-    {file = "django-environ-0.11.2.tar.gz", hash = "sha256:f32a87aa0899894c27d4e1776fa6b477e8164ed7f6b3e410a62a6d72caaf64be"},
-    {file = "django_environ-0.11.2-py2.py3-none-any.whl", hash = "sha256:0ff95ab4344bfeff693836aa978e6840abef2e2f1145adff7735892711590c05"},
+    {file = "django-dotenv-1.4.2.tar.gz", hash = "sha256:3812bb0f4876cf31f902aad140f0645e120e51ee30eb7c40c22050f58a0e4adb"},
+    {file = "django_dotenv-1.4.2-py2.py3-none-any.whl", hash = "sha256:a9b1b40a70bd321acd231926acedb9bd2c5e873e33a1873b34a7276d196a765e"},
 ]
-
-[package.extras]
-develop = ["coverage[toml] (>=5.0a4)", "furo (>=2021.8.17b43,<2021.9.dev0)", "pytest (>=4.6.11)", "sphinx (>=3.5.0)", "sphinx-notfound-page"]
-docs = ["furo (>=2021.8.17b43,<2021.9.dev0)", "sphinx (>=3.5.0)", "sphinx-notfound-page"]
-testing = ["coverage[toml] (>=5.0a4)", "pytest (>=4.6.11)"]
 
 [[package]]
 name = "django-filter"
@@ -132,6 +127,20 @@ files = [
 
 [package.dependencies]
 Django = ">=4.2"
+
+[[package]]
+name = "django-taggit"
+version = "5.0.1"
+description = "django-taggit is a reusable Django application for simple tagging."
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "django-taggit-5.0.1.tar.gz", hash = "sha256:edcd7db1e0f35c304e082a2f631ddac2e16ef5296029524eb792af7430cab4cc"},
+    {file = "django_taggit-5.0.1-py3-none-any.whl", hash = "sha256:a0ca8a28b03c4b26c2630fd762cb76ec39b5e41abf727a7b66f897a625c5e647"},
+]
+
+[package.dependencies]
+Django = ">=4.1"
 
 [[package]]
 name = "djangorestframework"
@@ -561,4 +570,4 @@ brotli = ["Brotli"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "8dea947a7d85b8aab59d9a1821bf8d889e3a0a00f8536af567253225c0c4e76c"
+content-hash = "01eefed18b92cfb63f4d761fba5cdbd55243b9d2952013f8b7e62bc0065aeda1"

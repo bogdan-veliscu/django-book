@@ -12,11 +12,14 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 
 from datetime import timedelta
 from pathlib import Path
+from os.path import dirname, join
 
-import environ
+from dotenv import read_dotenv
+import os
 
-env = environ.Env()
-environ.Env.read_env()
+project_dir = dirname(dirname(__file__))
+read_dotenv(join(project_dir, ".env"))
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -26,7 +29,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = env("DJANGO_SECRET_KEY")
+SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -48,6 +51,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "rest_framework_simplejwt",
+    "taggit",
     # local apps
     "profiles",
     "articles",
@@ -107,11 +111,11 @@ WSGI_APPLICATION = "config.wsgi.application"
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
-        "NAME": env("POSTGRES_DB", default="conduit"),
-        "USER": env("POSTGRES_USER", default="conduit"),
-        "PASSWORD": env("POSTGRES_PASSWORD", default="conduit"),
-        "HOST": env("POSTGRES_SERVER", default="localhost"),
-        "PORT": env("POSTGRES_PORT", default="5432"),
+        "NAME": os.getenv("POSTGRES_DB", default="conduit"),
+        "USER": os.getenv("POSTGRES_USER", default="conduit"),
+        "PASSWORD": os.getenv("POSTGRES_PASSWORD", default="conduit"),
+        "HOST": os.getenv("POSTGRES_SERVER", default="localhost"),
+        "PORT": os.getenv("POSTGRES_PORT", default="5432"),
     }
 }
 
