@@ -54,7 +54,9 @@ class Article(models.Model):
             models.Index(fields=["-created", "-updated", "slug"]),
             models.Index(fields=["slug", "tags"]),
             models.Index(
-                fields=["author", "-created"], condition=models.Q(status="published")
+                fields=["author", "-created"],
+                condition=models.Q(status="published"),
+                name="author_published_articles",
             ),
         ]
 
