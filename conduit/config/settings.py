@@ -116,8 +116,26 @@ DATABASES = {
         "PASSWORD": os.getenv("POSTGRES_PASSWORD", default="conduit"),
         "HOST": os.getenv("POSTGRES_SERVER", default="localhost"),
         "PORT": os.getenv("POSTGRES_PORT", default="5432"),
-    }
+    },
+    "shard1": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.getenv("POSTGRES_DB", default="conduit"),
+        "USER": os.getenv("POSTGRES_USER", default="conduit"),
+        "PASSWORD": os.getenv("POSTGRES_PASSWORD", default="conduit"),
+        "HOST": os.getenv("POSTGRES_SHARD1_SERVER", default="localhost"),
+        "PORT": os.getenv("POSTGRES_SHARD1_PORT", default="5432"),
+    },
+    "shard2": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": os.getenv("POSTGRES_DB", default="conduit"),
+        "USER": os.getenv("POSTGRES_USER", default="conduit"),
+        "PASSWORD": os.getenv("POSTGRES_PASSWORD", default="conduit"),
+        "HOST": os.getenv("POSTGRES_SHARD2_SERVER", default="localhost"),
+        "PORT": os.getenv("POSTGRES_SHARD2_PORT", default="5432"),
+    },
 }
+
+DATABASE_ROUTERS = ["conduit.config.database_routers.ShardRouter"]
 
 
 # Password validation
