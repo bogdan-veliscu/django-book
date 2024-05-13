@@ -52,8 +52,7 @@ class Article(SoftDeletableModel):
     class Meta:
         ordering = ["-created"]
         indexes = [
-            models.Index(fields=["-created", "-updated", "slug"]),
-            models.Index(fields=["slug", "tags"]),
+            models.Index(fields=["-updated", "slug"], name="article_index"),
             models.Index(
                 fields=["author", "-created"],
                 condition=models.Q(status="published"),
