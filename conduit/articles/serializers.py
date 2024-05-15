@@ -4,6 +4,9 @@ from taggit.models import Tag
 from taggit.serializers import TagListSerializerField, TaggitSerializer
 
 from .models import Article
+import logging
+
+logger = logging.getLogger(__name__)
 
 User = get_user_model()
 
@@ -62,15 +65,24 @@ class ArticleSerializer(TaggitSerializer, serializers.ModelSerializer):
         request = self.context.get("request", None)
         if request is None:
             return None
-        return AuthorSerializer(obj.author, context={"request": request}).data
+        author = AuthorSerializer(obj.author, context={"request": request}).data
+        logger.info(f"author: {author}")
+        return author
 
     def get_favorited(self, obj):
-        user = self.context.get("request").user
-        if user.is_authenticated:
+
+        request = self.context.get("request", None)
+        if request is None:
+            return False
+        user = request.user
+        logger.info(f" get_favorited user: {user}, obj: {obj}")
+        if user.is_authenticated and hasattr(obj, "favorites"):
             return obj.favorites.filter(pk=user.pk).exists()
         return False
 
-    def get_favoriteCount(self, obj):
+    def get_favoritesCount(self, obj):
+        if not hasattr(obj, "favorites"):
+            return 0
         return obj.favorites.count()
 
     def create(self, validated_data):
@@ -78,12 +90,13 @@ class ArticleSerializer(TaggitSerializer, serializers.ModelSerializer):
         article = Article.objects.create(
             author=self.context["request"].user, **validated_data
         )
-        article.tags.set(*tags)
+
+        article.tags.add(*tags)
         return article
 
     def update(self, instance, validated_data):
         tags = validated_data.pop("tags", [])
-        instance.tags.set(*tags)
+        instance.tags.add(*tags)
         for key, value in validated_data.items():
             setattr(instance, key, value)
         instance.save()

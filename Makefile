@@ -37,7 +37,7 @@ migrations: ## generate migrations in a clean container
 	docker compose run --rm app ./manage.py makemigrations
 
 migrate: ## apply migrations in a clean container
-	docker compose run --rm app ./manage.py migrate
+	docker compose run --rm app ./manage.py migrate 
 
 ## [UTILS]
 install_local: ## Install the package locally

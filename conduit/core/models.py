@@ -1,5 +1,9 @@
-from datetime import timezone
 from django.db import models
+from django.utils import timezone
+from django.db import models
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class SoftDeletableModel(models.Model):
@@ -11,11 +15,16 @@ class SoftDeletableModel(models.Model):
         abstract = True
 
     def delete(self, using=None, keep_parents=False):
+        logger.info(f"delete called on {self}")
         self.deleted_at = timezone.now()
         self.save()
 
     def hard_delete(self):
         super().delete()
+
+    def restore(self):
+        self.deleted_at = None
+        self.save()
 
     def restore(self):
         self.deleted_at = None

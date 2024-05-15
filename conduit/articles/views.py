@@ -9,14 +9,18 @@ from profiles.models import User
 from articles.models import Article
 from articles.serializers import ArticleSerializer, TagSerializer
 from articles.filters import ArticleFilter
+import logging
+
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
 
 
 class ArticleViewSet(viewsets.ModelViewSet):
     queryset = Article.objects.all()
     serializer_class = ArticleSerializer
-    permission_classes = (IsAuthenticatedOrReadOnly,)
+    permission_classes = (IsAuthenticated,)
     lookup_field = "slug"
-    filter_class = ArticleFilter
+    filterset_class = ArticleFilter
     http_method_names = ["get", "post", "put", "delete"]
 
     def get_permissions(self):
@@ -28,10 +32,12 @@ class ArticleViewSet(viewsets.ModelViewSet):
     def create(self, request, *args, **kwargs):
         try:
             article_data = request.data.get("article", {})
-            serializer = self.serializer_class(data=article_data)
+            logger.debug(f"Create article with data: {article_data}")
+            serializer = self.get_serializer(data=article_data)
             serializer.is_valid(raise_exception=True)
             self.perform_create(serializer)
             headers = self.get_success_headers(serializer.data)
+            logger.debug(f"Headers: {headers}")
             return Response(
                 {"article": serializer.data},
                 status=status.HTTP_201_CREATED,
@@ -39,8 +45,13 @@ class ArticleViewSet(viewsets.ModelViewSet):
             )
 
         except Exception as e:
+            logger.error(e)
             return Response(
-                {"errors": {"body": ["Bad request"]}},
+                {
+                    "errors": {
+                        "body": ["Bad request: unable to create article"],
+                    }
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -90,19 +101,23 @@ class ArticleViewSet(viewsets.ModelViewSet):
     @action(detail=False)
     def feed(self, request, *args, **kwargs):
         try:
+            logger.info(f"Feed request: {request}.user: {request.user}")
             followed_authors = User.objects.filter(followers=request.user)
             queryset = self.get_queryset()
+            logger.debug(f"Feed followed authors: {followed_authors}")
             articles = queryset.filter(author__in=followed_authors).order_by("-created")
+            logger.info(f"Feed articles: {articles}")
             queryset = self.filter_queryset(articles)
-
+            logger.debug(f"Feed Queryset: {queryset}")
             serializer = self.get_serializer(queryset, many=True)
             response = {
                 "articles": serializer.data,
                 "articlesCount": queryset.count(),
             }
+            return Response(response, status=status.HTTP_200_OK)
         except Exception as e:
             return Response(
-                {"errors": {"body": ["Bad request"]}},
+                {"errors": {"body": ["Bad request: unable to retrieve feed articles"]}},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -125,7 +140,7 @@ class ArticleViewSet(viewsets.ModelViewSet):
     def update(self, request, slug, *args, **kwargs):
         try:
             queryset = self.get_queryset()
-            article = Article.objects.get(slug=slug)
+            article = queryset.get(slug=slug)
             if article.author != request.user:
                 return Response(
                     {"errors": {"body": ["Permission denied"]}},
@@ -133,7 +148,7 @@ class ArticleViewSet(viewsets.ModelViewSet):
                 )
 
             article_data = request.data.get("article", {})
-            serializer = self.serializer_class(article, data=article_data, partial=True)
+            serializer = self.get_serializer(article, data=article_data, partial=True)
             serializer.is_valid(raise_exception=True)
             self.perform_update(serializer)
 
@@ -164,7 +179,7 @@ class ArticleViewSet(viewsets.ModelViewSet):
             )
         except Article.DoesNotExist:
             return Response(
-                {"errors": {"body": ["Article not found"]}},
+                {"errors": {"body": ["Article not found: unable to delete article"]}},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -179,11 +194,11 @@ class TagView(viewsets.GenericViewSet, mixins.ListModelMixin):
         try:
             queryset = self.get_queryset()
             tags = [element.name for element in queryset]
-            serializer = self.get_serializer({"tags": tags})
+            serializer = self.get_serializer({"tagList": tags})
 
             return Response(serializer.data, status=status.HTTP_200_OK)
         except Exception as e:
             return Response(
-                {"errors": {"body": ["Bad request"]}},
+                {"errors": {"body": ["Bad request: unable to retrieve tags"]}},
                 status=status.HTTP_400_BAD_REQUEST,
             )

@@ -1,5 +1,6 @@
 import markdown
 from django.db import models
+from django.dispatch import receiver
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
@@ -43,7 +44,7 @@ class Article(SoftDeletableModel):
 
     tags = TaggableManager(blank=True)
     favorites = models.ManyToManyField(
-        settings.AUTH_USER_MODEL, related_name="favorites"
+        settings.AUTH_USER_MODEL, blank=True, related_name="favorites"
     )
     slug = models.SlugField(unique=True, max_length=250)
 
