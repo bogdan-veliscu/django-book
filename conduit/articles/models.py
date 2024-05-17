@@ -37,7 +37,7 @@ class Article(SoftDeletableModel):
     summary = models.TextField(blank=True)
     content = models.TextField(blank=True)
 
-    created = models.DateTimeField(auto_now_add=True)
+    created = models.DateTimeField(auto_now_add=True, db_index=True)
     updated = models.DateTimeField(auto_now_add=True)
 
     status = models.CharField(max_length=10)
@@ -49,6 +49,9 @@ class Article(SoftDeletableModel):
     slug = models.SlugField(unique=True, max_length=250)
 
     objects = ArticleManager()
+
+    def __str__(self):
+        return f"<Article: {self.title}>"
 
     class Meta:
         ordering = ["-created"]

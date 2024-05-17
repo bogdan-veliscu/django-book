@@ -2,6 +2,7 @@ from rest_framework import viewsets, status, mixins, generics
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework.decorators import action
+from django.views.decorators.cache import cache_page
 
 from taggit.models import Tag
 
@@ -10,13 +11,17 @@ from articles.models import Article
 from articles.serializers import ArticleSerializer, TagSerializer
 from articles.filters import ArticleFilter
 import logging
+from django.core.cache import cache
+
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 
 
 class ArticleViewSet(viewsets.ModelViewSet):
-    queryset = Article.objects.all()
+    queryset = (
+        Article.objects.select_related("author").prefetch_related("favorites").all()
+    )
     serializer_class = ArticleSerializer
     permission_classes = (IsAuthenticated,)
     lookup_field = "slug"
@@ -57,6 +62,7 @@ class ArticleViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["post", "delete"])
     def favorite(self, request, slug=None):
+        logger.debug(f"### Favorite request: {request}")
         if request.method == "POST":
             try:
                 article = Article.objects.get(slug=slug)
@@ -118,6 +124,32 @@ class ArticleViewSet(viewsets.ModelViewSet):
         except Exception as e:
             return Response(
                 {"errors": {"body": ["Bad request: unable to retrieve feed articles"]}},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+    @action(detail=False)
+    def recent(self, request, *args, **kwargs):
+        try:
+            if "recent_articles" not in cache:
+                queryset = self.get_queryset()
+                articles = queryset.order_by("-created")[:5]
+                serializer = self.get_serializer(articles, many=True)
+                articles = serializer.data
+                cache.set("recent_articles", articles, 60 * 60)
+            else:
+                articles = cache.get("recent_articles")
+
+            return Response(
+                {"articles": articles},
+                status=status.HTTP_200_OK,
+            )
+        except Exception as e:
+            return Response(
+                {
+                    "errors": {
+                        "body": ["Bad request: unable to retrieve recent articles"]
+                    }
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 

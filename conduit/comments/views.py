@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 class CommentView(generics.ListCreateAPIView):
-    queryset = Comment.objects.all()
+    queryset = Comment.objects.prefetch_related("author").all()
     serializer_class = CommentSerializer
     permission_classes = [
         IsAuthenticated,
