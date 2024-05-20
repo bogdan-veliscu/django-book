@@ -7,6 +7,10 @@ from rest_framework.permissions import (
 )
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
+from django.views.generic.edit import FormView
+from django.views.generic import TemplateView
+from django.contrib.auth.views import LogoutView, LoginView
+from .forms import UserRegistrationForm
 
 from .models import User
 from .serializers import ProfileSerializer, UserSerializer
@@ -127,3 +131,37 @@ class ProfileDetailView(viewsets.ModelViewSet):
             profile.followers.remove(follower)
             serializer = self.get_serializer(profile)
             return Response({"profile": serializer.data})
+
+
+class UserRegistrationView(FormView):
+    template_name = "profiles/register.html"
+    form_class = UserRegistrationForm
+    success_url = "/login"
+
+    def form_valid(self, form):
+        user = form.save(commit=False)
+        user.set_password(form.cleaned_data["password"])
+        user.save()
+        return super(UserRegistrationView, self).form_valid(form)
+
+
+class ModularLoginView(LoginView):
+    template_name = "profiles/login.html"
+    redirect_authenticated_user = True
+    next_page = "/profile/"
+
+
+class ModularLogoutView(LogoutView):
+    next_page = "/login/"
+
+
+# create a basic view for profile using templates/profile
+class ProfileView(TemplateView):
+    template_name = "profiles/profile.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        print("User: ", self.request.user)
+        print("context: ", context)
+        context["profile"] = self.request.user
+        return context
