@@ -48,6 +48,8 @@ class Article(SoftDeletableModel):
     )
     slug = models.SlugField(unique=True, max_length=250)
 
+    metadata = models.JSONField(default=dict)
+
     objects = ArticleManager()
 
     def __str__(self):
@@ -75,3 +77,56 @@ class Article(SoftDeletableModel):
 
     def as_markdown(self):
         return markdown.markdown(self.content, safe_mode="escape")
+
+
+def create_model(
+    name, fields=None, app_label="", module="", options=None, admin_opts=None
+):
+    class Meta:
+        pass
+
+    if app_label:
+        setattr(Meta, "app_label", app_label)
+
+    if options is not None:
+        for key, value in options.items():
+            setattr(Meta, key, value)
+
+    attrs = {"__module__": module, "Meta": Meta}
+
+    if fields:
+        attrs.update(fields)
+
+    model = type(name, (models.Model,), attrs)
+
+    if admin_opts is not None:
+
+        class Admin:
+            pass
+
+        for key, value in admin_opts.items():
+            setattr(Admin, key, value)
+
+        setattr(model, "Admin", Admin)
+
+    return model
+
+
+# # Define the fields for the model
+# fields = {
+#     "name": models.CharField(max_length=255),
+#     "age": models.IntegerField(),
+# }
+
+# # Define the meta options for the model
+# options = {
+#     "ordering": ["name"],
+#     "verbose_name": "DynamicModel",
+# }
+
+# # Create the model
+# DynamicModel = create_model("DynamicModel", fields, app_label="myapp", options=options)
+
+# # Now you can use DynamicModel like any other Django model
+# instance = DynamicModel(name="Test", age=30)
+# instance.save()

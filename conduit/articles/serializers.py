@@ -45,6 +45,8 @@ class ArticleSerializer(TaggitSerializer, serializers.ModelSerializer):
     favorited = serializers.SerializerMethodField()
     favoritesCount = serializers.SerializerMethodField()
 
+    metadata = serializers.JSONField()  # Add this line
+
     class Meta:
         model = Article
         fields = (
@@ -58,6 +60,7 @@ class ArticleSerializer(TaggitSerializer, serializers.ModelSerializer):
             "favorited",
             "favoritesCount",
             "author",
+            "metadata",
         )
         reaad_only_fields = ("slug", "createdAt", "updatedAt", "author")
 

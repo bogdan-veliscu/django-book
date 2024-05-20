@@ -1,4 +1,4 @@
-from django.contrib.auth.models import AbstractUser, BaseUserManager
+from django.contrib.auth.models import AbstractBaseUser, BaseUserManager
 from django.db import models
 
 
@@ -28,39 +28,35 @@ class UserManager(BaseUserManager):
         return user
 
 
-class User(AbstractUser):
-    first_name = None
-    last_name = None
+class User(AbstractBaseUser):
+    email = models.EmailField(unique=True, db_index=True)
+    username = models.CharField(max_length=255, unique=True, db_index=True)
+    is_verified = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
+    is_staff = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
-    email: str = models.EmailField("Email Address", unique=True)
-    username: str = models.CharField(max_length=60)
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = ["username"]
+
+    objects = UserManager()
+
+    def __str__(self):
+        return f"<User: {self.email}>"
+
+    first_name: str = models.CharField(max_length=255, blank=True)
+    last_name: str = models.CharField(max_length=255, blank=True)
+
     bio: str = models.TextField(blank=True)
+    linkedin_url: str = models.URLField(blank=True)
     image: str | None = models.URLField(blank=True)
 
     followers = models.ManyToManyField(
         "self", related_name="followees", symmetrical=False
     )
-    # favorites = models.ManyToManyField('articles.Article', related_name='favorited_by')
 
     objects = UserManager()
-    groups = models.ManyToManyField(
-        "auth.Group",
-        verbose_name="groups",
-        blank=True,
-        help_text="The groups this user belongs to. A user will get all permissions granted to each of their groups.",
-        related_name="profile_user_set",  # unique related_name
-        related_query_name="profile_user",
-    )
-
-    # Modify the user_permissions relationship
-    user_permissions = models.ManyToManyField(
-        "auth.Permission",
-        verbose_name="user permissions",
-        blank=True,
-        help_text="Specific permissions for this user.",
-        related_name="profile_user_permission_set",  # unique related_name
-        related_query_name="profile_user_permission",
-    )
 
     def get_full_name(self) -> str:
         if self.first_name and self.last_name:
