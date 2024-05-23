@@ -17,7 +17,7 @@ class AuthorSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = (
-            "username",
+            "name",
             "bio",
             "image",
             "following",

@@ -22,10 +22,10 @@ class ArticleFilter(django_filters.FilterSet):
         return queryset.filter(tags__name__in=[value])
 
     def author_filter(self, queryset, name, value):
-        return queryset.filter(author__username__icontains=value)
+        return queryset.filter(author__name__icontains=value)
 
     def favorited_filter(self, queryset, name, value):
-        return queryset.filter(favorites__username__icontains=value)
+        return queryset.filter(favorites__name__icontains=value)
 
     def limit_filter(self, queryset, name, value):
         return queryset[:value]
