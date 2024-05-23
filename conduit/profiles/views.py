@@ -16,6 +16,10 @@ from .models import User
 from .serializers import ProfileSerializer, UserSerializer
 
 import logging
+from django.contrib.auth.views import LoginView, LogoutView
+from django.views.generic import TemplateView
+from django.contrib.auth.views import LoginView, LogoutView
+from django.views.generic import TemplateView
 
 logger = logging.getLogger(__name__)
 # Create your views here.
@@ -43,8 +47,11 @@ def account_registration(request):
 @api_view(["POST"])
 def login(request):
     try:
+        logger.info(f"login() request.data: {request.data}")
         user_data = request.data.get("user")
+        logger.info(f"login() user_data: {user_data}")
         user = authenticate(email=user_data["email"], password=user_data["password"])
+        logger.info(f"login() user: {user}")
         serializer = UserSerializer(user)
         jwt_token = RefreshToken.for_user(user)
         serializer_data = serializer.data
@@ -139,7 +146,7 @@ class ProfileDetailView(viewsets.ModelViewSet):
 class UserRegistrationView(FormView):
     template_name = "profiles/register.html"
     form_class = UserRegistrationForm
-    success_url = "/login"
+    success_url = "/login/"
 
     def form_valid(self, form):
         user = form.save(commit=False)
@@ -158,11 +165,21 @@ class ModularLogoutView(LogoutView):
     next_page = "/login/"
 
 
-# create a basic view for profile using templates/profile
+# create a basic view for profile using templates/profile only if logged in
+
+
 class ProfileView(TemplateView):
     template_name = "profiles/profile.html"
+    http_method_names = ["get"]
+
+    def get(self, request, *args, **kwargs):
+        logger.info(f"ProfileView.get() request.user: {request.user}")
+        if request.user.is_authenticated:
+            return super().get(request, *args, **kwargs)
+        return Response(status=status.HTTP_400_BAD_REQUEST)
 
     def get_context_data(self, **kwargs):
+        logger.info(f"ProfileView.get_context_data() kwargs: {kwargs}")
         context = super().get_context_data(**kwargs)
         logger.info(f"ProfileView.get_context_data() user: {self.request.user}")
         logger.info(f"bio: {self.request.user.bio}, image: {self.request.user.image}")
