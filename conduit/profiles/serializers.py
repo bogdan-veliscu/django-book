@@ -1,12 +1,15 @@
 from profiles.models import User
 from rest_framework import serializers
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class UserSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ("username", "email", "password", "bio", "image")
+        fields = ("name", "email", "password", "bio", "image")
         extra_kwargs = {"password": {"write_only": True}}
 
     def create(self, validated_data):
@@ -17,11 +20,19 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
     def update(self, instance, validated_data):
+        logger.info(f" # UPDATE : bio: {instance.bio}, image: {instance.image}")
+        logger.info(f"instance: {instance}, validated_data: {validated_data}")
+
         for key, value in validated_data.items():
+            logger.info(f"key: {key}, value: {value}")
             if key == "password":
                 instance.set_password(value)
+            elif key == "bio":  # Add this line to handle the 'bio' field
+                setattr(instance, key, value)
             else:
                 setattr(instance, key, value)
+        logger.info(f" # after bio: {instance.bio}, image: {instance.image}")
+
         instance.save()
         return instance
 
@@ -31,7 +42,7 @@ class ProfileSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ("username", "bio", "image", "following")
+        fields = ("name", "bio", "image", "following")
 
     def get_following(self, obj):
         request = self.context.get("request", None)

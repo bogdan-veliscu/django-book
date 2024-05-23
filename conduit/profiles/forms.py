@@ -9,12 +9,10 @@ class UserRegistrationForm(forms.ModelForm):
     class Meta:
         model = User
         fields = [
+            "name",
             "email",
-            "username",
             "password",
             "confirm_password",
-            "first_name",
-            "last_name",
         ]
 
     def clean_confirm_password(self):
@@ -25,3 +23,11 @@ class UserRegistrationForm(forms.ModelForm):
             raise forms.ValidationError("Passwords do not match")
 
         return confirm_password
+
+    def save(self, commit=True):
+        user = super(UserRegistrationForm, self).save(commit=False)
+        print("# UserRegistrationForm.save() user: ", user)
+        user.set_password(self.cleaned_data["password"])
+        if commit:
+            user.save()
+        return user

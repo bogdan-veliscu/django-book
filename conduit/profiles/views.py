@@ -15,6 +15,9 @@ from .forms import UserRegistrationForm
 from .models import User
 from .serializers import ProfileSerializer, UserSerializer
 
+import logging
+
+logger = logging.getLogger(__name__)
 # Create your views here.
 
 
@@ -77,7 +80,7 @@ class ProfileDetailView(viewsets.ModelViewSet):
     queryset = User.objects.all()
     serializer_class = ProfileSerializer
     permission_classes = (IsAuthenticated,)
-    lookup_field = "username"
+    lookup_field = "name"
     http_method_names = ["get", "post", "delete"]
 
     def get_permissions(self):
@@ -87,9 +90,9 @@ class ProfileDetailView(viewsets.ModelViewSet):
             ]
         return super().get_permissions()
 
-    def list(self, request, username=None, *args, **kwargs):
+    def list(self, request, name=None, *args, **kwargs):
         try:
-            profile = User.objects.get(username=username)
+            profile = User.objects.get(name=name)
             serializer = self.get_serializer(profile)
             return Response({"profile": serializer.data})
 
@@ -97,7 +100,7 @@ class ProfileDetailView(viewsets.ModelViewSet):
             return Response({"errors": {"body": ["Invalid User"]}})
 
     @action(detail=True, methods=["post", "delete"])
-    def follow(self, request, username=None, *args, **kwargs):
+    def follow(self, request, name=None, *args, **kwargs):
         if request.method == "POST":
 
             profile = self.get_object()
@@ -161,7 +164,7 @@ class ProfileView(TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        print("User: ", self.request.user)
-        print("context: ", context)
+        logger.info(f"ProfileView.get_context_data() user: {self.request.user}")
+        logger.info(f"bio: {self.request.user.bio}, image: {self.request.user.image}")
         context["profile"] = self.request.user
         return context

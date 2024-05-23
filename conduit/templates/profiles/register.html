@@ -9,7 +9,34 @@
                     <p class="text-xs-center">
                         <a href="">Have an account?</a>
                     </p>
-                    {% include "registration/_register.html" %}
+                    <form hx-post="{{ request.path }}" hx-target="this">
+                        {% if form.errors %}
+                            <ul class="error-messages">
+                                {% for error in form.errors.values %}
+                                    <li>{{ error }}</li>
+                                {% endfor %}
+                            </ul>
+                        {% endif %}
+                        {% csrf_token %}
+                        <fieldset class="form-group">
+                            <input type="text" name="name" placeholder="Your Name" class="form-control form-control-lg" value="{{ form.name.value|default_if_none:'' }}">
+                        </fieldset>
+                        <fieldset class="form-group">
+                            <input type="email" name="email" placeholder="Email" class="form-control form-control-lg" value="{{ form.email.value|default_if_none:'' }}">
+                            <div id="email-exists"></div>
+                        </fieldset>
+                        <fieldset class="form-group">
+                            <input type="password" name="password" placeholder="Password" class="form-control form-control-lg">
+                        </fieldset>
+
+                        <fieldset class="form-group">
+                            <input type="password" name="confirm_password" placeholder="Confirm Password" class="form-control form-control-lg">
+                        </fieldset>
+
+                        <button class="btn btn-lg btn-primary pull-xs-right">
+                            Sign up
+                        </button>
+                    </form>
                 </div>
 
             </div>
