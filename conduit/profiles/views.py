@@ -20,6 +20,8 @@ from django.contrib.auth.views import LoginView, LogoutView
 from django.views.generic import TemplateView
 from django.contrib.auth.views import LoginView, LogoutView
 from django.views.generic import TemplateView
+from django.contrib.auth.views import PasswordResetView
+from django.contrib.auth import views as auth_views
 
 logger = logging.getLogger(__name__)
 # Create your views here.
@@ -185,3 +187,39 @@ class ProfileView(TemplateView):
         logger.info(f"bio: {self.request.user.bio}, image: {self.request.user.image}")
         context["profile"] = self.request.user
         return context
+
+
+class ModularPasswordResetDoneView(TemplateView):
+    template_name = "profiles/password_reset_complete.html"
+
+
+class ModularPassordResetConfirmView(auth_views.PasswordResetConfirmView):
+    template_name = "profiles/password_reset_confirm.html"
+
+
+class ModularPasswordResetView(auth_views.PasswordResetView):
+    template_name = "profiles/password_reset_form.html"
+    email_template_name = "profiles/password_reset_email.html"
+    success_url = "/password_reset/done/"
+    from_email = "bogdan@codeswiftr.com"
+
+    def form_valid(self, form):
+        logger.info(f"form_valid() form")
+        opts = {
+            "use_https": self.request.is_secure(),
+            "token_generator": self.token_generator,
+            "from_email": self.from_email,
+            "email_template_name": self.email_template_name,
+            "subject_template_name": self.subject_template_name,
+            "request": self.request,
+            "html_email_template_name": self.html_email_template_name,
+            "extra_email_context": self.extra_email_context,
+        }
+        logger.debug(f"reset password  opts: {opts}")
+        form.save(**opts)
+        logger.debug(f"reset password  email sent")
+        return super().form_valid(form)
+
+
+class ModularPasswordResetCompleteView(TemplateView):
+    template_name = "profiles/password_reset_complete.html"

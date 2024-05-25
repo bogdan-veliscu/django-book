@@ -34,6 +34,7 @@ class User(AbstractBaseUser):
     name: str = models.CharField("Name", max_length=60)
     bio: str = models.TextField(blank=True)
     image: str | None = models.URLField(null=True, blank=True)
+    is_active: bool = models.BooleanField(default=True)
 
     EMAIL_FIELD = "email"
     USERNAME_FIELD = "email"

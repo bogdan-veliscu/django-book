@@ -58,6 +58,9 @@ INSTALLED_APPS = [
     "profiles",
     "articles",
     "comments",
+    "django_otp",
+    "django_otp.plugins.otp_totp",
+    "two_factor",
 ]
 
 REST_FRAMEWORK = {
@@ -182,3 +185,9 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 AUTH_USER_MODEL = "profiles.User"
+
+EMAIL_HOST = os.getenv("SMTP_HOST", default="smtp.gmail.com")
+EMAIL_HOST_USER = os.getenv("SMTP_USER")
+EMAIL_HOST_PASSWORD = os.getenv("SMTP_PASSWORD")
+EMAIL_PORT = os.getenv("SMTP_PORT", default=587)
+EMAIL_USE_TLS = os.getenv("SMTP_TLS", default=True)
