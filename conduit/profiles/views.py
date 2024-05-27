@@ -164,7 +164,7 @@ class ModularLoginView(LoginView):
 
 
 class ModularLogoutView(LogoutView):
-    next_page = "/login/"
+    next_page = "/account/login/"
 
 
 # create a basic view for profile using templates/profile only if logged in
@@ -223,3 +223,8 @@ class ModularPasswordResetView(auth_views.PasswordResetView):
 
 class ModularPasswordResetCompleteView(TemplateView):
     template_name = "profiles/password_reset_complete.html"
+
+
+# class ModularTwoFactorSetupView(TwoFactorSetupView):
+#     template_name = "profiles/two_factor_setup.html"
+#     success_url = "/profiles/profile/"

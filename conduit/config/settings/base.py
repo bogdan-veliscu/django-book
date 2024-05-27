@@ -87,6 +87,8 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django_otp.middleware.OTPMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -191,3 +193,9 @@ EMAIL_HOST_USER = os.getenv("SMTP_USER")
 EMAIL_HOST_PASSWORD = os.getenv("SMTP_PASSWORD")
 EMAIL_PORT = os.getenv("SMTP_PORT", default=587)
 EMAIL_USE_TLS = os.getenv("SMTP_TLS", default=True)
+
+
+LOGIN_URL = "two_factor:login"
+
+# this one is optional
+LOGIN_REDIRECT_URL = "two_factor:profile"
