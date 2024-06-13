@@ -38,9 +38,7 @@ DEBUG = True
 
 SITE_ID = 1
 
-ALLOWED_HOSTS = [
-    "localhost",
-]
+ALLOWED_HOSTS = ["localhost", "cod3.go.ro", "brandfocus.ai"]
 
 APPEND_SLASH = False
 
