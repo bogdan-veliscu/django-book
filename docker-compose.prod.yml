@@ -61,11 +61,20 @@ services:
       - media:/home/app/web/media
     ports:
       - 80:80
+    environment:
+      - VIRTUAL_HOST=$DOMAIN_NAME
     depends_on:
       - app
+
+  certbot:
+    image: certbot/certbot
+    volumes:
+      - certbot-etc:/etc/letsencrypt # Persistent volume for certificates
+    command: ["certonly"] # Run Certbot in non-renewal mode
 
 volumes:
   .postgres:
   conduit:
   static:
   media:
+  certbot-etc:
