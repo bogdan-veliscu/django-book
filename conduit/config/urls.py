@@ -29,4 +29,5 @@ urlpatterns = [
     path(f"", include("profiles.urls")),
     path(f"{api_prefix}/", include("articles.urls")),
     path(f"{api_prefix}/", include("comments.urls")),
+    path("accounts/", include("allauth.urls")),
 ]

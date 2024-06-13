@@ -22,6 +22,7 @@ django-dotenv = "^1.4.2"
 django-otp = "^1.5.0"
 django-two-factor-auth = "^1.16.0"
 phonenumbers = "^8.13.37"
+django-allauth = "^0.63.3"
 
 
 [tool.poetry.group.dev.dependencies]
