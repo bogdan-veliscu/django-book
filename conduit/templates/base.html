@@ -38,7 +38,7 @@
   <body hx-boost="true">
     <nav class="navbar navbar-light">
       <div class="container">
-        <a class="navbar-brand" href="profile">conduit</a>
+        <a class="navbar-brand" href="{% url 'article-list'%}">conduit</a>
 
         {% with url_name=request.resolver_match.url_name %}
         <ul class="nav navbar-nav pull-xs-right">
@@ -50,7 +50,7 @@
             >
           </li>
           <li class="nav-item{% if url_name == 'profile' %} active{% endif %}">
-            <a class="nav-link" href="#">
+            <a class="nav-link" href="{% url 'create-article' %}">
               <i class="ion-compose"></i>&nbsp;New Article
             </a>
           </li>
@@ -74,7 +74,9 @@
             </a>
           </li>
           {% else %}
-          <li class="nav-item{% if url_name == 'two_factor:login' %} active{% endif %}">
+          <li
+            class="nav-item{% if url_name == 'two_factor:login' %} active{% endif %}"
+          >
             <a class="nav-link" href="{% url 'two_factor:login' %}">Sign in</a>
           </li>
           <li class="nav-item{% if url_name == 'register' %} active{% endif %}">

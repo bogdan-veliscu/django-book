@@ -1,3 +1,4 @@
+from django.urls import reverse_lazy
 from rest_framework import viewsets, status, mixins, generics
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
@@ -5,7 +6,8 @@ from rest_framework.decorators import action
 from django.views.decorators.cache import cache_page
 
 from taggit.models import Tag
-
+from django.views.generic.edit import CreateView
+from django.views.generic import ListView, DetailView
 from profiles.models import User
 from articles.models import Article
 from articles.serializers import ArticleSerializer, TagSerializer
@@ -234,3 +236,42 @@ class TagView(viewsets.GenericViewSet, mixins.ListModelMixin):
                 {"errors": {"body": ["Bad request: unable to retrieve tags"]}},
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+
+class ArticleCreateView(CreateView):
+    model = Article
+    template_name = "articles/article_form.html"
+    fields = ["title", "summary", "content"]
+    success_url = reverse_lazy("articles:article_list")
+
+    def form_valid(self, form):
+        form.instance.author = self.request.user
+        return super().form_valid(form)
+
+
+class ArticleListView(ListView):
+    model = Article
+    template_name = "articles/home.html"
+    context_object_name = "articles"
+    paginate_by = 10
+
+    def get_queryset(self):
+        res = Article.objects.all().order_by("-created_at")
+        print(res)
+        return res
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["tags"] = Tag.objects.all()
+        return context
+
+
+class ArticleDetailView(DetailView):
+    model = Article
+    template_name = "articles/article.html"
+    context_object_name = "article"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["tags"] = Tag.objects.all()
+        return context

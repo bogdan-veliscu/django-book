@@ -27,7 +27,7 @@ api_prefix = "api"
 urlpatterns = [
     path("admin/", admin.site.urls),
     path(f"", include("profiles.urls")),
-    path(f"{api_prefix}/", include("articles.urls")),
-    path(f"{api_prefix}/", include("comments.urls")),
+    path(f"", include("articles.urls")),
+    path(f"", include("comments.urls")),
     path("accounts/", include("allauth.urls")),
 ]
