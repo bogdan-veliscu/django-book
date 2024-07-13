@@ -10,10 +10,14 @@ from rest_framework import generics, status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+from django.template.loader import render_to_string
 
 from .forms import CommentForm
 from .models import Comment
 from .serializers import CommentSerializer
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -139,6 +143,31 @@ def add_comment(request: HttpRequest, article_id: int) -> HttpResponse:
         comment.author = request.user
         comment.article = article
         comment.save()
+        logger.info(f"Comment {comment} created")
+
+        channel_layer = get_channel_layer()
+        group_name = f"comments_{article_id}"
+        logger.info(f"Send comment to group {group_name}")
+        # Convert the comment data to JSON
+        comment_data = {
+            "id": comment.id,
+            "content": comment.content,
+            "author_id": comment.author.id,
+            "html": json.dumps(
+                render_to_string("comments/_comment.html", {"comment": comment})
+            ),
+        }
+
+        # Send the comment JSON to the group
+        async_to_sync(channel_layer.group_send)(
+            group_name,
+            {
+                "type": "comment_message",
+                "comment": comment_data,
+            },
+        )
+
+        logger.info(f"Comment sent to group {group_name} with data: {comment_data}")
 
         # reset form
         form = CommentForm()

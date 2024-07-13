@@ -313,8 +313,6 @@ class ArticleDetailView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["tags"] = Tag.objects.all()
-        logger.info(f"ArticleDetailView context: {context}")
-        logger.warning(f"ArticleDetailView author: {self.object.author}")
         context["author"] = self.object.author
         context["num_favorites"] = self.object.favorites.count()
         context["is_favorite"] = self.object.favorites.filter(
@@ -325,8 +323,6 @@ class ArticleDetailView(DetailView):
             .select_related("author")
             .order_by("-created")
         )
-
-        logger.info(f"# get_context_data: {context}")
 
         context["comment_form"] = CommentForm()
         return context

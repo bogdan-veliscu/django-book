@@ -23,6 +23,9 @@ install:init-env ## builds and start the dev container
 run: ## Run the application
 	docker compose up -d --build
 
+dev:
+	docker compose up --build
+
 build: ## Build the Docker image
 	docker buildx build --platform linux/amd64 -t $(IMAGE) --load .
 

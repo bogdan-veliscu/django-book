@@ -14,7 +14,6 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
-from dotenv import read_dotenv
 
 # from os.path import dirname, join
 
@@ -55,6 +54,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework_simplejwt",
     "taggit",
+    "channels",
     # local apps
     "profiles",
     "articles",
@@ -77,6 +77,15 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ]
+}
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)],
+        },
+    },
 }
 
 ACCOUNT_AUTHENTICATION_METHOD = "email"
@@ -128,8 +137,9 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = "config.wsgi.application"
+ASGI_APPLICATION = "config.asgi.application"
 
-
+print(f"Asgi application: {ASGI_APPLICATION}")
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 

@@ -25,5 +25,16 @@ DATABASES = {
     },
 }
 
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [(os.getenv("REDIS_SERVER", default="localhost"), 6379)],
+        },
+    },
+}
+
+ASGI_APPLICATION = "config.asgi.application"
+
 # use default database router
 DATABASE_ROUTERS = []
