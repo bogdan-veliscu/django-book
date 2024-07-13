@@ -43,6 +43,9 @@ class User(AbstractBaseUser):
     def __str__(self):
         return f"<User: {self.email}>"
 
+    def get_full_name(self) -> str:
+        return self.name
+
     linkedin_url: str = models.URLField(blank=True)
 
     followers = models.ManyToManyField(

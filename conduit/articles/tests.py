@@ -1,7 +1,7 @@
-from django.test import TestCase
 from articles.models import Article
 from articles.signals import article_pre_save
 from django.db.models.signals import pre_save
+from django.test import TestCase
 
 
 class ArticlePreSaveTestCase(TestCase):

@@ -1,13 +1,13 @@
 import markdown
-from django.db import models
-from django.dispatch import receiver
+from core.models import SoftDeletableModel
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
-from django.utils.text import slugify
+from django.db import models
+from django.dispatch import receiver
 from django.urls import reverse
+from django.utils.text import slugify
 from taggit.managers import TaggableManager
-from core.models import SoftDeletableModel
 
 User = get_user_model()
 

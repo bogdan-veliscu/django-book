@@ -19,7 +19,6 @@
       hx-swap="innerHTML"
       hx-target="#comment-{{ comment.id }}"
     >
-      <i class="ion-edit" hx-get="{% url 'edit_comment' comment.id %}"></i>
       <i
         class="ion-trash-a"
         hx-delete="{% url 'delete_comment' comment.id %}"

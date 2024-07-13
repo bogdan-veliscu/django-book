@@ -1,17 +1,18 @@
+from django.contrib.auth import views as auth_views
 from django.urls import include, path
 from profiles import views
 from rest_framework.routers import DefaultRouter
+from two_factor.urls import urlpatterns as tf_urls
+
 from .views import (
     ModularLoginView,
     ModularLogoutView,
-    UserRegistrationView,
-    ModularPasswordResetView,
-    ModularPasswordResetCompleteView,
     ModularPassordResetConfirmView,
+    ModularPasswordResetCompleteView,
     ModularPasswordResetDoneView,
+    ModularPasswordResetView,
+    UserRegistrationView,
 )
-from django.contrib.auth import views as auth_views
-from two_factor.urls import urlpatterns as tf_urls
 
 profile_router = DefaultRouter(trailing_slash=False)
 profile_router.register(r"profiles", views.ProfileDetailView)
@@ -24,6 +25,7 @@ urlpatterns = [
     path("register/", UserRegistrationView.as_view(), name="register"),
     path("logout/", ModularLogoutView.as_view(), name="logout"),
     path("profile/", views.ProfileView.as_view(), name="profile"),
+    path("profile/follow/<int:user_id>/", views.follow, name="follow"),
     path("password_reset/", ModularPasswordResetView.as_view(), name="password_reset"),
     path(
         "password_reset/done/",

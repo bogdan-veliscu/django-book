@@ -1,12 +1,19 @@
+import logging
+
+from articles.models import Article
+from django.contrib.auth.decorators import login_required
+from django.http import HttpRequest, HttpResponse
+from django.shortcuts import get_object_or_404
+from django.template.response import TemplateResponse
+from django.views.decorators.http import require_http_methods
 from rest_framework import generics, status
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 
+from .forms import CommentForm
 from .models import Comment
 from .serializers import CommentSerializer
-from articles.models import Article
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -117,3 +124,79 @@ class DeleteCommentView(generics.DestroyAPIView):
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )
+
+
+@require_http_methods(["POST"])
+@login_required
+def add_comment(request: HttpRequest, article_id: int) -> HttpResponse:
+
+    article = get_object_or_404(Article, pk=article_id)
+    comment: Comment | None = None
+
+    if (form := CommentForm(request.POST)).is_valid():
+
+        comment = form.save(commit=False)
+        comment.author = request.user
+        comment.article = article
+        comment.save()
+
+        # reset form
+        form = CommentForm()
+
+    return TemplateResponse(
+        request,
+        "comments/_comment_form.html",
+        {
+            "article": article,
+            "form": form,
+            "new_comment": comment,
+        },
+    )
+
+
+@require_http_methods(["GET", "POST"])
+@login_required
+def edit_comment(request: HttpRequest, comment_id: int) -> HttpResponse:
+
+    comment = get_object_or_404(
+        Comment.objects.select_related("author"),
+        author=request.user,
+        pk=comment_id,
+    )
+
+    if request.method == "GET":
+
+        return TemplateResponse(
+            request,
+            "comments/_comment_form.html",
+            {
+                "comment": comment,
+                "form": CommentForm(instance=comment),
+            },
+        )
+
+    if (form := CommentForm(request.POST, instance=comment)).is_valid():
+        comment = form.save()
+
+        return TemplateResponse(request, "comments/_comment.html", {"comment": comment})
+
+    return TemplateResponse(
+        request,
+        "comments/_comment_form.html",
+        {
+            "comment": comment,
+            "form": form,
+        },
+    )
+
+
+@require_http_methods(["DELETE"])
+@login_required
+def delete_comment(request: HttpRequest, comment_id: int) -> HttpResponse:
+    comment = get_object_or_404(
+        Comment,
+        author=request.user,
+        pk=comment_id,
+    )
+    comment.delete()
+    return HttpResponse()

@@ -1,27 +1,22 @@
+import logging
+
 from django.contrib.auth import authenticate
+from django.contrib.auth import views as auth_views
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.views import LoginView, LogoutView, PasswordResetView
+from django.http import HttpRequest, HttpResponse
+from django.views.decorators.http import require_http_methods
+from django.views.generic import TemplateView
+from django.views.generic.edit import FormView
 from rest_framework import status, views, viewsets
 from rest_framework.decorators import action, api_view
-from rest_framework.permissions import (
-    IsAuthenticated,
-    IsAuthenticatedOrReadOnly,
-)
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
-from django.views.generic.edit import FormView
-from django.views.generic import TemplateView
-from django.contrib.auth.views import LogoutView, LoginView
-from .forms import UserRegistrationForm
 
+from .forms import UserRegistrationForm
 from .models import User
 from .serializers import ProfileSerializer, UserSerializer
-
-import logging
-from django.contrib.auth.views import LoginView, LogoutView
-from django.views.generic import TemplateView
-from django.contrib.auth.views import LoginView, LogoutView
-from django.views.generic import TemplateView
-from django.contrib.auth.views import PasswordResetView
-from django.contrib.auth import views as auth_views
 
 logger = logging.getLogger(__name__)
 # Create your views here.
@@ -143,6 +138,32 @@ class ProfileDetailView(viewsets.ModelViewSet):
             profile.followers.remove(follower)
             serializer = self.get_serializer(profile)
             return Response({"profile": serializer.data})
+
+
+@require_http_methods(["POST", "DELETE"])
+@login_required
+def follow(request: HttpRequest, user_id: int) -> HttpResponse:
+
+    user = get_object_or_404(User.objects.exclude(pk=request.user.id), pk=user_id)
+
+    is_following: bool
+
+    if request.method == "DELETE":
+        user.followers.remove(request.user)
+        is_following = False
+    else:
+        user.followers.add(request.user)
+        is_following = True
+
+    return TemplateResponse(
+        request,
+        "accounts/_follow_action.html",
+        {
+            "followed": user,
+            "is_following": is_following,
+            "is_action": True,
+        },
+    )
 
 
 class UserRegistrationView(FormView):

@@ -10,13 +10,14 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
+import os
 from datetime import timedelta
 from pathlib import Path
 
+from dotenv import read_dotenv
+
 # from os.path import dirname, join
 
-from dotenv import read_dotenv
-import os
 
 # project_dir = dirname(dirname(__file__))
 # read .env file for parent directory

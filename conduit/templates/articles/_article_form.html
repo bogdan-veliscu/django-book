@@ -6,17 +6,42 @@
   </ul>
   {% endif %} {% csrf_token %}
   <fieldset class="form-group">
-    {% render_field form.title class+="form-control form-control-lg"
-    placeholder="Article Title" %}
+    <label for="id_title">Article Title</label>
+    <input
+      type="text"
+      name="title"
+      id="id_title"
+      class="form-control form-control-lg"
+      placeholder="Article Title"
+      required
+    >{{ form.title.value|default_if_none:"" }}
+  
+  </input>
   </fieldset>
   <fieldset class="form-group">
-    {# see https://github.com/jazzband/django-widget-tweaks/issues/85 #} {{
-    form.summary|attr:"placeholder:What's this article
-    about?"|add_class:"form-control" }}
+    <label for="id_summary">Summary</label>
+    <textarea
+      name="summary"
+      id="id_summary"
+      class="form-control"
+      placeholder="What's this article about?"
+      required
+    >
+{{ form.summary.value|default_if_none:"" }}</textarea
+    >
   </fieldset>
   <fieldset class="form-group">
-    {% render_field form.content class+="form-control" placeholder="Write your
-    article (in markdown)" rows=8 %}
+    <label for="id_content">Content</label>
+    <textarea
+      name="content"
+      id="id_content"
+      class="form-control"
+      placeholder="Write your article (in markdown)"
+      rows="8"
+      required
+    >
+{{ form.content.value|default_if_none:"" }}</textarea
+    >
   </fieldset>
   <fieldset
     class="form-group"
@@ -33,10 +58,21 @@
     fmt:on
     #}
   >
-    {% url 'tags_autocomplete' as tags_autocomplete_url %} {% render_field
-    form.tags class+="form-control" placeholder="Enter tags" x-ref="input"
-    hx-trigger="keyup changed delay:200ms" hx-target="#tags-list"
-    hx-swap="innerHTML" hx-get=tags_autocomplete_url autocomplete="off" %}
+    <label for="id_tags">Tags</label>
+    <input
+      type="text"
+      name="tags"
+      id="id_tags"
+      class="form-control"
+      placeholder="Enter tags"
+      x-ref="input"
+      hx-trigger="keyup changed delay:200ms"
+      hx-target="#tags-list"
+      hx-swap="innerHTML"
+      hx-get="{{ tags_autocomplete_url }}"
+      autocomplete="off"
+      value="{{ form.tags.value }}"
+    />
     <div class="tag-list" id="tags-list" x-ref="list"></div>
   </fieldset>
   <fieldset>

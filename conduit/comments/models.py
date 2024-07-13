@@ -1,6 +1,6 @@
-from django.db import models
-from django.conf import settings
 from articles.models import Article
+from django.conf import settings
+from django.db import models
 
 
 class Comment(models.Model):

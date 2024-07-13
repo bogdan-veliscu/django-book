@@ -1,8 +1,8 @@
-from rest_framework import serializers
-
-from comments.models import Comment
-from articles.serializers import AuthorSerializer
 import logging
+
+from articles.serializers import AuthorSerializer
+from comments.models import Comment
+from rest_framework import serializers
 
 logger = logging.getLogger(__name__)
 

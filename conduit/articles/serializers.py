@@ -1,10 +1,11 @@
-from rest_framework import serializers
+import logging
+
 from django.contrib.auth import get_user_model
+from rest_framework import serializers
 from taggit.models import Tag
-from taggit.serializers import TagListSerializerField, TaggitSerializer
+from taggit.serializers import TaggitSerializer, TagListSerializerField
 
 from .models import Article
-import logging
 
 logger = logging.getLogger(__name__)
 

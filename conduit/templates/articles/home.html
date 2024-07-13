@@ -29,9 +29,15 @@
             </li>
           </ul>
         </div>
-        {% endif %} {% for article in articles %}
-        <p>{{ article.title }}</p>
-        {% include "articles/_article.html" %} {% endfor %}
+        {% endif %} 
+        
+        {% if articles %} 
+        {% for article in articles %} 
+          {% include 'articles/_article.html' %}
+        {% endfor %} 
+        {% else %}
+        <p>No articles are here... yet.</p>
+        {% endif %}
       </div>
 
       <div class="col-md-3">

@@ -1,20 +1,21 @@
-from django.urls import reverse_lazy
-from rest_framework import viewsets, status, mixins, generics
-from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
-from rest_framework.response import Response
-from rest_framework.decorators import action
-from django.views.decorators.cache import cache_page
+import logging
 
-from taggit.models import Tag
-from django.views.generic.edit import CreateView
-from django.views.generic import ListView, DetailView
-from profiles.models import User
+from articles.filters import ArticleFilter
 from articles.models import Article
 from articles.serializers import ArticleSerializer, TagSerializer
-from articles.filters import ArticleFilter
-import logging
+from comments.forms import CommentForm
+from comments.models import Comment
 from django.core.cache import cache
-
+from django.urls import reverse_lazy
+from django.views.decorators.cache import cache_page
+from django.views.generic import DetailView, ListView
+from django.views.generic.edit import CreateView
+from profiles.models import User
+from rest_framework import generics, mixins, status, viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.response import Response
+from taggit.models import Tag
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -249,21 +250,36 @@ class ArticleCreateView(CreateView):
         return super().form_valid(form)
 
 
+from django.http import JsonResponse
+from django.template.loader import render_to_string
+
+
 class ArticleListView(ListView):
     model = Article
     template_name = "articles/home.html"
     context_object_name = "articles"
-    paginate_by = 10
+    paginate_by = 3
 
     def get_queryset(self):
-        res = Article.objects.all().order_by("-created_at")
-        print(res)
-        return res
+        return Article.objects.all().order_by("-created_at")
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["tags"] = Tag.objects.all()
         return context
+
+    def render_to_response(self, context, **response_kwargs):
+        if self.request.is_ajax():
+            html = render_to_string(
+                "articles/_article_list.html",  # Assuming you have a template fragment for articles
+                context,
+                request=self.request,
+            )
+            return JsonResponse({"html": html})
+        return super().render_to_response(context, **response_kwargs)
+
+
+logger = logging.getLogger(__name__)
 
 
 class ArticleDetailView(DetailView):
@@ -274,4 +290,20 @@ class ArticleDetailView(DetailView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["tags"] = Tag.objects.all()
+        logger.info(f"ArticleDetailView context: {context}")
+        logger.warning(f"ArticleDetailView author: {self.object.author}")
+        context["author"] = self.object.author
+        context["num_favorites"] = self.object.favorites.count()
+        context["is_favorite"] = self.object.favorites.filter(
+            pk=self.request.user.pk
+        ).exists()
+        context["comments"] = (
+            Comment.objects.filter(article=self.object)
+            .select_related("author")
+            .order_by("-created")
+        )
+
+        logger.info(f"# get_context_data: {context}")
+
+        context["comment_form"] = CommentForm()
         return context

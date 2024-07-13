@@ -1,3 +1,4 @@
+<!-- base.html -->
 {% spaceless %}
 <!DOCTYPE html>
 <html>
@@ -23,71 +24,13 @@
     <!-- Import the custom Bootstrap 4 theme from our hosted CDN -->
     <link rel="stylesheet" href="//demo.productionready.io/main.css" />
 
-    <script
-      src="https://unpkg.com/htmx.org@1.6.1"
-      integrity="sha384-tvG/2mnCFmGQzYC1Oh3qxQ7CkQ9kMzYjWZSNtrRZygHPDDqottzEJsqS4oUVodhW"
-      crossorigin="anonymous"
-    ></script>
-    <script
-      src="https://unpkg.com/alpinejs@3.7.1/dist/cdn.min.js"
-      defer
-      integrity="sha384-KLv/Yaw8nAj6OXX6AvVFEt1FNRHrfBHziZ2JzPhgO9OilYrn6JLfCR4dZzaaQCA5"
-      crossorigin="anonymous"
-    ></script>
+    <script src="https://unpkg.com/htmx.org@2.0.1"></script>
   </head>
   <body hx-boost="true">
-    <nav class="navbar navbar-light">
-      <div class="container">
-        <a class="navbar-brand" href="{% url 'article-list'%}">conduit</a>
-
-        {% with url_name=request.resolver_match.url_name %}
-        <ul class="nav navbar-nav pull-xs-right">
-          <li class="nav-item">
-            <a
-              class="nav-link{% if url_name == 'profile' %} active{% endif %}"
-              href="{% url 'profile' %}"
-              >profile</a
-            >
-          </li>
-          <li class="nav-item{% if url_name == 'profile' %} active{% endif %}">
-            <a class="nav-link" href="{% url 'create-article' %}">
-              <i class="ion-compose"></i>&nbsp;New Article
-            </a>
-          </li>
-          {% if user.is_authenticated %}
-          <li class="nav-item{% if url_name == 'settings' %} active{% endif %}">
-            <a class="nav-link" href="{% url 'two_factor:profile' %}">
-              <i class="ion-gear-a"></i>&nbsp;Settings
-            </a>
-          </li>
-
-          <li class="nav-item">
-            <a
-              class="nav-link"
-              href="javascript:void(0)"
-              hx-post="{% url 'logout'%}"
-              hx-target="body"
-              hx-push-url="true"
-              hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'
-            >
-              Sign Out
-            </a>
-          </li>
-          {% else %}
-          <li
-            class="nav-item{% if url_name == 'two_factor:login' %} active{% endif %}"
-          >
-            <a class="nav-link" href="{% url 'two_factor:login' %}">Sign in</a>
-          </li>
-          <li class="nav-item{% if url_name == 'register' %} active{% endif %}">
-            <a class="nav-link" href="{% url 'register' %}">Sign up</a>
-          </li>
-          {% endif %}
-        </ul>
-        {% endwith %}
-      </div>
-    </nav>
+    {% include 'base_nav.html' with active_page='home' %}
+    <!-- Content block -->
     {% block content %}{% endblock %}
+    <!-- Footer -->
     <footer>
       <div class="container">
         <a href="/" class="logo-font">conduit</a>
