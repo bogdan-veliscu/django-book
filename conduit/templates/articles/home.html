@@ -9,7 +9,7 @@
 
   <div class="container page">
     <div class="row">
-      <div class="col-md-9">
+      <div class="col-md-9" id="articles-container">
         {% if user.is_authenticated %}
         <div class="feed-toggle">
           <ul class="nav nav-pills outline-active">
@@ -29,16 +29,26 @@
             </li>
           </ul>
         </div>
-        {% endif %} 
-        
-        {% if articles %} 
-        {% for article in articles %} 
-          {% include 'articles/_article.html' %}
-        {% endfor %} 
-        {% else %}
-        <p>No articles are here... yet.</p>
-        {% endif %}
+        {% endif %} {% include "articles/_article_list.html" %}
       </div>
+
+      <script>
+        document.addEventListener("htmx:afterSwap", function (event) {
+          if (event.detail.target.id === "articles-container") {
+            // Remove the old load-more button if it exists
+            var oldLoadMore = document.querySelector("#load-more");
+            if (oldLoadMore) {
+              oldLoadMore.parentNode.removeChild(oldLoadMore);
+            }
+            // Optional: Scroll restoration to enhance UX
+            if ("scrollRestoration" in history) {
+              history.scrollRestoration = "manual";
+            }
+          } else {
+            console.log(event.detail.target.id);
+          }
+        });
+      </script>
 
       <div class="col-md-3">
         <div class="sidebar">

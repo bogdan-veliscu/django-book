@@ -15,4 +15,10 @@ urlpatterns = [
         views.ArticleDetailView.as_view(),
         name="article-detail-view",
     ),
+    # add favorite article path
+    path(
+        "article/favorite/<int:article_id>/",
+        views.favorite,
+        name="favorite",
+    ),
 ]

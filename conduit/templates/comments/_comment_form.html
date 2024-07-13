@@ -1,19 +1,13 @@
+{{ comment.id }}
 <form
   class="card comment-form"
-  {%
-  if
-  comment
-  %}
-  hx-target="#comment-{{ comment.id }}"
-  hx-post="#"
-  {%
-  else
-  %}
-  hx-target="#comment-form"
-  hx-post="#"
-  {%
-  endif
-  %}
+    {% if comment %}
+        hx-target="#comment-{{ comment.id }}"
+        hx-post="{% url 'edit_comment' comment.id %}"
+    {% else %}
+        hx-target="#comment-form"
+        hx-post="{% url 'add_comment' article.id %}"
+    {% endif %}
   hx-swap="innerHTML"
 >
   <div card-block>

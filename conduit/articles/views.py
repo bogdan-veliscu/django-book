@@ -1,5 +1,7 @@
 import logging
 
+from django.shortcuts import get_object_or_404
+
 from articles.filters import ArticleFilter
 from articles.models import Article
 from articles.serializers import ArticleSerializer, TagSerializer
@@ -16,6 +18,9 @@ from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from taggit.models import Tag
+from django.views.decorators.http import require_http_methods
+from django.contrib.auth.decorators import login_required
+from django.template.response import TemplateResponse
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -250,8 +255,9 @@ class ArticleCreateView(CreateView):
         return super().form_valid(form)
 
 
-from django.http import JsonResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.template.loader import render_to_string
+from django.core.paginator import Paginator
 
 
 class ArticleListView(ListView):
@@ -266,16 +272,33 @@ class ArticleListView(ListView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         context["tags"] = Tag.objects.all()
+
+        # Add pagination to the context
+        page_obj = context["page_obj"]
+        context["page_obj"] = page_obj
+        context["next_page_number"] = (
+            page_obj.next_page_number() if page_obj.has_next() else None
+        )
+        context["previous_page_number"] = (
+            page_obj.previous_page_number() if page_obj.has_previous() else None
+        )
+        logger.info(
+            f"Context: Page {page_obj.number}, Next: {context['next_page_number']}, Previous: {context['previous_page_number']}"
+        )
+
         return context
 
     def render_to_response(self, context, **response_kwargs):
-        if self.request.is_ajax():
+        logger.info(
+            f"Rendering response for page: {context['page_obj'].number}, Next page: {context['next_page_number']}"
+        )
+        if self.request.headers.get("X-Requested-With") == "XMLHttpRequest":
             html = render_to_string(
-                "articles/_article_list.html",  # Assuming you have a template fragment for articles
+                "articles/_article_list.html",  # a template fragment for articles
                 context,
                 request=self.request,
             )
-            return JsonResponse({"html": html})
+            return HttpResponse(html)
         return super().render_to_response(context, **response_kwargs)
 
 
@@ -307,3 +330,38 @@ class ArticleDetailView(DetailView):
 
         context["comment_form"] = CommentForm()
         return context
+
+
+@require_http_methods(["POST", "DELETE"])
+@login_required
+def favorite(request: HttpRequest, article_id: int) -> HttpResponse:
+
+    article = get_object_or_404(
+        Article.objects.select_related("author").exclude(author=request.user),
+        pk=article_id,
+    )
+
+    is_favorite: bool
+
+    if request.method == "DELETE":
+        article.favorites.remove(request.user)
+        is_favorite = False
+    else:
+        article.favorites.add(request.user)
+        is_favorite = True
+
+    return TemplateResponse(
+        request,
+        "articles/_favorite_action.html",
+        {
+            "article": article,
+            "is_favorite": is_favorite,
+            "num_favorites": article.favorites.count(),
+            "is_action": True,
+            "is_detail": (
+                False
+                if request.headers.get("HX-Target") == f"favorite-{article.id}"
+                else True
+            ),
+        },
+    )

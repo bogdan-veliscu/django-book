@@ -1,6 +1,6 @@
 <button class="btn btn-sm btn-outline-{{ is_following|yesno:'secondary,primary' }} action-btn"
-    {% if user.is_authenticated and user != followed %}
-        hx-{{ is_following|yesno:'delete,post' }}="#"
+    {% if user.is_authenticated and user != followed and followed.id%}
+        hx-{{ is_following|yesno:'delete,post' }}={% url 'follow' user_id=followed.id %}
         hx-push-url="false"
         hx-target="this"
         hx-swap="outerHTML"
@@ -11,5 +11,5 @@
     id="{{ button_id }}">
     <i class="ion-{{ is_following|yesno:'plus,minus' }}-round"></i>
     &nbsp;
-    Follow {{ followed.name }}
+    Follow {{ followed.name }} :{{ followed.id}}
 </button>
