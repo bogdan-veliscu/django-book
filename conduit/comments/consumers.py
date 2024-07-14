@@ -29,8 +29,3 @@ class CommentConsumer(WebsocketConsumer):
         async_to_sync(self.channel_layer.group_discard)(
             self.group_name, self.channel_name
         )
-
-    def comment_message(self, event):
-        # Send comment to WebSocket
-        comment = event["comment"]
-        self.send(text_data=json.dumps({"comment": comment}))

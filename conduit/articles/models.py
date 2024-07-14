@@ -37,9 +37,6 @@ class Article(SoftDeletableModel):
     summary = models.TextField(blank=True)
     content = models.TextField(blank=True)
 
-    created = models.DateTimeField(auto_now_add=True, db_index=True)
-    updated = models.DateTimeField(auto_now_add=True)
-
     status = models.CharField(max_length=10)
 
     tags = TaggableManager(blank=True)
