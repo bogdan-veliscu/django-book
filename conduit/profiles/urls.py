@@ -26,7 +26,11 @@ urlpatterns = [
     path("logout/", ModularLogoutView.as_view(), name="logout"),
     path("profile/", views.ProfileView.as_view(), name="profile"),
     path("profile/follow/<int:user_id>/", views.follow, name="follow"),
-    path("password_reset/", ModularPasswordResetView.as_view(), name="password_reset"),
+    path(
+        "password_reset/",
+        ModularPasswordResetView.as_view(),
+        name="password_reset",
+    ),
     path(
         "password_reset/done/",
         ModularPasswordResetDoneView.as_view(),

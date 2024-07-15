@@ -16,7 +16,9 @@ class Migration(migrations.Migration):
             model_name="article",
             name="favorites",
             field=models.ManyToManyField(
-                blank=True, related_name="favorites", to=settings.AUTH_USER_MODEL
+                blank=True,
+                related_name="favorites",
+                to=settings.AUTH_USER_MODEL,
             ),
         ),
     ]

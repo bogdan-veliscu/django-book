@@ -69,7 +69,9 @@ class ArticleSerializer(TaggitSerializer, serializers.ModelSerializer):
         request = self.context.get("request", None)
         if request is None:
             return None
-        author = AuthorSerializer(obj.author, context={"request": request}).data
+        author = AuthorSerializer(
+            obj.author, context={"request": request}
+        ).data
         logger.info(f"author: {author}")
         return author
 

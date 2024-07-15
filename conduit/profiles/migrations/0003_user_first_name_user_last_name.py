@@ -6,7 +6,10 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("profiles", "0002_alter_user_options_remove_user_date_joined_and_more"),
+        (
+            "profiles",
+            "0002_alter_user_options_remove_user_date_joined_and_more",
+        ),
     ]
 
     operations = [

@@ -21,7 +21,9 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
     def update(self, instance, validated_data):
-        logger.info(f" # UPDATE : bio: {instance.bio}, image: {instance.image}")
+        logger.info(
+            f" # UPDATE : bio: {instance.bio}, image: {instance.image}"
+        )
         logger.info(f"instance: {instance}, validated_data: {validated_data}")
 
         for key, value in validated_data.items():

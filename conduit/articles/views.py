@@ -15,7 +15,10 @@ from django.views.generic.edit import CreateView
 from profiles.models import User
 from rest_framework import generics, mixins, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import (
+    IsAuthenticated,
+    IsAuthenticatedOrReadOnly,
+)
 from rest_framework.response import Response
 from taggit.models import Tag
 from django.views.decorators.http import require_http_methods
@@ -28,7 +31,9 @@ logger = logging.getLogger(__name__)
 
 class ArticleViewSet(viewsets.ModelViewSet):
     queryset = (
-        Article.objects.select_related("author").prefetch_related("favorites").all()
+        Article.objects.select_related("author")
+        .prefetch_related("favorites")
+        .all()
     )
     serializer_class = ArticleSerializer
     permission_classes = (IsAuthenticated,)
@@ -119,7 +124,9 @@ class ArticleViewSet(viewsets.ModelViewSet):
             followed_authors = User.objects.filter(followers=request.user)
             queryset = self.get_queryset()
             logger.debug(f"Feed followed authors: {followed_authors}")
-            articles = queryset.filter(author__in=followed_authors).order_by("-created")
+            articles = queryset.filter(author__in=followed_authors).order_by(
+                "-created"
+            )
             logger.info(f"Feed articles: {articles}")
             queryset = self.filter_queryset(articles)
             logger.debug(f"Feed Queryset: {queryset}")
@@ -131,7 +138,13 @@ class ArticleViewSet(viewsets.ModelViewSet):
             return Response(response, status=status.HTTP_200_OK)
         except Exception as e:
             return Response(
-                {"errors": {"body": ["Bad request: unable to retrieve feed articles"]}},
+                {
+                    "errors": {
+                        "body": [
+                            "Bad request: unable to retrieve feed articles"
+                        ]
+                    }
+                },
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -155,7 +168,9 @@ class ArticleViewSet(viewsets.ModelViewSet):
             return Response(
                 {
                     "errors": {
-                        "body": ["Bad request: unable to retrieve recent articles"]
+                        "body": [
+                            "Bad request: unable to retrieve recent articles"
+                        ]
                     }
                 },
                 status=status.HTTP_400_BAD_REQUEST,
@@ -188,7 +203,9 @@ class ArticleViewSet(viewsets.ModelViewSet):
                 )
 
             article_data = request.data.get("article", {})
-            serializer = self.get_serializer(article, data=article_data, partial=True)
+            serializer = self.get_serializer(
+                article, data=article_data, partial=True
+            )
             serializer.is_valid(raise_exception=True)
             self.perform_update(serializer)
 
@@ -219,7 +236,11 @@ class ArticleViewSet(viewsets.ModelViewSet):
             )
         except Article.DoesNotExist:
             return Response(
-                {"errors": {"body": ["Article not found: unable to delete article"]}},
+                {
+                    "errors": {
+                        "body": ["Article not found: unable to delete article"]
+                    }
+                },
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -280,7 +301,9 @@ class ArticleListView(ListView):
             page_obj.next_page_number() if page_obj.has_next() else None
         )
         context["previous_page_number"] = (
-            page_obj.previous_page_number() if page_obj.has_previous() else None
+            page_obj.previous_page_number()
+            if page_obj.has_previous()
+            else None
         )
         logger.info(
             f"Context: Page {page_obj.number}, Next: {context['next_page_number']}, Previous: {context['previous_page_number']}"

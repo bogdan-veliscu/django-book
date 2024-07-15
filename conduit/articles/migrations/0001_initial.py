@@ -68,7 +68,9 @@ class Migration(migrations.Migration):
             options={
                 "ordering": ["-created"],
                 "indexes": [
-                    models.Index(fields=["-updated", "slug"], name="article_index")
+                    models.Index(
+                        fields=["-updated", "slug"], name="article_index"
+                    )
                 ],
             },
         ),

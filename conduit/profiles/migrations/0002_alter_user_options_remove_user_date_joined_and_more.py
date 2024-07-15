@@ -57,7 +57,9 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name="user",
             name="email",
-            field=models.EmailField(db_index=True, max_length=254, unique=True),
+            field=models.EmailField(
+                db_index=True, max_length=254, unique=True
+            ),
         ),
         migrations.AlterField(
             model_name="user",
