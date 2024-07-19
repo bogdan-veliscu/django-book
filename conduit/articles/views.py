@@ -119,8 +119,9 @@ class ArticleViewSet(viewsets.ModelViewSet):
 
     @action(detail=False)
     def feed(self, request, *args, **kwargs):
+        # print(f"Feed request: {dir(request.version)}.user: {request.user}")
         try:
-            logger.info(f"Feed request: {request}.user: {request.user}")
+            logger.info(f"Feed request: {request}\nuser: {request.user}\nversion:{request.version}")
             followed_authors = User.objects.filter(followers=request.user)
             queryset = self.get_queryset()
             logger.debug(f"Feed followed authors: {followed_authors}")
@@ -148,6 +149,8 @@ class ArticleViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+
+    
     @action(detail=False)
     def recent(self, request, *args, **kwargs):
         try:
