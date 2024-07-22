@@ -1,6 +1,11 @@
 FROM nginx:latest
 
-COPY nginx.conf /etc/nginx/conf.d
+# Copy the NGINX config template and entrypoint script
+COPY nginx.conf.template /etc/nginx/nginx.conf.template
+COPY entrypoint.sh /entrypoint.sh
 
-EXPOSE 80 443
-CMD ["nginx", "-g", "daemon off;"]
+# Make the entrypoint script executable
+RUN chmod +x /entrypoint.sh
+
+# Use the entrypoint script
+ENTRYPOINT ["/entrypoint.sh"]
