@@ -29,6 +29,9 @@
   <div class="container page">
     <div class="row article-content">
       <div class="col-md-12">
+        {% if article.image %}
+          <img src="{{ article.image.url }}" alt="{{ article.title }}">
+        {% endif %}
         <p>{{ article.summary }}</p>
         {{ article.as_markdown|safe }}
       </div>

@@ -27,6 +27,7 @@ django-htmx = "^1.18.0"
 channels = "^4.1.0"
 channels-redis = "^4.2.0"
 drf-yasg = "^1.21.7"
+pillow = "^10.4.0"
 
 
 [tool.poetry.group.dev.dependencies]

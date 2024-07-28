@@ -42,6 +42,15 @@
     >
 {{ form.content.value|default_if_none:"" }}</textarea
     >
+  <fieldset class="form-group">
+    <label for="id_image">Article Image</label>
+    <input
+      type="file"
+      name="image"
+      id="id_image"
+      class="form-control"
+    >
+  </fieldset>
   </fieldset>
   <fieldset
     class="form-group"

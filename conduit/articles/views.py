@@ -5,6 +5,7 @@ from django.shortcuts import get_object_or_404
 from articles.filters import ArticleFilter
 from articles.models import Article
 from articles.serializers import ArticleSerializer, TagSerializer
+from rest_framework.parsers import MultiPartParser, FormParser
 from comments.forms import CommentForm
 from comments.models import Comment
 from django.core.cache import cache
@@ -36,6 +37,7 @@ class ArticleViewSet(viewsets.ModelViewSet):
         .all()
     )
     serializer_class = ArticleSerializer
+    parser_classes = (MultiPartParser, FormParser)
     permission_classes = (IsAuthenticated,)
     lookup_field = "slug"
     filterset_class = ArticleFilter

@@ -12,6 +12,9 @@
       <span class="date">{{ article.created|date }}</span>
     </div>
   </div>
+  {% if article.image %}
+  <img src="{{ article.image.url }}" alt="{{ article.title }}">
+  {% endif %}
   <a href="{% url 'article-detail-view' article.slug%}" class="preview-link">
     <h1>{{ article.title }}</h1>
     <p>{{ article.summary }}</p>

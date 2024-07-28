@@ -38,6 +38,7 @@ class Article(SoftDeletableModel):
     title = models.CharField(max_length=150, unique=True)
     summary = models.TextField(blank=True)
     content = models.TextField(blank=True)
+    image = models.ImageField(upload_to='article_images/', blank=True, null=True)
 
     created = models.DateTimeField(auto_now_add=True, db_index=True)
     updated = models.DateTimeField(auto_now_add=True)
