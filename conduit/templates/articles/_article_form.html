@@ -1,5 +1,5 @@
 {% comment %} {% load widget_tweaks %} {% endcomment %}
-<form hx-target="this" hx-post="{{ request.path }}" hx-swap="innerHTML">
+<form hx-target="this" hx-post="{{ request.path }}" hx-swap="innerHTML" enctype="multipart/form-data">
   {% if form.errors %}
   <ul class="error-messages">
     {% for error in form.errors.values %} {{ error.as_text }} {% endfor %}

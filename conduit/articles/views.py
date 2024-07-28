@@ -273,10 +273,14 @@ class TagView(viewsets.GenericViewSet, mixins.ListModelMixin):
 class ArticleCreateView(CreateView):
     model = Article
     template_name = "articles/article_form.html"
-    fields = ["title", "summary", "content"]
-    success_url = reverse_lazy("articles:article_list")
+    fields = ["title", "summary", "content", "image"]
+    success_url = reverse_lazy("article-list")
 
     def form_valid(self, form):
+        if self.request.FILES:
+            logger.info(f"Files: {self.request.FILES}")
+
+        logger.info(f"Form: {form.cleaned_data}")
         form.instance.author = self.request.user
         return super().form_valid(form)
 

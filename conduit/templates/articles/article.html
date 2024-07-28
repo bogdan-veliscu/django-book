@@ -30,7 +30,7 @@
     <div class="row article-content">
       <div class="col-md-12">
         {% if article.image %}
-          <img src="{{ article.image.url }}" alt="{{ article.title }}">
+          <img src="{{ article.image.url }}" alt="{{ article.title }}" style="max-width: 512px; max-height: 512px;">
         {% endif %}
         <p>{{ article.summary }}</p>
         {{ article.as_markdown|safe }}

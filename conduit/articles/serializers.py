@@ -55,7 +55,7 @@ class ArticleSerializer(TaggitSerializer, serializers.ModelSerializer):
             "title",
             "description",
             "body",
-            "image"
+            "image",
             "tagList",
             "createdAt",
             "updatedAt",

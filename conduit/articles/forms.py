@@ -6,7 +6,7 @@ from .models import Article
 class ArticleForm(forms.ModelForm):
     class Meta:
         model = Article
-        fields = ["title", "content"]
+        fields = ["title", "content", "image"]
         widgets = {
             "summary": forms.Textarea(attrs={"rows": 2}),
         }
