@@ -22,7 +22,7 @@
     />
     <!-- Import the custom Bootstrap 4 theme from our hosted CDN -->
     <link rel="stylesheet" href="//demo.productionready.io/main.css" />
-    
+
     <script
       src="https://unpkg.com/htmx.org@1.6.1"
       integrity="sha384-tvG/2mnCFmGQzYC1Oh3qxQ7CkQ9kMzYjWZSNtrRZygHPDDqottzEJsqS4oUVodhW"
@@ -74,7 +74,9 @@
             </a>
           </li>
           {% else %}
-          <li class="nav-item{% if url_name == 'two_factor:login' %} active{% endif %}">
+          <li
+            class="nav-item{% if url_name == 'two_factor:login' %} active{% endif %}"
+          >
             <a class="nav-link" href="{% url 'two_factor:login' %}">Sign in</a>
           </li>
           <li class="nav-item{% if url_name == 'register' %} active{% endif %}">
@@ -85,17 +87,15 @@
         {% endwith %}
       </div>
     </nav>
-      {% block content_wrapper %}
-    <div class="container">
-      {% block content %}{% endblock %}
-    </div>
-  {% endblock %}
+    {% block content_wrapper %}
+    <div class="container">{% block content %}{% endblock %}</div>
+    {% endblock %}
     <footer>
       <div class="container">
         <a href="/" class="logo-font">conduit</a>
         <span class="attribution">
           An interactive learning project from
-          <a href="https://thinkster.io">Thinkster</a>. Code &amp; design
+          <a href="https://codeswiftr.com">CodeSwiftr</a>. Code &amp; design
           licensed under MIT.
         </span>
       </div>
