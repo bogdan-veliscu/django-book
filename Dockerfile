@@ -48,6 +48,12 @@ ENV PORT 8000
 # Run the application using gunicorn using uvicorn worker
 # CMD ["gunicorn", "conduit.asgi:application", "--bind", "${HOST}:${PORT}", "--worker-class", "uvicorn.workers.UvicornWorker"]
 
+# run migrations
+RUN python manage.py migrate
+
+# Collect static files
+RUN python manage.py collectstatic --noinput
+
 CMD ["uvicorn", "config.asgi:application", "--host", "0.0.0.0", "--port", "8000"]  
 
 LABEL maintainer="Bogdan Veliscu" \

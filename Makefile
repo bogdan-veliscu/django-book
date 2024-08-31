@@ -26,6 +26,9 @@ run: ## Run the application
 dev:
 	docker compose up --build
 
+prod:
+	docker compose -f docker-compose.prod.yml up --build -d
+
 build: ## Build the Docker image
 	docker buildx build --platform linux/amd64 -t $(IMAGE) --load .
 
@@ -41,6 +44,11 @@ migrations: ## generate migrations in a clean container
 
 migrate: ## apply migrations in a clean container
 	docker compose run --rm app ./manage.py migrate 
+
+collectstatic: ## collect static files
+	docker compose run --rm app ./manage.py collectstatic --noinput
+
+
 
 ## [UTILS]
 install_local: ## Install the package locally

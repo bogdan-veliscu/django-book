@@ -25,6 +25,12 @@ RUN poetry config virtualenvs.create false \
 # # Copy the rest of the application files
 # COPY ./conduit /code
 
+# # run migrations
+# RUN python manage.py migrate
+
+# # Collect static files
+# RUN python manage.py collectstatic --noinput
+
 EXPOSE 8000
 
 # Set environment variable for the application
