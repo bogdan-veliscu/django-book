@@ -1,5 +1,5 @@
 <!-- base.html -->
-{% spaceless %}
+{% spaceless %} {% load compress %}
 <!DOCTYPE html>
 <html>
   <head>
@@ -25,6 +25,10 @@
     <link rel="stylesheet" href="//demo.productionready.io/main.css" />
 
     <script src="https://unpkg.com/htmx.org@2.0.1"></script>
+    {% compress css %}
+    <link rel="stylesheet" href="{{ STATIC_URL }}css/main.css">
+    {% endcompress %}
+</head>
   </head>
   <body hx-boost="true">
     {% include 'base_nav.html' with active_page='home' %}

@@ -14,7 +14,6 @@ import os
 from datetime import timedelta
 from pathlib import Path
 
-
 # from os.path import dirname, join
 
 
@@ -39,7 +38,7 @@ DEBUG = True
 
 SITE_ID = 1
 
-ALLOWED_HOSTS = ["localhost", "cod3.go.ro", "brandfocus.ai"]
+ALLOWED_HOSTS = ["localhost", "cod3.go.ro", "brandfocus.ai", "brandfocus.ai.s3.amazonaws.com", "134.122.66.29"]
 
 APPEND_SLASH = False
 
@@ -71,6 +70,10 @@ INSTALLED_APPS = [
     "allauth.socialaccount",
     "allauth.socialaccount.providers.google",
     "allauth.socialaccount.providers.apple",
+
+    "compressor",
+    "storages",
+    
 ]
 
 AUTHENTICATION_BACKENDS = ("django.contrib.auth.backends.ModelBackend",)
@@ -212,17 +215,8 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
-STATIC_URL = "/static/"
-MEDIA_URL = "/media/"
 
 
-MEDIA_ROOT = os.path.join(BASE_DIR, "media")
-STATIC_ROOT = os.path.join(BASE_DIR, "static")
-DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10 MB
-
-print("BASE_DIR", BASE_DIR)
-print("MEDIA_ROOT", MEDIA_ROOT)
-print("STATIC_ROOT", STATIC_ROOT)
 
 
 
@@ -244,3 +238,41 @@ LOGIN_URL = "two_factor:login"
 
 # this one is optional
 LOGIN_REDIRECT_URL = "two_factor:profile"
+
+# AWS S3 settings
+AWS_ACCESS_KEY_ID = os.getenv('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = os.getenv('AWS_SECRET_ACCESS_KEY')
+AWS_STORAGE_BUCKET_NAME = os.getenv('AWS_STORAGE_BUCKET_NAME')
+AWS_S3_CUSTOM_DOMAIN = f'{AWS_STORAGE_BUCKET_NAME}.s3.amazonaws.com'
+AWS_S3_OBJECT_PARAMETERS = {
+    'CacheControl': 'max-age=86400',
+}
+
+# Static files (CSS, JavaScript, images)
+STATIC_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/static/'
+STATICFILES_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# Media files (uploads)
+MEDIA_URL = f'https://{AWS_S3_CUSTOM_DOMAIN}/media/'
+DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10 MB
+
+
+
+STATICFILES_FINDERS = [
+    'django.contrib.staticfiles.finders.FileSystemFinder',
+    'django.contrib.staticfiles.finders.AppDirectoriesFinder',
+    'compressor.finders.CompressorFinder',
+]
+
+COMPRESS_ENABLED = True
+COMPRESS_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
+COMPRESS_URL = STATIC_URL
+COMPRESS_ROOT = STATIC_ROOT
+COMPRESS_OUTPUT_DIR = 'CACHE'
+
+COMPRESS_ENABLED = True  # Typically set to False in development and True in production
+COMPRESS_OFFLINE = True  # Enables offline compression, useful for production
