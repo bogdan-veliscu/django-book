@@ -8,6 +8,7 @@ from django.dispatch import receiver
 from django.urls import reverse
 from django.utils.text import slugify
 from taggit.managers import TaggableManager
+from PIL import Image
 
 User = get_user_model()
 
@@ -71,6 +72,25 @@ class Article(SoftDeletableModel):
 
     def save(self, *args, **kwargs):
         self.slug = slugify(self.title)
+        pil_image = Image.open(self.image)
+        if pil_image.mode in ("RGBA", "P"):
+            pil_image = pil_image.convert("RGB")
+
+        pil_image = pil_image.resize((800, 800), Image.ANTIALIAS)
+
+        new_image = io.BytesIO()
+        pil_image.save(new_image, format="JPEG", quality=75)
+
+        temp_name = self.image.name
+        self.image = InMemoryUploadedFile(
+            new_image,
+            "ImageField",
+            "%s.jpg" % temp_name.split('.')[0],
+            "image/jpeg",
+            new_image.tell,
+            None,
+        )
+
         super().save(*args, **kwargs)
 
     def get_absolute_url(self):

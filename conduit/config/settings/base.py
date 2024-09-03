@@ -276,3 +276,22 @@ COMPRESS_OUTPUT_DIR = 'CACHE'
 
 COMPRESS_ENABLED = True  # Typically set to False in development and True in production
 COMPRESS_OFFLINE = True  # Enables offline compression, useful for production
+
+
+# Assuming Cloudflare is handling SSL
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Enforce HTTPS
+SECURE_SSL_REDIRECT = True
+
+# Ensure cookies are only sent over HTTPS
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+
+# Security middleware
+SECURE_HSTS_SECONDS = 31536000  # 1 year
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
+SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_BROWSER_XSS_FILTER = True
+X_FRAME_OPTIONS = 'DENY'

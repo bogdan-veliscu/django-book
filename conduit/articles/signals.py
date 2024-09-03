@@ -5,6 +5,7 @@ from core.utils import generate_random_string
 from django.db.models.signals import pre_save
 from django.dispatch import receiver
 from django.utils.text import slugify
+import os
 
 from .models import Article
 
@@ -13,6 +14,9 @@ logger = logging.getLogger(__name__)
 
 @receiver(pre_save, sender=Article)
 def article_pre_save(sender, instance: Article, **kwargs):
+    if instance.avatar:
+        os.chmod(instance.avatar.path, 0o644)
+
     MAXIMUM_SLUG_LENGTH = 255
 
     logger.info(f"pre_save called on {instance}")
