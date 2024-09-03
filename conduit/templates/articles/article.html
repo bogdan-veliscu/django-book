@@ -1,4 +1,4 @@
-{% extends "base.html" %} {% block content %}
+{% extends "base.html" %} {% block content %} {% load compress %}
 <div class="article-page" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
   <div class="banner">
     <div class="container">
@@ -7,8 +7,9 @@
       <div class="article-meta">
         {% if article.author.image %}
         <a href="{{ article.author.get_absolute_url }}"
-          ><img src="{{ article.author.image }}"
-        />{{ article.author.get_full_name }}</a>
+          ><img src="{{ article.author.image }}" />{{
+          article.author.get_full_name }}</a
+        >
         {% endif %}
         <div class="info">
           <a href="{{ article.author.get_absolute_url }}" class="author"
@@ -16,12 +17,10 @@
           >
           <span class="date">{{ article.created|date }}</span>
         </div>
-        {% include "profiles/_follow_btn.html" %}
-         {% comment %} include "profiles/_follow_btn.html" with button_id="follow-top"
-        followed=article.author %} {% endcomment %}
-        
-        
-        &nbsp;&nbsp; {% include "articles/_favorite_btn.html"  %}
+        {% include "profiles/_follow_btn.html" %} {% comment %} include
+        "profiles/_follow_btn.html" with button_id="follow-top"
+        followed=article.author %} {% endcomment %} &nbsp;&nbsp; {% include
+        "articles/_favorite_btn.html" %}
       </div>
     </div>
   </div>
@@ -30,7 +29,11 @@
     <div class="row article-content">
       <div class="col-md-12">
         {% if article.image %}
-          <img src="{{ article.image.url }}" alt="{{ article.title }}" style="max-width: 512px; max-height: 512px;">
+        <img
+          src="{{ article.image.url }}"
+          alt="{{ article.title }}"
+          style="max-width: 512px; max-height: 512px"
+        />
         {% endif %}
         <p>{{ article.summary }}</p>
         {{ article.as_markdown|safe }}
@@ -39,45 +42,42 @@
 
     <hr />
 
-                <div class="article-actions">
-                    <div class="article-meta">
-                        {% if article.author.image %}
-                            <a href="{{ article.author.get_absolute_url }}"><img src="{{ article.author.image }}"/></a>
-                        {% endif %}
-                        <div class="info">
-                            <a href="{{ article.author.get_absolute_url }}" class="author">{{ article.author.get_full_name }}</a>
-                            <span class="date">{{ article.created|date }}</span>
-                        </div>
-                        {% include "profiles/_follow_btn.html" with button_id='follow-bottom' followed=article.author %}
-                        &nbsp;
-                        {% include "articles/_favorite_btn.html" with button_id="favorite-bottom" %}
-                    </div>
-                </div>
+    <div class="article-actions">
+      <div class="article-meta">
+        {% if article.author.image %}
+        <a href="{{ article.author.get_absolute_url }}"
+          ><img src="{{ article.author.image }}"
+        /></a>
+        {% endif %}
+        <div class="info">
+          <a href="{{ article.author.get_absolute_url }}" class="author"
+            >{{ article.author.get_full_name }}</a
+          >
+          <span class="date">{{ article.created|date }}</span>
+        </div>
+        {% include "profiles/_follow_btn.html" with button_id='follow-bottom'
+        followed=article.author %} &nbsp; {% include
+        "articles/_favorite_btn.html" with button_id="favorite-bottom" %}
+      </div>
+    </div>
 
-            <div class="row">
+    <div class="row">
+      <div class="col-xs-12 col-md-8 offset-md-2" id="comments-container">
+        {% if comment_form %}
+        <div id="comment-form">
+          {% include "comments/_comment_form.html" with form=comment_form %}
+        </div>
+        {% endif %} {% for comment in comments %}
+        <div id="comment-{{ comment.id }}">
+          {% include "comments/_comment.html" %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
 
-                <div class="col-xs-12 col-md-8 offset-md-2" id="comments-container">
-
-                    {% if comment_form %}
-                      <div id="comment-form">
-                        {% include "comments/_comment_form.html" with form=comment_form  %}
-                      </div>
-                    {% endif %}
-
-                    {% for comment in comments %}
-                        <div id="comment-{{ comment.id }}">
-                            {% include "comments/_comment.html" %}
-                        </div>
-                    {% endfor %}
-
-                </div>
-
-            </div>
-
-          {% compress %}
-          <scrip src="{% static 'js/comment-condumers.js' %}"></scrip>
-          {% endcompress %}
-            
+    {% compress js %}
+    <script src="{{ STATIC_URL }}js/comment-consumer.js"></script>
+    {% endcompress %}
   </div>
 </div>
 {% endblock content %}
