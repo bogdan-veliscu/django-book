@@ -1,1 +1,1 @@
-# Create your tests here.
+from comments.models import Comment

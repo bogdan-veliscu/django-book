@@ -1,3 +1,4 @@
+import io
 import markdown
 from core.models import SoftDeletableModel
 from django.conf import settings
@@ -9,6 +10,7 @@ from django.urls import reverse
 from django.utils.text import slugify
 from taggit.managers import TaggableManager
 from PIL import Image
+from django.core.files.uploadedfile import InMemoryUploadedFile
 
 User = get_user_model()
 
@@ -76,7 +78,7 @@ class Article(SoftDeletableModel):
         if pil_image.mode in ("RGBA", "P"):
             pil_image = pil_image.convert("RGB")
 
-        pil_image = pil_image.resize((800, 800), Image.ANTIALIAS)
+        pil_image = pil_image.resize((800, 800), Image.Resampling.LANCZOS)
 
         new_image = io.BytesIO()
         pil_image.save(new_image, format="JPEG", quality=75)

@@ -5,6 +5,7 @@ WORKDIR /app
 # set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1 \
     PYTHONUNBUFFERED 1
+RUN pip install --upgrade pip setuptools
 
 # Copy the poetry lock file and the pyproject file
 COPY ./poetry.lock pyproject.toml /app/
