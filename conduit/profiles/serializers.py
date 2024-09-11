@@ -1,7 +1,8 @@
 import logging
 
-from profiles.models import User
 from rest_framework import serializers
+
+from profiles.models import User
 
 logger = logging.getLogger(__name__)
 
@@ -21,9 +22,7 @@ class UserSerializer(serializers.ModelSerializer):
         return user
 
     def update(self, instance, validated_data):
-        logger.info(
-            f" # UPDATE : bio: {instance.bio}, image: {instance.image}"
-        )
+        logger.info(f" # UPDATE : bio: {instance.bio}, image: {instance.image}")
         logger.info(f"instance: {instance}, validated_data: {validated_data}")
 
         for key, value in validated_data.items():

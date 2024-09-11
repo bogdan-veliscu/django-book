@@ -10,10 +10,7 @@ from django.views.generic import TemplateView
 from django.views.generic.edit import FormView
 from rest_framework import status, views, viewsets
 from rest_framework.decorators import action, api_view
-from rest_framework.permissions import (
-    IsAuthenticated,
-    IsAuthenticatedOrReadOnly,
-)
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
 
@@ -37,9 +34,7 @@ def account_registration(request):
 
         serializer.save()
         print("after Serializer Data: ", serializer.data)
-        return Response(
-            {"user": serializer.data}, status=status.HTTP_201_CREATED
-        )
+        return Response({"user": serializer.data}, status=status.HTTP_201_CREATED)
 
     except Exception as e:
         print("Error: ", e)
@@ -52,9 +47,7 @@ def login(request):
         logger.info(f"login() request.data: {request.data}")
         user_data = request.data.get("user")
         logger.info(f"login() user_data: {user_data}")
-        user = authenticate(
-            email=user_data["email"], password=user_data["password"]
-        )
+        user = authenticate(email=user_data["email"], password=user_data["password"])
         logger.info(f"login() user: {user}")
         serializer = UserSerializer(user)
         jwt_token = RefreshToken.for_user(user)
@@ -151,9 +144,7 @@ class ProfileDetailView(viewsets.ModelViewSet):
 @login_required
 def follow(request: HttpRequest, user_id: int) -> HttpResponse:
 
-    user = get_object_or_404(
-        User.objects.exclude(pk=request.user.id), pk=user_id
-    )
+    user = get_object_or_404(User.objects.exclude(pk=request.user.id), pk=user_id)
 
     is_following: bool
 
@@ -213,12 +204,8 @@ class ProfileView(TemplateView):
     def get_context_data(self, **kwargs):
         logger.info(f"ProfileView.get_context_data() kwargs: {kwargs}")
         context = super().get_context_data(**kwargs)
-        logger.info(
-            f"ProfileView.get_context_data() user: {self.request.user}"
-        )
-        logger.info(
-            f"bio: {self.request.user.bio}, image: {self.request.user.image}"
-        )
+        logger.info(f"ProfileView.get_context_data() user: {self.request.user}")
+        logger.info(f"bio: {self.request.user.bio}, image: {self.request.user.image}")
         context["profile"] = self.request.user
         return context
 

@@ -1,16 +1,18 @@
 import io
+
 import markdown
-from core.models import SoftDeletableModel
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
+from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.db import models
 from django.dispatch import receiver
 from django.urls import reverse
 from django.utils.text import slugify
-from taggit.managers import TaggableManager
 from PIL import Image
-from django.core.files.uploadedfile import InMemoryUploadedFile
+from taggit.managers import TaggableManager
+
+from core.models import SoftDeletableModel
 
 User = get_user_model()
 
@@ -35,13 +37,11 @@ ArticleManager = models.Manager.from_queryset(ArticleQuerySet)
 
 
 class Article(SoftDeletableModel):
-    author = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.CASCADE
-    )
+    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     title = models.CharField(max_length=150, unique=True)
     summary = models.TextField(blank=True)
     content = models.TextField(blank=True)
-    image = models.ImageField(upload_to='article_images/', blank=True, null=True)
+    image = models.ImageField(upload_to="article_images/", blank=True, null=True)
 
     created = models.DateTimeField(auto_now_add=True, db_index=True)
     updated = models.DateTimeField(auto_now_add=True)
@@ -87,7 +87,7 @@ class Article(SoftDeletableModel):
         self.image = InMemoryUploadedFile(
             new_image,
             "ImageField",
-            "%s.jpg" % temp_name.split('.')[0],
+            "%s.jpg" % temp_name.split(".")[0],
             "image/jpeg",
             new_image.tell,
             None,

@@ -1,8 +1,8 @@
 # tests/test_models.py
 import pytest
 
-from tests.factories import ArticleFactory
-from tests.factories import UserFactory
+from tests.factories import ArticleFactory, UserFactory
+
 
 @pytest.mark.django_db
 def test_create_article():
@@ -15,6 +15,7 @@ def test_create_article():
     assert article.slug
     assert article.created_at
     assert article.updated_at
+
 
 @pytest.mark.django_db
 def test_create_author():

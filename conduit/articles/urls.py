@@ -1,9 +1,8 @@
-from articles import views
 from django.conf.urls.static import static
-
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
+from articles import views
 from config import settings
 
 router = DefaultRouter(trailing_slash=False)
@@ -29,5 +28,4 @@ urlpatterns = [
         views.favorite,
         name="favorite",
     ),
-    
-]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

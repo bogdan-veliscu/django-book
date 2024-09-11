@@ -1,26 +1,24 @@
+import json
 import logging
 
-from articles.models import Article
+from asgiref.sync import async_to_sync
+from channels.layers import get_channel_layer
 from django.contrib.auth.decorators import login_required
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404
+from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
 from django.views.decorators.http import require_http_methods
 from rest_framework import generics, status
 from rest_framework.decorators import action
-from rest_framework.permissions import (
-    IsAuthenticated,
-    IsAuthenticatedOrReadOnly,
-)
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
-from channels.layers import get_channel_layer
-from asgiref.sync import async_to_sync
-from django.template.loader import render_to_string
+
+from articles.models import Article
 
 from .forms import CommentForm
 from .models import Comment
 from .serializers import CommentSerializer
-import json
 
 logger = logging.getLogger(__name__)
 
@@ -157,9 +155,7 @@ def add_comment(request: HttpRequest, article_id: int) -> HttpResponse:
             "content": comment.content,
             "author_id": comment.author.id,
             "html": json.dumps(
-                render_to_string(
-                    "comments/_comment.html", {"comment": comment}
-                )
+                render_to_string("comments/_comment.html", {"comment": comment})
             ),
         }
 
@@ -172,9 +168,7 @@ def add_comment(request: HttpRequest, article_id: int) -> HttpResponse:
             },
         )
 
-        logger.info(
-            f"Comment sent to group {group_name} with data: {comment_data}"
-        )
+        logger.info(f"Comment sent to group {group_name} with data: {comment_data}")
 
         # reset form
         form = CommentForm()
@@ -214,9 +208,7 @@ def edit_comment(request: HttpRequest, comment_id: int) -> HttpResponse:
     if (form := CommentForm(request.POST, instance=comment)).is_valid():
         comment = form.save()
 
-        return TemplateResponse(
-            request, "comments/_comment.html", {"comment": comment}
-        )
+        return TemplateResponse(request, "comments/_comment.html", {"comment": comment})
 
     return TemplateResponse(
         request,

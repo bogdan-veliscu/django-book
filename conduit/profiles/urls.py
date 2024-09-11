@@ -1,8 +1,9 @@
 from django.contrib.auth import views as auth_views
 from django.urls import include, path
-from profiles import views
 from rest_framework.routers import DefaultRouter
 from two_factor.urls import urlpatterns as tf_urls
+
+from profiles import views
 
 from .views import (
     ModularLoginView,

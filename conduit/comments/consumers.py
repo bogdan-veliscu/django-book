@@ -1,9 +1,10 @@
 # comments/consumers.py
 
 import json
+import logging
+
 from asgiref.sync import async_to_sync
 from channels.generic.websocket import WebsocketConsumer
-import logging
 
 logger = logging.getLogger(__name__)
 
@@ -19,9 +20,7 @@ class CommentConsumer(WebsocketConsumer):
         self.article_id = self.scope["url_route"]["kwargs"]["article_id"]
         self.group_name = f"comments_{self.article_id}"
         logger.info(f"Connected to {self.group_name}")
-        async_to_sync(self.channel_layer.group_add)(
-            self.group_name, self.channel_name
-        )
+        async_to_sync(self.channel_layer.group_add)(self.group_name, self.channel_name)
 
         self.accept()
 

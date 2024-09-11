@@ -46,9 +46,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name="user",
             name="name",
-            field=models.CharField(
-                default=django.utils.timezone.now, max_length=60
-            ),
+            field=models.CharField(default=django.utils.timezone.now, max_length=60),
             preserve_default=False,
         ),
         migrations.AlterField(

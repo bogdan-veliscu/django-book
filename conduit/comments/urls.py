@@ -1,5 +1,6 @@
-from comments import views
 from django.urls import path
+
+from comments import views
 
 urlpatterns = [
     path(

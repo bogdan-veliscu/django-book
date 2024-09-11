@@ -1,30 +1,27 @@
 import logging
 
+from django.contrib.auth.decorators import login_required
+from django.core.cache import cache
 from django.shortcuts import get_object_or_404
+from django.template.response import TemplateResponse
+from django.urls import reverse_lazy
+from django.views.decorators.cache import cache_page
+from django.views.decorators.http import require_http_methods
+from django.views.generic import DetailView, ListView
+from django.views.generic.edit import CreateView
+from rest_framework import generics, mixins, status, viewsets
+from rest_framework.decorators import action
+from rest_framework.parsers import FormParser, MultiPartParser
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.response import Response
+from taggit.models import Tag
 
 from articles.filters import ArticleFilter
 from articles.models import Article
 from articles.serializers import ArticleSerializer, TagSerializer
-from rest_framework.parsers import MultiPartParser, FormParser
 from comments.forms import CommentForm
 from comments.models import Comment
-from django.core.cache import cache
-from django.urls import reverse_lazy
-from django.views.decorators.cache import cache_page
-from django.views.generic import DetailView, ListView
-from django.views.generic.edit import CreateView
 from profiles.models import User
-from rest_framework import generics, mixins, status, viewsets
-from rest_framework.decorators import action
-from rest_framework.permissions import (
-    IsAuthenticated,
-    IsAuthenticatedOrReadOnly,
-)
-from rest_framework.response import Response
-from taggit.models import Tag
-from django.views.decorators.http import require_http_methods
-from django.contrib.auth.decorators import login_required
-from django.template.response import TemplateResponse
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -32,9 +29,7 @@ logger = logging.getLogger(__name__)
 
 class ArticleViewSet(viewsets.ModelViewSet):
     queryset = (
-        Article.objects.select_related("author")
-        .prefetch_related("favorites")
-        .all()
+        Article.objects.select_related("author").prefetch_related("favorites").all()
     )
     serializer_class = ArticleSerializer
     parser_classes = (MultiPartParser, FormParser)
@@ -129,9 +124,7 @@ class ArticleViewSet(viewsets.ModelViewSet):
             followed_authors = User.objects.filter(followers=request.user)
             queryset = self.get_queryset()
             logger.debug(f"Feed followed authors: {followed_authors}")
-            articles = queryset.filter(author__in=followed_authors).order_by(
-                "-created"
-            )
+            articles = queryset.filter(author__in=followed_authors).order_by("-created")
             logger.info(f"Feed articles: {articles}")
             queryset = self.filter_queryset(articles)
             logger.debug(f"Feed Queryset: {queryset}")
@@ -143,13 +136,7 @@ class ArticleViewSet(viewsets.ModelViewSet):
             return Response(response, status=status.HTTP_200_OK)
         except Exception as e:
             return Response(
-                {
-                    "errors": {
-                        "body": [
-                            "Bad request: unable to retrieve feed articles"
-                        ]
-                    }
-                },
+                {"errors": {"body": ["Bad request: unable to retrieve feed articles"]}},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
@@ -173,9 +160,7 @@ class ArticleViewSet(viewsets.ModelViewSet):
             return Response(
                 {
                     "errors": {
-                        "body": [
-                            "Bad request: unable to retrieve recent articles"
-                        ]
+                        "body": ["Bad request: unable to retrieve recent articles"]
                     }
                 },
                 status=status.HTTP_400_BAD_REQUEST,
@@ -208,9 +193,7 @@ class ArticleViewSet(viewsets.ModelViewSet):
                 )
 
             article_data = request.data.get("article", {})
-            serializer = self.get_serializer(
-                article, data=article_data, partial=True
-            )
+            serializer = self.get_serializer(article, data=article_data, partial=True)
             serializer.is_valid(raise_exception=True)
             self.perform_update(serializer)
 
@@ -241,11 +224,7 @@ class ArticleViewSet(viewsets.ModelViewSet):
             )
         except Article.DoesNotExist:
             return Response(
-                {
-                    "errors": {
-                        "body": ["Article not found: unable to delete article"]
-                    }
-                },
+                {"errors": {"body": ["Article not found: unable to delete article"]}},
                 status=status.HTTP_404_NOT_FOUND,
             )
 
@@ -285,9 +264,9 @@ class ArticleCreateView(CreateView):
         return super().form_valid(form)
 
 
+from django.core.paginator import Paginator
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.template.loader import render_to_string
-from django.core.paginator import Paginator
 
 
 class ArticleListView(ListView):
@@ -310,9 +289,7 @@ class ArticleListView(ListView):
             page_obj.next_page_number() if page_obj.has_next() else None
         )
         context["previous_page_number"] = (
-            page_obj.previous_page_number()
-            if page_obj.has_previous()
-            else None
+            page_obj.previous_page_number() if page_obj.has_previous() else None
         )
         logger.info(
             f"Context: Page {page_obj.number}, Next: {context['next_page_number']}, Previous: {context['previous_page_number']}"
