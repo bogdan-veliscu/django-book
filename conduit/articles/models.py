@@ -74,24 +74,25 @@ class Article(SoftDeletableModel):
 
     def save(self, *args, **kwargs):
         self.slug = slugify(self.title)
-        pil_image = Image.open(self.image)
-        if pil_image.mode in ("RGBA", "P"):
-            pil_image = pil_image.convert("RGB")
+        if self.image:
+            pil_image = Image.open(self.image)
+            if pil_image.mode in ("RGBA", "P"):
+                pil_image = pil_image.convert("RGB")
 
-        pil_image = pil_image.resize((800, 800), Image.Resampling.LANCZOS)
+            pil_image = pil_image.resize((800, 800), Image.Resampling.LANCZOS)
 
-        new_image = io.BytesIO()
-        pil_image.save(new_image, format="JPEG", quality=75)
+            new_image = io.BytesIO()
+            pil_image.save(new_image, format="JPEG", quality=75)
 
-        temp_name = self.image.name
-        self.image = InMemoryUploadedFile(
-            new_image,
-            "ImageField",
-            "%s.jpg" % temp_name.split(".")[0],
-            "image/jpeg",
-            new_image.tell,
-            None,
-        )
+            temp_name = self.image.name
+            self.image = InMemoryUploadedFile(
+                new_image,
+                "ImageField",
+                "%s.jpg" % temp_name.split(".")[0],
+                "image/jpeg",
+                new_image.tell,
+                None,
+            )
 
         super().save(*args, **kwargs)
 

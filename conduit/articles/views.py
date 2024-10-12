@@ -11,7 +11,7 @@ from django.views.generic import DetailView, ListView
 from django.views.generic.edit import CreateView
 from rest_framework import generics, mixins, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.parsers import FormParser, MultiPartParser
+from rest_framework.parsers import FormParser, MultiPartParser, JSONParser
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from taggit.models import Tag
@@ -32,7 +32,7 @@ class ArticleViewSet(viewsets.ModelViewSet):
         Article.objects.select_related("author").prefetch_related("favorites").all()
     )
     serializer_class = ArticleSerializer
-    parser_classes = (MultiPartParser, FormParser)
+    parser_classes = (MultiPartParser, FormParser, JSONParser)
     permission_classes = (IsAuthenticated,)
     lookup_field = "slug"
     filterset_class = ArticleFilter
@@ -46,6 +46,7 @@ class ArticleViewSet(viewsets.ModelViewSet):
 
     def create(self, request, *args, **kwargs):
         try:
+            logger.debug(f"Create request: {request}")
             article_data = request.data.get("article", {})
             logger.debug(f"Create article with data: {article_data}")
             serializer = self.get_serializer(data=article_data)
