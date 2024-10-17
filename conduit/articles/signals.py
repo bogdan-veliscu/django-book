@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 
 @receiver(pre_save, sender=Article)
 def article_pre_save(sender, instance: Article, **kwargs):
-    if instance.image:
+    if instance.image and os.path.exists(instance.image.path):
         os.chmod(instance.image.path, 0o644)
 
     MAXIMUM_SLUG_LENGTH = 255
