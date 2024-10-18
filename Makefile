@@ -43,7 +43,8 @@ migrations: ## generate migrations in a clean container
 	docker compose run --rm app ./manage.py makemigrations
 
 migrate: ## apply migrations in a clean container
-	docker compose run --rm app ./manage.py migrate 
+	docker compose run --rm app ./manage.py migrate
+	docker compose run --rm app ./manage.py migrate django_otp
 
 collectstatic: ## collect static files
 	docker compose run --rm app ./manage.py collectstatic --noinput

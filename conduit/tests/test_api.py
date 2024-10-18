@@ -50,7 +50,6 @@ def test_list_articles(api_client, test_article):
     logger.debug("Response: %s", response)
     res = response.json()
 
-    breakpoint()
     logger.debug("Response json: %s", res)
 
     # Debug log to check response data
