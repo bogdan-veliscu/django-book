@@ -1,7 +1,6 @@
 from django.contrib.auth import views as auth_views
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
-from two_factor.urls import urlpatterns as tf_urls
 
 from profiles import views
 
@@ -48,5 +47,4 @@ urlpatterns = [
         name="password_reset_complete",
     ),
     path("", include(profile_router.urls)),
-    path("", include(tf_urls)),
 ]

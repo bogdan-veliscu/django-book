@@ -13,7 +13,7 @@ from rest_framework.decorators import action, api_view
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
-
+from two
 from .forms import UserRegistrationForm
 from .models import User
 from .serializers import ProfileSerializer, UserSerializer
@@ -244,8 +244,3 @@ class ModularPasswordResetView(auth_views.PasswordResetView):
 
 class ModularPasswordResetCompleteView(TemplateView):
     template_name = "profiles/password_reset_complete.html"
-
-
-# class ModularTwoFactorSetupView(TwoFactorSetupView):
-#     template_name = "profiles/two_factor_setup.html"
-#     success_url = "/profiles/profile/"

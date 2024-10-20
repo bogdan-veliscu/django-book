@@ -35,8 +35,6 @@ SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-SITE_ID = 1
-
 ALLOWED_HOSTS = [
     "localhost",
     "cod3.go.ro",
@@ -65,16 +63,7 @@ INSTALLED_APPS = [
     "profiles",
     "articles",
     "comments",
-    "django_otp",
-    "django_otp.plugins.otp_totp",
-    "two_factor",
-    # social auth
     "django.contrib.sites",
-    "allauth",
-    "allauth.account",
-    "allauth.socialaccount",
-    "allauth.socialaccount.providers.google",
-    "allauth.socialaccount.providers.apple",
     "compressor",
     "storages",
     "corsheaders",
@@ -135,8 +124,6 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-    "django_otp.middleware.OTPMiddleware",
-    "allauth.account.middleware.AccountMiddleware",
 ]
 
 CORS_ALLOWED_ORIGINS = [

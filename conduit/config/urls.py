@@ -46,7 +46,6 @@ urlpatterns = [
     path(f"", include("profiles.urls")),
     path(f"", include("articles.urls")),
     path(f"", include("comments.urls")),
-    path("accounts/", include("allauth.urls")),
     path(
         "docs/",
         schema_view.with_ui("swagger", cache_timeout=0),
