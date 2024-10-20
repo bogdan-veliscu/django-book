@@ -5,6 +5,7 @@ from django.contrib.auth import views as auth_views
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.views import LoginView, LogoutView, PasswordResetView
 from django.http import HttpRequest, HttpResponse
+from django.shortcuts import redirect
 from django.views.decorators.http import require_http_methods
 from django.views.generic import TemplateView
 from django.views.generic.edit import FormView
@@ -13,7 +14,7 @@ from rest_framework.decorators import action, api_view
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import RefreshToken
-from two
+
 from .forms import UserRegistrationForm
 from .models import User
 from .serializers import ProfileSerializer, UserSerializer
@@ -183,6 +184,14 @@ class ModularLoginView(LoginView):
     redirect_authenticated_user = True
     next_page = "/profile/"
 
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        if self.request.user.is_authenticated:
+            logger.info(f"User {self.request.user} is authenticated.")
+        else:
+            logger.warning("User is not authenticated.")
+        return response
+
 
 class ModularLogoutView(LogoutView):
     next_page = "/account/login/"
@@ -199,7 +208,8 @@ class ProfileView(TemplateView):
         logger.info(f"ProfileView.get() request.user: {request.user}")
         if request.user.is_authenticated:
             return super().get(request, *args, **kwargs)
-        return Response(status=status.HTTP_400_BAD_REQUEST)
+        redirect_url = "/login/"
+        return redirect(redirect_url)
 
     def get_context_data(self, **kwargs):
         logger.info(f"ProfileView.get_context_data() kwargs: {kwargs}")

@@ -11,7 +11,6 @@ router.register("tags", views.TagView)
 
 urlpatterns = [
     path("api/", include(router.urls)),
-    
     path("articles", views.ArticleListView.as_view(), name="article-list"),
     path(
         "articles/new",

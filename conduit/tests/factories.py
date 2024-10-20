@@ -1,6 +1,7 @@
 from profile import Profile
 
 import factory
+
 # from django.forms import ImageField
 from factory.django import ImageField
 
@@ -16,7 +17,7 @@ class UserFactory(factory.django.DjangoModelFactory):
     name = factory.Faker("name")
     password = factory.Faker("password")
     bio = factory.Faker("sentence")
-    image = factory.django.ImageField(color='blue')
+    image = factory.django.ImageField(color="blue")
     is_active = factory.Faker("boolean")
     linkedin_url = factory.Faker("url")
 
@@ -33,4 +34,4 @@ class ArticleFactory(factory.django.DjangoModelFactory):
     slug = factory.Faker("slug")
     created = factory.Faker("date_time")
     updated = factory.Faker("date_time")
-    image = factory.django.ImageField(color='blue')
+    image = factory.django.ImageField(color="blue")

@@ -68,4 +68,3 @@ def test_create_article():
     assert article.slug == article_orm.slug
     assert article.created_at == article_orm.created_at
     assert article.updated_at == article_orm.updated_at
-

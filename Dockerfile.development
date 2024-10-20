@@ -2,11 +2,16 @@ FROM python:3.12-slim-bookworm
 
 WORKDIR /code
 
+
 # set environment variables
 ENV PYTHONDONTWRITEBYTECODE 1 \
-    PYTHONUNBUFFERED 1
+    PYTHONUNBUFFERED 1 \
+    BLACKFIRE_CLIENT_ID=61b8c44e-1e6e-4a2b-881a-159a9aaa4fd2 \
+    BLACKFIRE_CLIENT_TOKEN=236626e94efe0d9ec140e586b9db3adbf63ab31d64020693c67836fe4481d980 
 
 RUN pip install --upgrade pip setuptools
+
+RUN pip install --upgrade pip blackfire
 
 # install peetry and native dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -40,6 +45,6 @@ ENV PORT 8000
 # Run the application using gunicorn using uvicorn worker
 # run django app using manage.py in development mode
 
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000", "--settings=config.settings.development"]
+CMD ["blackfire-python", "python", "manage.py", "runserver", "0.0.0.0:8000", "--settings=config.settings.development"]
 
 # CMD ["uvicorn", "config.asgi:application", "--host", "0.0.0.0", "--port", "8000"]  

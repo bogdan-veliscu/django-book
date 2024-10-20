@@ -259,7 +259,7 @@ class ArticleCreateView(CreateView):
     def form_valid(self, form):
         if self.request.FILES:
             logger.info(f"Files: {self.request.FILES}")
-
+        # breakpoint()
         logger.info(f"Form: {form.cleaned_data}")
         form.instance.author = self.request.user
         return super().form_valid(form)

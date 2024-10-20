@@ -13,7 +13,6 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 import os
 from datetime import timedelta
 from pathlib import Path
-
 # from os.path import dirname, join
 
 
@@ -41,7 +40,11 @@ ALLOWED_HOSTS = [
     "brandfocus.ai",
     "brandfocus.ai.s3.amazonaws.com",
     "134.122.66.29",
+    "app",
+    "host.docker.internal",
 ]
+
+BLACKFIRE_ENABLED = True
 
 APPEND_SLASH = False
 
@@ -79,11 +82,11 @@ REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
         "rest_framework_simplejwt.authentication.JWTAuthentication",
     ],
-    'DEFAULT_PARSER_CLASSES': [
-        'rest_framework.parsers.JSONParser',
+    "DEFAULT_PARSER_CLASSES": [
+        "rest_framework.parsers.JSONParser",
     ],
-    'DEFAULT_RENDERER_CLASSES': [
-        'rest_framework.renderers.JSONRenderer',
+    "DEFAULT_RENDERER_CLASSES": [
+        "rest_framework.renderers.JSONRenderer",
     ],
 }
 
@@ -95,6 +98,8 @@ CHANNEL_LAYERS = {
         },
     },
 }
+
+SITE_ID = 1
 
 ACCOUNT_AUTHENTICATION_METHOD = "email"
 ACCOUNT_EMAIL_REQUIRED = True
@@ -113,8 +118,8 @@ SIMPLE_JWT = {
 }
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',
-    'django.middleware.common.CommonMiddleware',
+    "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.common.CommonMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -128,7 +133,7 @@ MIDDLEWARE = [
 
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  # Next.js app's development URL
-    "https://brandfocus.ai" # Next.js app's production URL
+    "https://brandfocus.ai",  # Next.js app's production URL
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -232,12 +237,6 @@ EMAIL_HOST_USER = os.getenv("SMTP_USER")
 EMAIL_HOST_PASSWORD = os.getenv("SMTP_PASSWORD")
 EMAIL_PORT = os.getenv("SMTP_PORT", default=587)
 EMAIL_USE_TLS = os.getenv("SMTP_TLS", default=True)
-
-
-LOGIN_URL = "two_factor:login"
-
-# this one is optional
-LOGIN_REDIRECT_URL = "two_factor:profile"
 
 # AWS S3 settings
 AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID")

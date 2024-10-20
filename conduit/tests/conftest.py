@@ -12,6 +12,7 @@ def user():
 def articles():
     return ArticleFactory.create_batch(5)
 
+
 # patch the article_pre_save signal handler
 @pytest.fixture
 def patch_article_pre_save_signal_handler(mocker):

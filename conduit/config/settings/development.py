@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 from .base import *
+
 print("# Using development.py")
 DEBUG = True
 
@@ -38,4 +39,3 @@ ASGI_APPLICATION = "config.asgi.application"
 
 # use default database router
 DATABASE_ROUTERS = []
-
