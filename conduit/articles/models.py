@@ -11,7 +11,7 @@ from django.urls import reverse
 from django.utils.text import slugify
 from PIL import Image
 from taggit.managers import TaggableManager
-
+from django.db.models import Count
 from core.models import SoftDeletableModel
 
 User = get_user_model()
@@ -32,8 +32,22 @@ class ArticleQuerySet(models.QuerySet):
             ),
         )
 
+    def published(self):
+        return self.filter(status="published")
 
-ArticleManager = models.Manager.from_queryset(ArticleQuerySet)
+    def with_author(self):
+        return self.select_related("author")
+
+    def with_comments_count(self):
+        return self.annotate(comments_count=Count("comments"))
+
+
+class ArticleManager(models.Manager):
+    def get_queryset(self):
+        return ArticleQuerySet(self.model, using=self._db)
+
+    def published(self):
+        return self.get_queryset().published()
 
 
 class Article(SoftDeletableModel):

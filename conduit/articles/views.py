@@ -278,7 +278,12 @@ class ArticleListView(ListView):
     paginate_by = 10
 
     def get_queryset(self):
-        return Article.objects.all().order_by("-created_at")
+        return (
+            Article.objects.published()
+            .with_author()
+            .with_comments_count()
+            .order_by("-created_at")
+        )
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
@@ -323,7 +328,16 @@ class ArticleListView(ListView):
             LIMIT 10
         """
         )
-        return render(request, "articles/top_commented.html", {"articles": articles})
+        return render(request, "articles/home.html", {"articles": articles})
+
+    def popular_articles(request):
+        articles = (
+            Article.objects.published()
+            .with_author()
+            .with_comments_count()
+            .filter(comments_count__gt=10)
+        )
+        return render(request, "articles/home.html", {"articles": articles})
 
 
 class ArticleDetailView(DetailView, CachePageMixin):
@@ -331,6 +345,9 @@ class ArticleDetailView(DetailView, CachePageMixin):
     template_name = "articles/article.html"
     context_object_name = "article"
     cache_timeout = 60 * 10  # Override timeout (optional)
+
+    def get_queryset(self):
+        return Article.objects.published().with_author()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
