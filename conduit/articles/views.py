@@ -2,7 +2,7 @@ import logging
 
 from django.contrib.auth.decorators import login_required
 from django.core.cache import cache
-from django.shortcuts import get_object_or_404
+from django.shortcuts import get_object_or_404, render
 from django.template.response import TemplateResponse
 from django.urls import reverse_lazy
 from django.views.decorators.cache import cache_page
@@ -312,8 +312,18 @@ class ArticleListView(ListView):
             return HttpResponse(html)
         return super().render_to_response(context, **response_kwargs)
 
-
-logger = logging.getLogger(__name__)
+    def top_commented_articles(request):
+        articles = Article.objects.raw(
+            """
+            SELECT a.*, COUNT(c.id) as comment_count
+            FROM articles_article a
+            LEFT JOIN articles_comment c ON c.article_id = a.id
+            GROUP BY a.id
+            ORDER BY comment_count DESC
+            LIMIT 10
+        """
+        )
+        return render(request, "articles/top_commented.html", {"articles": articles})
 
 
 class ArticleDetailView(DetailView, CachePageMixin):

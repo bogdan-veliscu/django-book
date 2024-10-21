@@ -52,7 +52,7 @@ class Article(SoftDeletableModel):
     favorites = models.ManyToManyField(
         settings.AUTH_USER_MODEL, blank=True, related_name="favorites"
     )
-    slug = models.SlugField(unique=True, max_length=250)
+    slug = models.SlugField(unique=True, max_length=250, db_index=True)
 
     metadata = models.JSONField(default=dict)
 
@@ -60,7 +60,7 @@ class Article(SoftDeletableModel):
 
     @property
     def cache_key(self):
-        return f'article_{self.slug}'
+        return f"article_{self.slug}"
 
     def __str__(self):
         return f"<Article: {self.title}>"
