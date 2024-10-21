@@ -45,6 +45,6 @@ ENV PORT 8000
 # Run the application using gunicorn using uvicorn worker
 # run django app using manage.py in development mode
 
-CMD ["blackfire-python", "python", "manage.py", "runserver", "0.0.0.0:8000", "--settings=config.settings.development"]
+CMD ["python", "manage.py", "runserver", "0.0.0.0:8000", "--settings=config.settings.development"]
 
 # CMD ["uvicorn", "config.asgi:application", "--host", "0.0.0.0", "--port", "8000"]  

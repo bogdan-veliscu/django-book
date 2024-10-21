@@ -22,6 +22,7 @@ from articles.serializers import ArticleSerializer, TagSerializer
 from comments.forms import CommentForm
 from comments.models import Comment
 from profiles.models import User
+from core.mixins import CachePageMixin
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -315,10 +316,11 @@ class ArticleListView(ListView):
 logger = logging.getLogger(__name__)
 
 
-class ArticleDetailView(DetailView):
+class ArticleDetailView(DetailView, CachePageMixin):
     model = Article
     template_name = "articles/article.html"
     context_object_name = "article"
+    cache_timeout = 60 * 10  # Override timeout (optional)
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)

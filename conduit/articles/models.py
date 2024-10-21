@@ -58,6 +58,10 @@ class Article(SoftDeletableModel):
 
     objects = ArticleManager()
 
+    @property
+    def cache_key(self):
+        return f'article_{self.slug}'
+
     def __str__(self):
         return f"<Article: {self.title}>"
 

@@ -1,4 +1,8 @@
 {% extends "base.html" %} {% block content %} {% load compress %}
+{% load cache %}
+
+{% cache 600 article.cache_key%}
+
 <div class="article-page" hx-headers='{"X-CSRFToken": "{{ csrf_token }}"}'>
   <div class="banner">
     <div class="container">
@@ -77,6 +81,7 @@
 
     {% compress js %}
     <script src="{{ STATIC_URL }}js/comment-consumer.js"></script>
+    {% endcache %}
     {% endcompress %}
   </div>
 </div>
