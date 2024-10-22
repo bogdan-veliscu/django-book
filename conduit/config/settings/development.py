@@ -10,8 +10,9 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
-from .base import *
 import socket
+
+from .base import *
 
 print("# Using development.py")
 DEBUG = True

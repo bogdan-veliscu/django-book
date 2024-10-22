@@ -29,4 +29,7 @@ urlpatterns = [
         name="favorite",
     ),
     path("", views.ArticleListView.as_view(), name="article-list"),
+    path("search/", views.search_articles, name="article-search"),
+    path("ranking/", views.ranked_articles, name="ranking"),
+    path("latest_comments/", views.latest_comments, name="latest_comments"),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

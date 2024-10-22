@@ -194,7 +194,7 @@ class ModularLoginView(LoginView):
 
 
 class ModularLogoutView(LogoutView):
-    next_page = "/account/login/"
+    next_page = "/users/login/"
 
 
 # create a basic view for profile using templates/profile only if logged in

@@ -14,7 +14,7 @@
         </ul>
         {% endif %}
 
-        <form method="post" action="{% url 'login' %}">
+        <form method="post" action="{% url 'account-login' %}">
           {% csrf_token %}
           <fieldset class="form-group">
             <input

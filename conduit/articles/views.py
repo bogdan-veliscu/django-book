@@ -1,6 +1,7 @@
 import logging
 
 from django.contrib.auth.decorators import login_required
+from django.contrib.postgres.search import SearchVector
 from django.core.cache import cache
 from django.shortcuts import get_object_or_404, render
 from django.template.response import TemplateResponse
@@ -267,6 +268,9 @@ class ArticleCreateView(CreateView):
 
 
 from django.core.paginator import Paginator
+from django.db.models import Count, F, Window, DateTimeField, Subquery, OuterRef
+from django.db.models.functions import Coalesce
+from django.db.models.functions import RowNumber
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.template.loader import render_to_string
 
@@ -279,7 +283,7 @@ class ArticleListView(ListView):
 
     def get_queryset(self):
         return (
-            Article.objects.prefetch_related('comments')
+            Article.objects.prefetch_related("comments")
             .with_author()
             .with_comments_count()
             .order_by("-created_at")
@@ -317,27 +321,58 @@ class ArticleListView(ListView):
             return HttpResponse(html)
         return super().render_to_response(context, **response_kwargs)
 
-    def top_commented_articles(request):
-        articles = Article.objects.raw(
-            """
-            SELECT a.*, COUNT(c.id) as comment_count
-            FROM articles_article a
-            LEFT JOIN articles_comment c ON c.article_id = a.id
-            GROUP BY a.id
-            ORDER BY comment_count DESC
-            LIMIT 10
-        """
-        )
-        return render(request, "articles/home.html", {"articles": articles})
 
-    def popular_articles(request):
-        articles = (
-            Article.objects.published()
-            .with_author()
-            .with_comments_count()
-            .filter(comments_count__gt=10)
+def top_commented_articles(request):
+    articles = Article.objects.raw(
+        """
+        SELECT a.*, COUNT(c.id) as comment_count
+        FROM articles_article a
+        LEFT JOIN articles_comment c ON c.article_id = a.id
+        GROUP BY a.id
+        ORDER BY comment_count DESC
+        LIMIT 10
+    """
+    )
+    return render(request, "articles/home.html", {"articles": articles})
+
+
+def popular_articles(request):
+    articles = (
+        Article.objects.published()
+        .with_author()
+        .with_comments_count()
+        .filter(comments_count__gt=10)
+    )
+    return render(request, "articles/home.html", {"articles": articles})
+
+
+def ranked_articles(request):
+    articles = Article.objects.annotate(
+        total_comments=Count("comments"),
+        rank=Window(expression=RowNumber(), order_by=F("total_comments").desc()),
+    )
+    return render(request, "articles/home.html", {"articles": articles})
+
+
+def search_articles(request):
+    query = request.GET.get("q")
+    logging.info(f"#---> Search query: {query}")
+    articles = Article.objects.annotate(
+        search=SearchVector("title", "summary", "content"),
+    ).filter(search=query)
+    return render(request, "articles/home.html", {"articles": articles})
+
+
+def latest_comments(request):
+    latest_comment_date = Comment.objects.filter(article=OuterRef("pk")).values(
+        "created"
+    )[:1]
+    articles = Article.objects.annotate(
+        latest_comment=Coalesce(
+            Subquery(latest_comment_date, output_field=DateTimeField()), F("created")
         )
-        return render(request, "articles/home.html", {"articles": articles})
+    )
+    return render(request, "articles/home.html", {"articles": articles})
 
 
 class ArticleDetailView(DetailView, CachePageMixin):
@@ -351,7 +386,7 @@ class ArticleDetailView(DetailView, CachePageMixin):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["tags"] = Tag.objects.all()
+        # context["tags"] = Tag.objects.all()
         context["author"] = self.object.author
         context["num_favorites"] = self.object.favorites.count()
         context["is_favorite"] = self.object.favorites.filter(

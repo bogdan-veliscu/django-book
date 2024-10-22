@@ -2,7 +2,6 @@ import gzip
 import logging
 import time
 
-from config.settings.base import GLOBAL_CACHE_TIME
 from django.contrib.auth.middleware import AuthenticationMiddleware
 from django.contrib.sessions.middleware import SessionMiddleware
 from django.core.cache import cache
@@ -10,6 +9,8 @@ from django.db import connection
 from django.middleware.gzip import GZipMiddleware as DjangoGZipMiddleware
 from django.utils.decorators import decorator_from_middleware
 from django.utils.deprecation import MiddlewareMixin
+
+from config.settings.base import GLOBAL_CACHE_TIME
 
 logger = logging.getLogger(__name__)
 
@@ -43,7 +44,11 @@ class GlobalCacheMiddleware(MiddlewareMixin):
 
     def process_request(self, request):
         # Skip caching for admin or authenticated users
-        if request.path.startswith("/admin/") or request.user.is_authenticated:
+        if (
+            request.path.startswith("/admin/")
+            or request.user.is_authenticated
+            or request.method != "GET"
+        ):
             return None
 
         cache_key = f"cache:{request.get_full_path()}"
