@@ -61,10 +61,14 @@ class Article(SoftDeletableModel):
     created = models.DateTimeField(auto_now_add=True, db_index=True)
     updated = models.DateTimeField(auto_now_add=True)
 
-    status = models.CharField(max_length=10, choices=[("draft", "Draft"), ("published", "Published")], default="draft")
+    status = models.CharField(
+        max_length=10,
+        choices=[("draft", "Draft"), ("published", "Published")],
+        default="draft",
+    )
     comments = models.ManyToManyField(
         settings.AUTH_USER_MODEL, through="comments.Comment", related_name="comments"
-    ) 
+    )
     tags = TaggableManager(blank=True)
     favorites = models.ManyToManyField(
         settings.AUTH_USER_MODEL, blank=True, related_name="favorites"

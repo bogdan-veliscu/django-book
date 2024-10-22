@@ -71,6 +71,7 @@ INSTALLED_APPS = [
     "compressor",
     "storages",
     "corsheaders",
+    "debug_toolbar",
 ]
 
 AUTHENTICATION_BACKENDS = ("django.contrib.auth.backends.ModelBackend",)
@@ -130,7 +131,6 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-
     # Custom middleware
     "middleware.PerformanceLoggingMiddleware",
     "middleware.CustomSessionMiddleware",
@@ -141,6 +141,7 @@ MIDDLEWARE = [
 ]
 
 CORS_ALLOWED_ORIGINS = [
+    "http://localhost:8000",  # Django development URL
     "http://localhost:3000",  # Next.js app's development URL
     "https://brandfocus.ai",  # Next.js app's production URL
 ]
@@ -257,17 +258,13 @@ AWS_S3_OBJECT_PARAMETERS = {
 }
 
 # Static files (CSS, JavaScript, images)
-STATIC_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/static/"
-STATICFILES_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
-STATICFILES_DIRS = [os.path.join(BASE_DIR, "static")]
-STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")
+STATIC_URL = "/static/"
+MEDIA_URL = "/media/"
 
-# Media files (uploads)
-MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/media/"
-DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
+
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+STATIC_ROOT = os.path.join(BASE_DIR, "static")
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10 MB
-
 
 STATICFILES_FINDERS = [
     "django.contrib.staticfiles.finders.FileSystemFinder",

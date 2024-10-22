@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 from .base import *
+import socket
 
 print("# Using development.py")
 DEBUG = True
@@ -37,5 +38,30 @@ CHANNEL_LAYERS = {
 
 ASGI_APPLICATION = "config.asgi.application"
 
+
+STATIC_URL = "/static/"
+MEDIA_URL = "/media/"
+
+
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
+STATIC_ROOT = os.path.join(BASE_DIR, "static")
+DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10 MB
+
+print("BASE_DIR", BASE_DIR)
+print("MEDIA_ROOT", MEDIA_ROOT)
+print("STATIC_ROOT", STATIC_ROOT)
+
+
 # use default database router
 DATABASE_ROUTERS = []
+
+INTERNAL_IPS = [
+    "127.0.0.1",
+]
+
+hostname, _, ips = socket.gethostbyname_ex(socket.gethostname())
+INTERNAL_IPS += [ip[:-1] + "1" for ip in ips]
+
+MIDDLEWARE += [
+    "debug_toolbar.middleware.DebugToolbarMiddleware",
+]

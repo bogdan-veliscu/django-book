@@ -279,8 +279,7 @@ class ArticleListView(ListView):
 
     def get_queryset(self):
         return (
-            Article.objects.all()
-            # .published()
+            Article.objects.prefetch_related('comments')
             .with_author()
             .with_comments_count()
             .order_by("-created_at")

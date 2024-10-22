@@ -28,4 +28,5 @@ urlpatterns = [
         views.favorite,
         name="favorite",
     ),
+    path("", views.ArticleListView.as_view(), name="article-list"),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
