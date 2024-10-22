@@ -6,12 +6,13 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
 from django.core.files.uploadedfile import InMemoryUploadedFile
 from django.db import models
+from django.db.models import Count
 from django.dispatch import receiver
 from django.urls import reverse
 from django.utils.text import slugify
 from PIL import Image
 from taggit.managers import TaggableManager
-from django.db.models import Count
+
 from core.models import SoftDeletableModel
 
 User = get_user_model()
@@ -60,8 +61,10 @@ class Article(SoftDeletableModel):
     created = models.DateTimeField(auto_now_add=True, db_index=True)
     updated = models.DateTimeField(auto_now_add=True)
 
-    status = models.CharField(max_length=10)
-
+    status = models.CharField(max_length=10, choices=[("draft", "Draft"), ("published", "Published")], default="draft")
+    comments = models.ManyToManyField(
+        settings.AUTH_USER_MODEL, through="comments.Comment", related_name="comments"
+    ) 
     tags = TaggableManager(blank=True)
     favorites = models.ManyToManyField(
         settings.AUTH_USER_MODEL, blank=True, related_name="favorites"

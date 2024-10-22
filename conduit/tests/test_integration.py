@@ -1,12 +1,12 @@
+import logging
+
 from django.test import LiveServerTestCase
+from factories import UserFactory
 from selenium import webdriver
 from selenium.webdriver.common.by import By
-from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.support import expected_conditions as EC
-
-from factories import UserFactory
-import logging
+from selenium.webdriver.support.ui import WebDriverWait
 
 logger = logging.getLogger(__name__)
 

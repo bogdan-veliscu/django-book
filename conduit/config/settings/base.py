@@ -130,6 +130,14 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
+
+    # Custom middleware
+    "middleware.PerformanceLoggingMiddleware",
+    "middleware.CustomSessionMiddleware",
+    "middleware.CustomAuthenticationMiddleware",
+    "middleware.GlobalCacheMiddleware",
+    "middleware.CustomGZipMiddleware",
+    "middleware.QueryCountMiddleware",
 ]
 
 CORS_ALLOWED_ORIGINS = [
@@ -305,3 +313,6 @@ CACHES = {
         },
     }
 }
+
+
+GLOBAL_CACHE_TIME = 300  # 5 minutes

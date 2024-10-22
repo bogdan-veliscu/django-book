@@ -1,7 +1,8 @@
-import pytest
-from rest_framework.test import APIClient
-from factories import UserFactory, ArticleFactory
 import logging
+
+import pytest
+from factories import ArticleFactory, UserFactory
+from rest_framework.test import APIClient
 
 logger = logging.getLogger(__name__)
 

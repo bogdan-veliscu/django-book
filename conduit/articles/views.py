@@ -11,7 +11,7 @@ from django.views.generic import DetailView, ListView
 from django.views.generic.edit import CreateView
 from rest_framework import generics, mixins, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.parsers import FormParser, MultiPartParser, JSONParser
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
 from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 from taggit.models import Tag
@@ -21,8 +21,8 @@ from articles.models import Article
 from articles.serializers import ArticleSerializer, TagSerializer
 from comments.forms import CommentForm
 from comments.models import Comment
-from profiles.models import User
 from core.mixins import CachePageMixin
+from profiles.models import User
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -279,7 +279,8 @@ class ArticleListView(ListView):
 
     def get_queryset(self):
         return (
-            Article.objects.published()
+            Article.objects.all()
+            # .published()
             .with_author()
             .with_comments_count()
             .order_by("-created_at")
@@ -347,7 +348,7 @@ class ArticleDetailView(DetailView, CachePageMixin):
     cache_timeout = 60 * 10  # Override timeout (optional)
 
     def get_queryset(self):
-        return Article.objects.published().with_author()
+        return Article.objects.all().with_author()
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
