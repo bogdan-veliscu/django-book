@@ -2,22 +2,37 @@ import logging
 
 from django.contrib.auth import authenticate
 from django.contrib.auth import views as auth_views
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.views import LoginView, LogoutView, PasswordResetView
+from django.contrib.auth.decorators import (
+    login_required,
+)
+from django.contrib.auth.views import (
+    LoginView,
+    LogoutView,
+)
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import redirect
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.http import (
+    require_http_methods,
+)
 from django.views.generic import TemplateView
 from django.views.generic.edit import FormView
 from rest_framework import status, views, viewsets
 from rest_framework.decorators import action, api_view
-from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import (
+    IsAuthenticated,
+    IsAuthenticatedOrReadOnly,
+)
 from rest_framework.response import Response
-from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.tokens import (
+    RefreshToken,
+)
 
 from .forms import UserRegistrationForm
 from .models import User
-from .serializers import ProfileSerializer, UserSerializer
+from .serializers import (
+    ProfileSerializer,
+    UserSerializer,
+)
 
 logger = logging.getLogger(__name__)
 # Create your views here.
@@ -235,7 +250,7 @@ class ModularPasswordResetView(auth_views.PasswordResetView):
     from_email = "bogdan@codeswiftr.com"
 
     def form_valid(self, form):
-        logger.info(f"form_valid() form")
+        logger.info("form_valid() form")
         opts = {
             "use_https": self.request.is_secure(),
             "token_generator": self.token_generator,
@@ -248,7 +263,7 @@ class ModularPasswordResetView(auth_views.PasswordResetView):
         }
         logger.debug(f"reset password  opts: {opts}")
         form.save(**opts)
-        logger.debug(f"reset password  email sent")
+        logger.debug("reset password  email sent")
         return super().form_valid(form)
 
 

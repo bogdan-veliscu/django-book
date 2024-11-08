@@ -1,10 +1,11 @@
 import pytest
-from django.core.files.uploadedfile import SimpleUploadedFile
+from articles.models import Article
+from django.core.files.uploadedfile import (
+    SimpleUploadedFile,
+)
 from django.urls import reverse
 from pytest_django.asserts import assertTemplateUsed
-
-from articles.models import Article
-from tests.factories import ArticleFactory, UserFactory
+from tests.factories import ArticleFactory
 
 
 @pytest.mark.django_db

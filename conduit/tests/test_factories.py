@@ -1,6 +1,5 @@
 # tests/test_models.py
 import pytest
-
 from tests.factories import ArticleFactory, UserFactory
 
 

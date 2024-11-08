@@ -1,14 +1,11 @@
-from django.contrib.auth import views as auth_views
 from django.urls import include, path
-from rest_framework.routers import DefaultRouter
-
 from profiles import views
+from rest_framework.routers import DefaultRouter
 
 from .views import (
     ModularLoginView,
     ModularLogoutView,
     ModularPassordResetConfirmView,
-    ModularPasswordResetCompleteView,
     ModularPasswordResetDoneView,
     ModularPasswordResetView,
     UserRegistrationView,

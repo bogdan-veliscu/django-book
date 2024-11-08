@@ -1,5 +1,4 @@
 # Create your tests here.
-from profiles.models import Profile
 
 User = get_user_model()
 

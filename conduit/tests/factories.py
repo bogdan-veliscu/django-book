@@ -1,10 +1,6 @@
-from profile import Profile
-
 import factory
 
 # from django.forms import ImageField
-from factory.django import ImageField
-
 from articles.models import Article
 from profiles.models import User
 

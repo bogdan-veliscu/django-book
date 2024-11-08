@@ -1,20 +1,25 @@
 import json
 import logging
 
+from articles.models import Article
 from asgiref.sync import async_to_sync
 from channels.layers import get_channel_layer
-from django.contrib.auth.decorators import login_required
+from django.contrib.auth.decorators import (
+    login_required,
+)
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404
 from django.template.loader import render_to_string
 from django.template.response import TemplateResponse
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.http import (
+    require_http_methods,
+)
 from rest_framework import generics, status
-from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.permissions import (
+    IsAuthenticated,
+    IsAuthenticatedOrReadOnly,
+)
 from rest_framework.response import Response
-
-from articles.models import Article
 
 from .forms import CommentForm
 from .models import Comment
@@ -52,7 +57,7 @@ class CommentView(generics.ListCreateAPIView):
             )
             logger.debug(f"Serializer: {serializer}")
             serializer.is_valid(raise_exception=True)
-            logger.debug(f"Serializer is valid")
+            logger.debug("Serializer is valid")
             self.perform_create(serializer)
             logger.debug(f"Serializer data: {serializer.data}")
 

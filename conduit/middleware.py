@@ -1,16 +1,19 @@
-import gzip
 import logging
 import time
 
-from django.contrib.auth.middleware import AuthenticationMiddleware
-from django.contrib.sessions.middleware import SessionMiddleware
+from config.settings.base import GLOBAL_CACHE_TIME
+from django.contrib.auth.middleware import (
+    AuthenticationMiddleware,
+)
+from django.contrib.sessions.middleware import (
+    SessionMiddleware,
+)
 from django.core.cache import cache
 from django.db import connection
-from django.middleware.gzip import GZipMiddleware as DjangoGZipMiddleware
-from django.utils.decorators import decorator_from_middleware
+from django.middleware.gzip import (
+    GZipMiddleware as DjangoGZipMiddleware,
+)
 from django.utils.deprecation import MiddlewareMixin
-
-from config.settings.base import GLOBAL_CACHE_TIME
 
 logger = logging.getLogger(__name__)
 

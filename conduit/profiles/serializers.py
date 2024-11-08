@@ -1,8 +1,7 @@
 import logging
 
-from rest_framework import serializers
-
 from profiles.models import User
+from rest_framework import serializers
 
 logger = logging.getLogger(__name__)
 

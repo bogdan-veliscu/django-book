@@ -43,9 +43,9 @@ schema_view = get_schema_view(
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path(f"", include("articles.urls")),
-    path(f"", include("profiles.urls")),
-    path(f"", include("comments.urls")),
+    path("", include("articles.urls")),
+    path("", include("profiles.urls")),
+    path("", include("comments.urls")),
 ]
 
 if settings.DEBUG:

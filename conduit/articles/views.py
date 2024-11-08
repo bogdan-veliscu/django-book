@@ -1,29 +1,45 @@
 import logging
 
-from django.contrib.auth.decorators import login_required
+from articles.filters import ArticleFilter
+from articles.models import Article
+from articles.serializers import (
+    ArticleSerializer,
+    TagSerializer,
+)
+from comments.forms import CommentForm
+from comments.models import Comment
+from core.mixins import CachePageMixin
+from django.contrib.auth.decorators import (
+    login_required,
+)
 from django.contrib.postgres.search import SearchVector
 from django.core.cache import cache
 from django.shortcuts import get_object_or_404, render
 from django.template.response import TemplateResponse
 from django.urls import reverse_lazy
-from django.views.decorators.cache import cache_page
-from django.views.decorators.http import require_http_methods
+from django.views.decorators.http import (
+    require_http_methods,
+)
 from django.views.generic import DetailView, ListView
 from django.views.generic.edit import CreateView
-from rest_framework import generics, mixins, status, viewsets
+from profiles.models import User
+from rest_framework import (
+    mixins,
+    status,
+    viewsets,
+)
 from rest_framework.decorators import action
-from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
-from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
+from rest_framework.parsers import (
+    FormParser,
+    JSONParser,
+    MultiPartParser,
+)
+from rest_framework.permissions import (
+    IsAuthenticated,
+    IsAuthenticatedOrReadOnly,
+)
 from rest_framework.response import Response
 from taggit.models import Tag
-
-from articles.filters import ArticleFilter
-from articles.models import Article
-from articles.serializers import ArticleSerializer, TagSerializer
-from comments.forms import CommentForm
-from comments.models import Comment
-from core.mixins import CachePageMixin
-from profiles.models import User
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -137,7 +153,7 @@ class ArticleViewSet(viewsets.ModelViewSet):
                 "articlesCount": queryset.count(),
             }
             return Response(response, status=status.HTTP_200_OK)
-        except Exception as e:
+        except Exception:
             return Response(
                 {"errors": {"body": ["Bad request: unable to retrieve feed articles"]}},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -159,7 +175,7 @@ class ArticleViewSet(viewsets.ModelViewSet):
                 {"articles": articles},
                 status=status.HTTP_200_OK,
             )
-        except Exception as e:
+        except Exception:
             return Response(
                 {
                     "errors": {
@@ -245,7 +261,7 @@ class TagView(viewsets.GenericViewSet, mixins.ListModelMixin):
             serializer = self.get_serializer({"tagList": tags})
 
             return Response(serializer.data, status=status.HTTP_200_OK)
-        except Exception as e:
+        except Exception:
             return Response(
                 {"errors": {"body": ["Bad request: unable to retrieve tags"]}},
                 status=status.HTTP_400_BAD_REQUEST,
@@ -267,11 +283,19 @@ class ArticleCreateView(CreateView):
         return super().form_valid(form)
 
 
-from django.core.paginator import Paginator
-from django.db.models import Count, F, Window, DateTimeField, Subquery, OuterRef
-from django.db.models.functions import Coalesce
-from django.db.models.functions import RowNumber
-from django.http import HttpRequest, HttpResponse, JsonResponse
+from django.db.models import (
+    Count,
+    DateTimeField,
+    F,
+    OuterRef,
+    Subquery,
+    Window,
+)
+from django.db.models.functions import (
+    Coalesce,
+    RowNumber,
+)
+from django.http import HttpRequest, HttpResponse
 from django.template.loader import render_to_string
 
 

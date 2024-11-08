@@ -1,9 +1,8 @@
+from articles import views
+from config import settings
 from django.conf.urls.static import static
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
-
-from articles import views
-from config import settings
 
 router = DefaultRouter(trailing_slash=False)
 router.register("articles", views.ArticleViewSet)

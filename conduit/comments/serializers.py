@@ -1,9 +1,8 @@
 import logging
 
-from rest_framework import serializers
-
 from articles.serializers import AuthorSerializer
 from comments.models import Comment
+from rest_framework import serializers
 
 logger = logging.getLogger(__name__)
 

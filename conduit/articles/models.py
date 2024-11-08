@@ -1,19 +1,19 @@
 import io
 
 import markdown
+from core.models import SoftDeletableModel
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AnonymousUser
-from django.core.files.uploadedfile import InMemoryUploadedFile
+from django.core.files.uploadedfile import (
+    InMemoryUploadedFile,
+)
 from django.db import models
 from django.db.models import Count
-from django.dispatch import receiver
 from django.urls import reverse
 from django.utils.text import slugify
 from PIL import Image
 from taggit.managers import TaggableManager
-
-from core.models import SoftDeletableModel
 
 User = get_user_model()
 
@@ -137,7 +137,7 @@ def create_model(
         pass
 
     if app_label:
-        setattr(Meta, "app_label", app_label)
+        Meta.app_label = app_label
 
     if options is not None:
         for key, value in options.items():
@@ -158,7 +158,7 @@ def create_model(
         for key, value in admin_opts.items():
             setattr(Admin, key, value)
 
-        setattr(model, "Admin", Admin)
+        model.Admin = Admin
 
     return model
 

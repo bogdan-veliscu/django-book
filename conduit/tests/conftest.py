@@ -1,5 +1,4 @@
 import pytest
-
 from tests.factories import ArticleFactory, UserFactory
 
 

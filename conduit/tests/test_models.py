@@ -1,11 +1,4 @@
-import shutil
-import tempfile
-from unittest import mock
-
 import pytest
-from django.conf import settings
-from django.test import TestCase, override_settings
-
 from articles.models import Article
 from profiles.models import User
 from tests.factories import ArticleFactory
