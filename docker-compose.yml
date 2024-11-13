@@ -12,14 +12,14 @@ services:
       - 8000:8000
     env_file: .env
     environment:
-        # Exposes BLACKFIRE_SERVER_* environment variables from the host
-        BLACKFIRE_SERVER_ID: 61b8c44e-1e6e-4a2b-881a-159a9aaa4fd2
-        BLACKFIRE_SERVER_TOKEN: 236626e94efe0d9ec140e586b9db3adbf63ab31d64020693c67836fe4481d980
+      # Exposes BLACKFIRE_SERVER_* environment variables from the host
+      BLACKFIRE_SERVER_ID: 61b8c44e-1e6e-4a2b-881a-159a9aaa4fd2
+      BLACKFIRE_SERVER_TOKEN: 236626e94efe0d9ec140e586b9db3adbf63ab31d64020693c67836fe4481d980
 
-        # Exposes BLACKFIRE_CLIENT_* environment variables
-        # allowing the client to communicate with Blackfire's API:
-        BLACKFIRE_CLIENT_ID: d5c9d5a4-2677-4c90-b4a8-cbc9dc84ec50
-        BLACKFIRE_CLIENT_TOKEN: 1128cba034a80d6ef0daeb7cbd6f4ebc85694a945dd4b9e34eb103134cf60344
+      # Exposes BLACKFIRE_CLIENT_* environment variables
+      # allowing the client to communicate with Blackfire's API:
+      BLACKFIRE_CLIENT_ID: d5c9d5a4-2677-4c90-b4a8-cbc9dc84ec50
+      BLACKFIRE_CLIENT_TOKEN: 1128cba034a80d6ef0daeb7cbd6f4ebc85694a945dd4b9e34eb103134cf60344
     stdin_open: true
     tty: true
     depends_on:
@@ -66,33 +66,32 @@ services:
   master:
     image: locustio/locust
     ports:
-     - "8089:8089"
+      - "8089:8089"
     volumes:
       - ./conduit:/mnt/locust
     command: -f /mnt/locust/locustfile.py --master -H http://master:8089
-  
+
   worker:
     image: locustio/locust
     volumes:
       - ./conduit:/mnt/locust
     command: -f /mnt/locust/locustfile.py --worker --master-host master
 
-  
   blackfire:
     image: blackfire/blackfire:2
     ports: ["8307"]
     environment:
-        # Define Blackfire Agent log vebosity level
-        BLACKFIRE_LOG_LEVEL: 4
+      # Define Blackfire Agent log vebosity level
+      BLACKFIRE_LOG_LEVEL: 4
 
-        # Exposes BLACKFIRE_SERVER_* environment variables from the host
-        BLACKFIRE_SERVER_ID: 61b8c44e-1e6e-4a2b-881a-159a9aaa4fd2
-        BLACKFIRE_SERVER_TOKEN: 236626e94efe0d9ec140e586b9db3adbf63ab31d64020693c67836fe4481d980
+      # Exposes BLACKFIRE_SERVER_* environment variables from the host
+      BLACKFIRE_SERVER_ID: 61b8c44e-1e6e-4a2b-881a-159a9aaa4fd2
+      BLACKFIRE_SERVER_TOKEN: 236626e94efe0d9ec140e586b9db3adbf63ab31d64020693c67836fe4481d980
 
-        # Exposes BLACKFIRE_CLIENT_* environment variables
-        # allowing the client to communicate with Blackfire's API:
-        BLACKFIRE_CLIENT_ID: d5c9d5a4-2677-4c90-b4a8-cbc9dc84ec50
-        BLACKFIRE_CLIENT_TOKEN: 1128cba034a80d6ef0daeb7cbd6f4ebc85694a945dd4b9e34eb103134cf60344
+      # Exposes BLACKFIRE_CLIENT_* environment variables
+      # allowing the client to communicate with Blackfire's API:
+      BLACKFIRE_CLIENT_ID: d5c9d5a4-2677-4c90-b4a8-cbc9dc84ec50
+      BLACKFIRE_CLIENT_TOKEN: 1128cba034a80d6ef0daeb7cbd6f4ebc85694a945dd4b9e34eb103134cf60344
 
   # db1:
   #   image: postgres:15
