@@ -1384,10 +1384,7 @@ ConfigArgParse = ">=1.5.5"
 flask = ">=2.0.0"
 Flask-Cors = ">=3.0.10"
 Flask-Login = ">=0.6.3"
-gevent = [
-    {version = ">=22.10.2", markers = "python_full_version <= \"3.12.0\""},
-    {version = ">=24.10.1", markers = "python_full_version > \"3.13.0\""},
-]
+gevent = {version = ">=24.10.1", markers = "python_full_version > \"3.13.0\""}
 geventhttpclient = ">=2.3.1"
 msgpack = ">=1.0.0"
 psutil = ">=5.9.1"
@@ -3084,5 +3081,5 @@ testing = ["coverage[toml]", "zope.event", "zope.testing"]
 
 [metadata]
 lock-version = "2.0"
-python-versions = "^3.12"
-content-hash = "1b6d83cc8472aece0b41a87a717b3a8f8f6ee6022450c720a53378747f4f4589"
+python-versions = "^3.12.6"
+content-hash = "297fec939281edadbcae189618832772448e8db7d5fbb5a91a5fc463f838722a"
