@@ -1,55 +1,56 @@
-[tool.poetry]
+[project]
 name = "conduit-api"
 version = "0.1.0"
-description = "Realword is a medium clone. This implementation uses django rest framework to create a backend service for the blog."
-authors = ["Bogdan Veliscu <bogdan.veliscu@outlook.com>"]
-license = "MIT"
+description = "Realworld is a medium clone. This implementation uses Django REST Framework to create a backend service for the blog."
+authors = [
+    {name = "Bogdan Veliscu", email = "bogdan.veliscu@outlook.com"}
+]
+license = {text = "MIT"}
 readme = "README.md"
+requires-python = ">=3.13"
+dependencies =  [
+    "Django>=5.0,<6.0",
+    "djangorestframework>=3.15.1,<4.0",
+    "django-filter>=24.2,<25.0",
+    "djangorestframework-simplejwt>=5.3.1,<6.0",
+    "psycopg2-binary>=2.9.9,<3.0",
+    "uvicorn[standard]>=0.30.1,<1.0",
+    "gunicorn>=22.0.0,<23.0",
+    "whitenoise>=6.6.0,<7.0",
+    "django-taggit>=5.0.1,<6.0",
+    "django-dotenv>=1.4.2,<2.0",
+    "django-htmx>=1.18.0,<2.0",
+    "channels>=4.1.0,<5.0",
+    "channels-redis>=4.2.0,<5.0",
+    "drf-yasg>=1.21.7,<2.0",
+    "django-storages>=1.14.4,<2.0",
+    "boto3>=1.35.10,<2.0",
+    "django-cors-headers>=4.5.0,<5.0",
+    "django-redis>=5.4.0,<6.0",
+]
 
-[tool.poetry.dependencies]
-python = "^3.12.6"
-Django = "^5.0"
-djangorestframework = "^3.15.1"
-markdown = "^3.6"
-django-filter = "^24.2"
-djangorestframework-simplejwt = "^5.3.1"
-psycopg2-binary = "^2.9.9"
-uvicorn = {extras = ["standard"], version = "^0.30.1"}
-gunicorn = "^22.0.0"
-whitenoise = "^6.6.0"
-django-taggit = "^5.0.1"
-django-dotenv = "^1.4.2"
-phonenumbers = "^8.13.37"
-django-htmx = "^1.18.0"
-channels = "^4.1.0"
-channels-redis = "^4.2.0"
-drf-yasg = "^1.21.7"
-pillow = "^10.4.0"
-django-storages = "^1.14.4"
-boto3 = "^1.35.10"
-django-compressor = "^4.5.1"
-django-cors-headers = "^4.5.0"
-selenium = "^4.25.0"
-pytest-selenium = "^4.1.0"
-blackfire = {extras = ["django"], version = "^1.20.21"}
-locust = "^2.32.0"
-django-redis = "^5.4.0"
-django-debug-toolbar = "^4.4.6"
+# Specify optional dependencies for development (dev) environment
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.2,<9.0",
+    "factory-boy>=3.3.1,<4.0",
+    "pytest-django>=4.9.0,<5.0",
+    "ruff>=0.4.2,<1.0",
+]
 
 
-[tool.poetry.group.dev.dependencies]
-pytest = "^8.3.2"
-factory-boy = "^3.3.1"
-pytest-django = "^4.9.0"
-black = "^24.4.2"
-isort = "^5.13.2"
-flake8 = "^7.0.0"
-ruff = "^0.4.2"
 
-[build-system]
-requires = ["poetry-core"]
-build-backend = "poetry.core.masonry.api"
+# Configure Ruff as the primary linter and formatter
+[tool.ruff]
+line-length = 88  # Black's default line length, customize as needed
 
+# Enable Ruff to perform Black-compatible formatting
+[tool.ruff.black]
+enabled = true
+
+# Enable Ruff to perform isort-compatible import sorting
+[tool.ruff.isort]
+enabled = true
 
 [tool.ruff.lint]
 select = [
@@ -62,24 +63,20 @@ select = [
     "UP",  # pyupgrade
 ]
 ignore = [
-    "E501",  # line too long, handled by black
+    "E501",  # line too long, handled by Black
     "B008",  # do not perform function calls in argument defaults
     "W191",  # indentation contains tabs
-    "B904",  # Allow raising exceptions without from e, for HTTPException
+    "B904",  # allow raising exceptions without 'from e'
 ]
 
 [tool.ruff.lint.pyupgrade]
-# Preserve types, even if a file imports `from __future__ import annotations`.
 keep-runtime-typing = true
 
 [tool.isort]
 multi_line_output = 3
 include_trailing_comma = true
 force_grid_wrap = 0
-line_length = 80
+line_length = 88  # Matches Black's default line length
 
 [tool.black]
-line-length = 55
-
-[tool.ruff]
-line-length = 55
+line-length = 88

@@ -1,62 +1,85 @@
-FROM python:3.12-slim-bookworm as build
+# Build stage for dependencies
+FROM python:3.12-slim-bookworm as builder
 
+# Install uv
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+
+# Set up working directory
 WORKDIR /app
 
-# set environment variables
-ENV PYTHONDONTWRITEBYTECODE 1 \
-    PYTHONUNBUFFERED 1
-RUN pip install --upgrade pip setuptools
+# Set environment variables
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
 
-# Copy the poetry lock file and the pyproject file
-COPY ./poetry.lock pyproject.toml /app/
-
-# install peetry and native dependencies
+# Install system dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
-    git build-essential \
-    && pip install --upgrade pip \
-    && pip install poetry \
-    && poetry env info
+    build-essential \
+    curl \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
 
-ARG INSTALL_DEV=false
-RUN echo "Install development dependencies: ${INSTALL_DEV}"
+# Copy dependency management files
+COPY pyproject.toml uv.lock ./
 
-RUN if [ "${INSTALL_DEV}" = "true" ]; then poetry  export -o requirements.txt --dev --without-hashes ; else  poetry export -o requirements.txt --without-hashes;  fi
+# Install dependencies without project code for caching
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-install-project --no-editable
 
-RUN pip wheel --wheel-dir /app/wheels -r requirements.txt
+# Copy application code
+COPY . .
 
-RUN pip install -r requirements.txt 
+# Finalize dependency installation in non-editable mode
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-editable
 
-# Copy the rest of the application files
-COPY conduit /app
+# Add entrypoint script and set permissions in the builder stage
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
-FROM python:3.12-slim-bookworm
+# Final stage
+FROM python:3.12-slim-bookworm AS app
 
+# Set up a non-root user for security
 RUN useradd -ms /bin/bash appuser
 
+# Set up working directory
 WORKDIR /app
 
-COPY --from=build /app/wheels /wheels/
-COPY --from=build --chown=appuser:appuser /app /app
+# Copy the virtual environment from the builder stage
+COPY --from=builder /app/.venv /app/.venv
 
-RUN pip install --no-cache-dir --no-index --find-links=/wheels/* /wheels/*
+# Configure environment variables for the virtual environment
+ENV VIRTUAL_ENV=/app/.venv
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 
+# Copy application source files only
+COPY --from=builder /app /app
+
+# Copy the entrypoint script with permissions already set
+COPY --from=builder /entrypoint.sh /entrypoint.sh
+
+# Set permissions for the application directory
+RUN chown -R appuser:appuser /app
+
+# Switch to non-root user
+USER appuser
+
+# Expose application port
 EXPOSE 8000
 
-# Set environment variable for the application
-ENV HOST 0.0.0.0
-ENV PORT 8000
+# Default environment variables
+ENV HOST=0.0.0.0 \
+    PORT=8000
 
-# Run the application using gunicorn using uvicorn worker
-# CMD ["gunicorn", "conduit.asgi:application", "--bind", "${HOST}:${PORT}", "--worker-class", "uvicorn.workers.UvicornWorker"]
+# Healthcheck endpoint
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:8000/health/ || exit 1
 
-# run migrations
-RUN python manage.py migrate
+# Use environment variables for CMD
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["uvicorn", "config.asgi:application", "--host", "${HOST}", "--port", "${PORT}"]
 
-# Collect static files
-RUN python manage.py collectstatic --noinput
-
-CMD ["uvicorn", "config.asgi:application", "--host", "0.0.0.0", "--port", "8000"]  
-
+# Metadata
 LABEL maintainer="Bogdan Veliscu" \
     version="1.0" \
-    description="Django Application with Poetry and Slim image"
+    description="Production-ready Django application with uv and optimized Docker image"

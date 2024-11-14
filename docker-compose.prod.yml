@@ -2,7 +2,7 @@ services:
   app:
     build:
       context: .
-      dockerfile: Dockerfile.development
+      dockerfile: Dockerfile
 
       args:
         INSTALL_DEV: false
@@ -51,7 +51,7 @@ services:
     networks:
       - app-network
     volumes:
-      - ./redis.conf:/usr/local/etc/redis/redis.conf # Mount custom Redis configuration
+      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf # Mount custom Redis configuration
     command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
 
   nginx:
