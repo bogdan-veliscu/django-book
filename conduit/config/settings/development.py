@@ -66,3 +66,7 @@ INTERNAL_IPS += [ip[:-1] + "1" for ip in ips]
 MIDDLEWARE += [
     "debug_toolbar.middleware.DebugToolbarMiddleware",
 ]
+
+INSTALLED_APPS += [
+    "debug_toolbar",
+]

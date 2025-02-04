@@ -7,9 +7,7 @@ services:
       args:
         INSTALL_DEV: false
     volumes:
-      - ./conduit/:/code
-    expose:
-      - "8000"
+      - ./conduit/:/code/conduit/
     ports:
       - 8000:8000
     env_file: .env
@@ -17,8 +15,6 @@ services:
     tty: true
     depends_on:
       - db
-    networks:
-      - app-network
 
   db:
     image: postgres:15
@@ -31,8 +27,6 @@ services:
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
       - POSTGRES_USER=${POSTGRES_USER?Variable not set}
       - POSTGRES_DB=${POSTGRES_DB?Variable not set}
-    networks:
-      - app-network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER?Variable not set}"]
       interval: 10s
@@ -48,11 +42,9 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    networks:
-      - app-network
-    volumes:
-      - ./redis/redis.conf:/usr/local/etc/redis/redis.conf # Mount custom Redis configuration
-    command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
+    # volumes:
+    #   - ./redis/redis.conf:/usr/local/etc/redis/redis.conf # Mount custom Redis configuration
+    # command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
 
   nginx:
     image: nginx:alpine
@@ -66,17 +58,14 @@ services:
       - ./nginx/conf.d/:/etc/nginx/conf.d/
     depends_on:
       - app
-    networks:
-      - app-network
 
   certbot:
     image: certbot/certbot:latest
     volumes:
       - /var/certbot/conf:/etc/letsencrypt/:rw
       - /var/certbot/www/:/var/www/certbot/:rw
-    networks:
-      - app-network
     depends_on:
+      - app
       - nginx
 
 volumes:
@@ -84,7 +73,3 @@ volumes:
   conduit:
   static:
   media:
-
-networks:
-  app-network:
-    driver: bridge

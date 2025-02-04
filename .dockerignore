@@ -1,0 +1,4 @@
+postgres/
+.pgdata/
+pgdata/
+.postgres

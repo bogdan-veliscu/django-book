@@ -93,3 +93,6 @@ clean/py: ## remove Python test, coverage, file artifacts, and compiled message 
 	find . -name '*.pyc' -delete
 	find . -name '*.pyo' -delete
 	find . -name '*.mo' -delete
+
+start:
+	uvicorn conduit.config.asgi:application --host 0.0.0.0 --port 8000

@@ -11,9 +11,8 @@ import os
 
 from django.core.asgi import get_asgi_application
 
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.development")
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.production")
 
-import comments.routing
 from channels.routing import (
     ProtocolTypeRouter,
     URLRouter,
@@ -22,7 +21,7 @@ from channels.routing import (
 application = ProtocolTypeRouter(
     {
         "http": get_asgi_application(),
-        "websocket": URLRouter(comments.routing.websocket_urlpatterns),
+        "websocket": URLRouter([]),
     }
 )
 

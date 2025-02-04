@@ -64,14 +64,13 @@ INSTALLED_APPS = [
     "taggit",
     "channels",
     # local apps
-    "profiles",
-    "articles",
+    "conduit.profiles",
+    "conduit.articles",
     "comments",
     "django.contrib.sites",
     "compressor",
     "storages",
     "corsheaders",
-    "debug_toolbar",
 ]
 
 AUTHENTICATION_BACKENDS = ("django.contrib.auth.backends.ModelBackend",)
