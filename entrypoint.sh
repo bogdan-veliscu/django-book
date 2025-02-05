@@ -16,4 +16,4 @@ echo python manage.py collectstatic --noinput
 
 # Execute the main container command
 echo "Starting application..."
-exec "$@"
+exec gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3

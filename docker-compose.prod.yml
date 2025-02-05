@@ -1,11 +1,7 @@
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    image: ghcr.io/bogdan-veliscu/conduit-backend:latest 
 
-      args:
-        INSTALL_DEV: false
     volumes:
       - ./conduit/:/code/conduit/
     ports:
