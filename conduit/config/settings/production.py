@@ -29,3 +29,29 @@ MEDIA_URL = f"https://{AWS_S3_CUSTOM_DOMAIN}/media/"
 DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10 MB
+
+INSTALLED_APPS += ['corsheaders']
+
+MIDDLEWARE = ['corsheaders.middleware.CorsMiddleware'] + MIDDLEWARE
+
+# CORS Settings
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost",
+    "http://localhost:3000",
+    "http://brandfocus.ai",
+    "https://brandfocus.ai",
+    "http://www.brandfocus.ai",
+    "https://www.brandfocus.ai",
+]
+
+CORS_ALLOW_CREDENTIALS = True
+
+# Security Headers
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+ALLOWED_HOSTS = [
+    "brandfocus.ai",
+    "www.brandfocus.ai",
+    "localhost",
+    "127.0.0.1",
+]

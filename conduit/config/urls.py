@@ -22,6 +22,7 @@ from django.urls import include, path
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
 from rest_framework import permissions
+from django.http import JsonResponse
 
 # from rest_framework.authentication import BearerTokenAuthentication
 
@@ -40,12 +41,15 @@ schema_view = get_schema_view(
     permission_classes=(permissions.AllowAny,),
 )
 
+def health_check(request):
+    return JsonResponse({"status": "ok"})
 
 urlpatterns = [
     path("admin/", admin.site.urls),
     path("", include("articles.urls")),
     path("", include("profiles.urls")),
     path("", include("comments.urls")),
+    path('health/', health_check),
 ]
 
 if settings.DEBUG:
