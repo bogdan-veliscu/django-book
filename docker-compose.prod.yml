@@ -1,81 +1,72 @@
+version: "3.8"
+
 services:
   app:
-    image: ghcr.io/bogdan-veliscu/conduit-backend:latest 
-
+    image: ghcr.io/bogdan-veliscu/conduit-backend:latest
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings.production
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - SECRET_KEY=${DJANGO_SECRET_KEY}
+      - DEBUG=0
     volumes:
-      - ./conduit/:/code/conduit/
-    ports:
-      - 8000:8000
-    env_file: .env
-    stdin_open: false
-    tty: true
+      - static_volume:/app/static
+      - media_volume:/app/media
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
   frontend:
-    build:
-      context: ../frontend
-      dockerfile: Dockerfile
-    ports:
-      - 3000:80
-    env_file: ../frontend/.env.production
+    image: ghcr.io/bogdan-veliscu/conduit-frontend:latest
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost/api
+      - NEXT_PUBLIC_API_URL=https://${DOMAIN}/api
+      - NEXTAUTH_URL=https://${DOMAIN}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+    depends_on:
+      app:
+        condition: service_healthy
 
   db:
     image: postgres:15
-    ports:
-      - ${POSTGRES_DEFAULT_PORT}:5432
     volumes:
-      - ./.postgres:/var/lib/postgresql/data
+      - pg_data:/var/lib/postgresql/data
     environment:
-      - PGDATA=/var/lib/postgresql/data/pgdata
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
-      - POSTGRES_USER=${POSTGRES_USER?Variable not set}
-      - POSTGRES_DB=${POSTGRES_DB?Variable not set}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER?Variable not set}"]
-      interval: 10s
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
+      interval: 5s
       timeout: 5s
       retries: 5
-
-  redis:
-    image: redis:6
-    ports:
-      - 6379:6379
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-    # volumes:
-    #   - ./redis/redis.conf:/usr/local/etc/redis/redis.conf # Mount custom Redis configuration
-    # command: ["redis-server", "/usr/local/etc/redis/redis.conf"]
 
   nginx:
-    image: nginx:alpine
-    restart: unless-stopped
+    image: nginx:1.25-alpine
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./conduit/static/:/var/www/static/
-      - ./conduit/media/:/var/www/media/
-      - ./nginx/conf.d/:/etc/nginx/conf.d/
+      - ./nginx:/etc/nginx/conf.d
+      - static_volume:/app/static
+      - media_volume:/app/media
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
     depends_on:
       - app
+      - frontend
 
   certbot:
     image: certbot/certbot:latest
     volumes:
-      - /var/certbot/conf:/etc/letsencrypt/:rw
-      - /var/certbot/www/:/var/www/certbot/:rw
-    depends_on:
-      - app
-      - nginx
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+    command: certonly --webroot -w /var/www/certbot --keep-until-expiring --agree-tos --email ${CERTBOT_EMAIL} -d ${DOMAIN} --non-interactive
 
 volumes:
-  .postgres:
-  conduit:
-  static:
-  media:
+  pg_data:
+  static_volume:
+  media_volume:
