@@ -1,10 +1,11 @@
 name: Build and Publish Backend Image
 
 on:
+  workflow_dispatch:  # Allow manual triggering
   push:
     branches: [ "main" ]
     paths:
-      - 'backend/**'  # More specific path to backend changes
+      - 'conduit/**'  # More specific path to backend changes
       - 'pyproject.toml'
       - 'poetry.lock'
 
