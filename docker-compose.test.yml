@@ -1,0 +1,45 @@
+version: "3.8"
+
+services:
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: test
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings.test
+      - DATABASE_URL=postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@test_db:5432/${POSTGRES_DB:-test_db}
+      - SECRET_KEY=${DJANGO_SECRET_KEY:-test-key}
+      - DEBUG=0
+      - PYTHONPATH=/code
+    volumes:
+      - .:/code
+      - test-results:/code/test-results
+    depends_on:
+      test_db:
+        condition: service_healthy
+    command: >
+      sh -c "cd /code/conduit && 
+             python -m pytest
+             --cov=.
+             --cov-report=html:/code/test-results/coverage
+             --cov-report=xml:/code/test-results/coverage.xml
+             --junitxml=/code/test-results/junit.xml
+             -v"
+
+  test_db:
+    image: postgres:15
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_DB=${POSTGRES_DB:-test_db}
+    tmpfs:
+      - /var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  test-results: 

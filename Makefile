@@ -4,7 +4,7 @@ ifneq (,$(wildcard ./.env))
 endif
 
 IMAGE_NAME = $(shell basename "`pwd`")
-IMAGE_TAG = $(shell poetry version -s)
+IMAGE_TAG = $(shell grep '^version = ' pyproject.toml | cut -d'"' -f2)
 REGISTRY = $(shell echo $(REGISTRY_HOST))
 IMAGE = $(REGISTRY)/$(IMAGE_NAME):$(IMAGE_TAG)
 
@@ -48,15 +48,12 @@ migrate: ## apply migrations in a clean container
 collectstatic: ## collect static files
 	docker compose run --rm app ./manage.py collectstatic --noinput
 
-
-
 ## [UTILS]
 install_local: ## Install the package locally
-	poetry install --with dev
+	uv pip install -e .[dev]
 
 test_local: ## Run the tests locally
-	poetry run pytest
-
+	python -m pytest
 
 shell:  ## start a django shell
 	docker compose run --rm app ./manage.py shell
@@ -68,15 +65,12 @@ isort:  ## run isort
 black:  ## run black
 	docker compose run --rm app black .
 
-
-
 ## [TEST]
 test:  ## run all tests
 	docker compose run --rm app pytest
 
 test-lf:  ## rerun tests that failed last time
 	docker compose run --rm app pytest --lf --pdb
-
 
 ## [CLEAN]
 clean: clean/docker clean/py ## remove all build, test, coverage and Python artifacts

@@ -1,16 +1,23 @@
-version: "3.8"
-
 services:
   app:
-    image: ghcr.io/bogdan-veliscu/conduit-backend:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: app
+    volumes:
+      - static_volume:/code/conduit/static
+      - media_volume:/code/conduit/media
     environment:
       - DJANGO_SETTINGS_MODULE=config.settings.production
-      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST:-db}:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
       - SECRET_KEY=${DJANGO_SECRET_KEY}
       - DEBUG=0
-    volumes:
-      - static_volume:/app/static
-      - media_volume:/app/media
+      - ALLOWED_HOSTS=${DOMAIN},localhost,127.0.0.1
+      - POSTGRES_HOST=${POSTGRES_HOST:-db}
+      - POSTGRES_PORT=${POSTGRES_PORT:-5432}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
     depends_on:
       db:
         condition: service_healthy
@@ -22,6 +29,7 @@ services:
 
   frontend:
     image: ghcr.io/bogdan-veliscu/conduit-frontend:latest
+    platform: linux/arm64
     environment:
       - NEXT_PUBLIC_API_URL=https://${DOMAIN}/api
       - NEXTAUTH_URL=https://${DOMAIN}
@@ -33,7 +41,7 @@ services:
   db:
     image: postgres:15
     volumes:
-      - pg_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
@@ -46,13 +54,14 @@ services:
 
   nginx:
     image: nginx:1.25-alpine
+    platform: linux/arm64
     ports:
       - "80:80"
       - "443:443"
     volumes:
       - ./nginx:/etc/nginx/conf.d
-      - static_volume:/app/static
-      - media_volume:/app/media
+      - static_volume:/code/conduit/static
+      - media_volume:/code/conduit/media
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
     depends_on:
@@ -61,12 +70,13 @@ services:
 
   certbot:
     image: certbot/certbot:latest
+    platform: linux/arm64
     volumes:
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
     command: certonly --webroot -w /var/www/certbot --keep-until-expiring --agree-tos --email ${CERTBOT_EMAIL} -d ${DOMAIN} --non-interactive
 
 volumes:
-  pg_data:
+  postgres_data:
   static_volume:
   media_volume:
