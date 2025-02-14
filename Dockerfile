@@ -38,10 +38,12 @@ FROM python:3.12-slim-bookworm AS app
 COPY --from=builder /bin/uv /bin/uv
 COPY --from=builder /code/.venv /code/.venv
 COPY --from=builder /code /code
+COPY . /code/
 
 # Configure environment variables for the virtual environment
 ENV VIRTUAL_ENV=/code/.venv \
-    PATH="$VIRTUAL_ENV/bin:$PATH"
+    PATH="/code/.venv/bin:$PATH" \
+    PYTHONPATH=/code:$PYTHONPATH
 
 # Expose application port
 EXPOSE 8000
@@ -49,26 +51,18 @@ EXPOSE 8000
 # Default environment variables
 ENV HOST=0.0.0.0 \
     PORT=8000 \
-    DJANGO_SETTINGS_MODULE="config.settings.production" \
-    PYTHONPATH=/code/conduit:${PYTHONPATH}
+    DJANGO_SETTINGS_MODULE="config.settings.production"
 
 # Healthcheck endpoint
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
     CMD curl -f http://localhost:8000/health/ || exit 1
 
-# Use environment variables for CMD
-# ENTRYPOINT ["/entrypoint.sh"]
-CMD ["uvicorn", "conduit.config.asgi:application", "--host", "0.0.0.0", "--port", "8000", "--app-dir", "/code"]
-# CMD ["python", "conduit/manage.py", "runserver", "0.0.0.0:8000", "--settings=config.settings.development"]
-
-# Verify your working directory matches project structure
 WORKDIR /code
+
+ENTRYPOINT ["/entrypoint.sh"]
+CMD ["uvicorn", "config.asgi:application", "--host", "0.0.0.0", "--port", "8000"]
 
 # Metadata
 LABEL maintainer="Bogdan Veliscu" \
     version="1.0" \
     description="Production-ready Django application with uv and optimized Docker image"
-
-# Fix virtual environment activation
-ENV VIRTUAL_ENV=/code/.venv \
-    PATH="$VIRTUAL_ENV/bin:$PATH"

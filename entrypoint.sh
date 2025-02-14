@@ -2,18 +2,18 @@
 
 # Exit immediately if a command exits with a non-zero status
 set -e
-set -x
 
-source /app/.venv/bin/activate
+echo "Activating virtual environment..."
+source /code/.venv/bin/activate
 
 # Run database migrations
 echo "Applying database migrations..."
-echo python manage.py migrate --noinput
+python manage.py migrate --noinput
 
 # Collect static files
 echo "Collecting static files..."
-echo python manage.py collectstatic --noinput
+python manage.py collectstatic --noinput
 
 # Execute the main container command
 echo "Starting application..."
-exec gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 3
+exec "$@"
