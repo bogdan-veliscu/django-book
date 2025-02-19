@@ -22,12 +22,13 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-    command: gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 4
-    ports:
-      - "8000:8000"
+    expose:
+      - "8000"
     depends_on:
-      - db
-      - redis
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     volumes:
       - static_volume:/code/conduit/staticfiles
       - media_volume:/code/conduit/media
@@ -37,6 +38,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
+    command: gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 4 --worker-class uvicorn.workers.UvicornWorker --max-requests 1000 --max-requests-jitter 50 --access-logfile - --error-logfile -
 
   frontend:
     image: ghcr.io/bogdan-veliscu/conduit-frontend:latest
@@ -55,6 +57,11 @@ services:
     volumes:
       - redis_data:/data
     command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
 
   db:
     image: postgres:15
@@ -73,33 +80,32 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
-    ports:
-      - "5432:5432"
+    expose:
+      - "5432"
 
   nginx:
     image: nginx:1.25-alpine
-    platform: linux/arm64
     restart: unless-stopped
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx:/etc/nginx/conf.d
-      - static_volume:/code/conduit/static
-      - media_volume:/code/conduit/media
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
+      - ./nginx/conf.d:/etc/nginx/conf.d
+      - static_volume:/code/conduit/staticfiles:ro
+      - media_volume:/code/conduit/media:ro
+      - ./certbot/conf:/etc/letsencrypt:ro
+      - ./certbot/www:/var/www/certbot:ro
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
     depends_on:
       - app
-      - frontend
+    command: "/bin/sh -c 'while :; do sleep 6h & wait $${!}; nginx -s reload; done & nginx -g \"daemon off;\"'"
 
   certbot:
     image: certbot/certbot:latest
-    platform: linux/arm64
     volumes:
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
-    command: certonly --webroot -w /var/www/certbot --keep-until-expiring --agree-tos --email ${CERTBOT_EMAIL} -d ${DOMAIN} --non-interactive
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
 
 volumes:
   postgres_data:

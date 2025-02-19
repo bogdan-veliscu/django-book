@@ -29,6 +29,23 @@ dev:
 prod:
 	docker compose -f docker-compose.prod.yml up --build -d
 
+prod-local: ## Run production setup locally for testing
+	@if [ ! -f .env.prod ]; then \
+		cp example.env .env.prod; \
+		echo "Created .env.prod file. Please update it with your production settings."; \
+		exit 1; \
+	fi
+	docker compose -f docker-compose.prod.yml up --build -d
+	@echo "Production environment is running locally"
+	@echo "Access the application at http://localhost"
+	@echo "Run 'make logs' to view logs"
+
+logs: ## View logs from all containers
+	docker compose -f docker-compose.prod.yml logs -f
+
+prod-down: ## Stop production environment
+	docker compose -f docker-compose.prod.yml down -v
+
 build: ## Build the Docker image
 	docker buildx build --platform linux/amd64 -t $(IMAGE) --load .
 
