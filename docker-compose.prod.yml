@@ -5,80 +5,104 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      # image: conduit-api:latest
-      args:
-        INSTALL_DEV: false
+    # image: ghcr.io/bogdan-veliscu/conduit-backend:latest
+    container_name: conduit-api
     restart: unless-stopped
-    expose:
-      - "8000"
+    env_file:
+      - .env.prod
     environment:
       - DJANGO_SETTINGS_MODULE=config.settings.production
-      - PYTHONPATH=/code
-    env_file: .env.prod
-    volumes:
-      - static_volume:/code/conduit/static
-      - media_volume:/code/conduit/media
-      - logs_volume:/code/conduit/logs
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - REDIS_URL=redis://redis:6379/0
+      - SECRET_KEY=${DJANGO_SECRET_KEY}
+      - DEBUG=0
+      - POSTGRES_HOST=${POSTGRES_HOST:-db}
+      - POSTGRES_PORT=${POSTGRES_PORT:-5432}
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    command: gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 4
+    ports:
+      - "8000:8000"
     depends_on:
+      - db
       - redis
-      - postgres
-    networks:
-      - app-network
-    command: uvicorn config.asgi:application --host 0.0.0.0 --port 8000 --workers 4
+    volumes:
+      - static_volume:/code/conduit/staticfiles
+      - media_volume:/code/conduit/media
+      - ./logs:/code/conduit/logs
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
 
-  postgres:
+  frontend:
+    image: ghcr.io/bogdan-veliscu/conduit-frontend:latest
+    platform: linux/arm64
+    environment:
+      - NEXT_PUBLIC_API_URL=https://${DOMAIN}/api
+      - NEXTAUTH_URL=https://${DOMAIN}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+    depends_on:
+      app:
+        condition: service_healthy
+
+  redis:
+    image: redis:7.2-alpine
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+
+  db:
     image: postgres:15
     restart: unless-stopped
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    env_file: .env.prod
-    networks:
-      - app-network
-
-  redis:
-    image: redis:7-alpine
-    restart: unless-stopped
-    volumes:
-      - redis_data:/data
-    networks:
-      - app-network
+      - ./postgres/postgresql.conf:/etc/postgresql/postgresql.conf
+      - ./postgres/ssl:/etc/postgresql/ssl
+    command: postgres -c 'config_file=/etc/postgresql/postgresql.conf'
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    ports:
+      - "5432:5432"
 
   nginx:
-    image: nginx:alpine
+    image: nginx:1.25-alpine
+    platform: linux/arm64
     restart: unless-stopped
     ports:
       - "80:80"
       - "443:443"
     volumes:
+      - ./nginx:/etc/nginx/conf.d
       - static_volume:/code/conduit/static
       - media_volume:/code/conduit/media
-      - ./nginx/conf.d/:/etc/nginx/conf.d/
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
     depends_on:
       - app
-    networks:
-      - app-network
+      - frontend
 
   certbot:
     image: certbot/certbot:latest
-    restart: unless-stopped
+    platform: linux/arm64
     volumes:
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
-    depends_on:
-      - nginx
-    networks:
-      - app-network
-    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+    command: certonly --webroot -w /var/www/certbot --keep-until-expiring --agree-tos --email ${CERTBOT_EMAIL} -d ${DOMAIN} --non-interactive
 
 volumes:
   postgres_data:
-  redis_data:
   static_volume:
   media_volume:
-  logs_volume:
-
-networks:
-  app-network:
-    driver: bridge
+  redis_data:

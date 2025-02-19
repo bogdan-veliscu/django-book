@@ -50,14 +50,14 @@ MEDIA_ROOT = '/code/conduit/media/'
 
 # Security settings
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
-SECURE_SSL_REDIRECT = True  # Enable SSL redirect
+SESSION_COOKIE_SECURE = False  # Temporarily disabled for debugging
+CSRF_COOKIE_SECURE = False  # Temporarily disabled for debugging
+SECURE_SSL_REDIRECT = False  # Temporarily disabled for debugging
 
 # HSTS settings
-SECURE_HSTS_SECONDS = 31536000  # 1 year
-SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-SECURE_HSTS_PRELOAD = True
+SECURE_HSTS_SECONDS = 0  # Temporarily disabled for debugging
+SECURE_HSTS_INCLUDE_SUBDOMAINS = False  # Temporarily disabled for debugging
+SECURE_HSTS_PRELOAD = False  # Temporarily disabled for debugging
 
 # Content security policy
 SECURE_CONTENT_TYPE_NOSNIFF = True
@@ -65,14 +65,13 @@ SECURE_BROWSER_XSS_FILTER = True
 X_FRAME_OPTIONS = 'DENY'
 
 # Allowed hosts - Updated for brandfocus.ai
-ALLOWED_HOSTS = [
-    'brandfocus.ai',
-    'www.brandfocus.ai',
-    'api.brandfocus.ai',
-]
+ALLOWED_HOSTS = ['*']  # Allow all hosts temporarily for debugging
+USE_X_FORWARDED_HOST = True  # Trust X-Forwarded-Host header from proxy
+
+print(f"ALLOWED_HOSTS in production.py: {ALLOWED_HOSTS}")
 
 # CORS settings
-CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOW_ALL_ORIGINS = True  # Temporarily enabled for debugging
 CORS_ALLOWED_ORIGINS = [
     "https://brandfocus.ai",
     "https://www.brandfocus.ai",
@@ -183,7 +182,7 @@ DATABASES = {
         'PORT': get_env_variable('POSTGRES_PORT'),
         'CONN_MAX_AGE': 600,  # 10 minute connection persistence
         'OPTIONS': {
-            'sslmode': 'require',  # Enforce SSL
+            'sslmode': 'prefer',  # Changed from 'require' to 'prefer'
             'target_session_attrs': 'read-write',
         },
     }
@@ -193,12 +192,19 @@ DATABASES = {
 import sentry_sdk
 from sentry_sdk.integrations.django import DjangoIntegration
 
-sentry_sdk.init(
-    dsn=get_env_variable('SENTRY_DSN'),
-    integrations=[DjangoIntegration()],
-    traces_sample_rate=1.0,
-    send_default_pii=True
-)
+# Sentry Configuration
+try:
+    sentry_dsn = get_env_variable("SENTRY_DSN")
+    sentry_sdk.init(
+        dsn=sentry_dsn,
+        integrations=[DjangoIntegration()],
+        traces_sample_rate=1.0,
+        send_default_pii=True,
+        debug=True,  # Enable debug logging
+    )
+    print("Sentry initialized successfully")
+except Exception as e:
+    print(f"Failed to initialize Sentry: {str(e)}")
 
 # Django prometheus for metrics
 INSTALLED_APPS += ['django_prometheus']

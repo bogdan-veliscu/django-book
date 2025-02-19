@@ -46,15 +46,10 @@ SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = [
-    "localhost",
-    "cod3.go.ro",
-    "brandfocus.ai",
-    "brandfocus.ai.s3.amazonaws.com",
-    "134.122.66.29",
-    "app",
-    "host.docker.internal",
-]
+ALLOWED_HOSTS = ['*']  # Allow all hosts temporarily for debugging
+USE_X_FORWARDED_HOST = True  # Trust X-Forwarded-Host header from proxy
+
+print(f"ALLOWED_HOSTS in base.py: {ALLOWED_HOSTS}")
 
 BLACKFIRE_ENABLED = True
 
