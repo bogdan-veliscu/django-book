@@ -118,15 +118,29 @@ services:
     user: "70:70"  # postgres user
     entrypoint: |
       bash -c '
-      mkdir -p /ssl &&
-      if [ ! -f /ssl/server.key ]; then
-        openssl req -new -x509 -days 365 -nodes \
-          -out /ssl/server.crt \
-          -keyout /ssl/server.key \
-          -subj "/C=US/ST=State/L=City/O=Organization/CN=localhost" &&
-        chmod 600 /ssl/server.key &&
-        chmod 644 /ssl/server.crt
-      fi'
+      echo "Debug: Current user and group" &&
+      id &&
+      echo "Debug: Creating temporary directory" &&
+      TEMP_DIR=$(mktemp -d) &&
+      echo "Debug: Temporary directory permissions" &&
+      ls -la $TEMP_DIR &&
+      echo "Debug: Generating certificate in temporary directory" &&
+      openssl req -new -x509 -days 365 -nodes \
+        -out $TEMP_DIR/server.crt \
+        -keyout $TEMP_DIR/server.key \
+        -subj "/C=US/ST=State/L=City/O=Organization/CN=localhost" &&
+      echo "Debug: Setting temporary file permissions" &&
+      chmod 600 $TEMP_DIR/server.key &&
+      chmod 644 $TEMP_DIR/server.crt &&
+      echo "Debug: SSL mount point permissions" &&
+      ls -la /ssl &&
+      echo "Debug: Copying files to final location" &&
+      cp $TEMP_DIR/server.key /ssl/ &&
+      cp $TEMP_DIR/server.crt /ssl/ &&
+      echo "Debug: Cleaning up temporary directory" &&
+      rm -rf $TEMP_DIR &&
+      echo "Debug: Final SSL directory contents" &&
+      ls -la /ssl/'
     profiles: ["setup"]
 
 volumes:
