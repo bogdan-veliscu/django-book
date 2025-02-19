@@ -2,12 +2,13 @@
 
 from django.conf import settings
 from django.db import migrations, models
+from django.db.models.deletion import CASCADE
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("articles", "0001_initial"),
+        ("conduit_articles", "0001_initial"),
         (
             "taggit",
             "0006_rename_taggeditem_content_type_object_id_taggit_tagg_content_8fc721_idx",
@@ -18,10 +19,15 @@ class Migration(migrations.Migration):
     operations = [
         migrations.AddIndex(
             model_name="article",
-            index=models.Index(
-                condition=models.Q(("status", "published")),
-                fields=["author", "-created"],
-                name="author_published_articles",
+            index=models.Index(fields=["created"], name="articles_ar_created_e6d39d_idx"),
+        ),
+        migrations.AlterField(
+            model_name="article",
+            name="author",
+            field=models.ForeignKey(
+                on_delete=CASCADE,
+                related_name="published_articles",
+                to=settings.AUTH_USER_MODEL,
             ),
         ),
     ]

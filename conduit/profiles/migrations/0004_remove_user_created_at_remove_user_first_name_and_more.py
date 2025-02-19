@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("profiles", "0003_user_first_name_user_last_name"),
+        ("conduit_profiles", "0003_user_first_name_user_last_name"),
     ]
 
     operations = [

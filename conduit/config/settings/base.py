@@ -64,9 +64,9 @@ INSTALLED_APPS = [
     "taggit",
     "channels",
     # local apps
-    "conduit.profiles",
-    "conduit.articles",
-    "comments",
+    "conduit.profiles.apps.ProfilesConfig",
+    "conduit.articles.apps.ArticlesConfig",
+    "conduit.comments.apps.CommentsConfig",
     "django.contrib.sites",
     "compressor",
     "storages",
@@ -239,7 +239,7 @@ USE_TZ = True
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-AUTH_USER_MODEL = "profiles.User"
+AUTH_USER_MODEL = "conduit_profiles.User"
 
 EMAIL_HOST = os.getenv("SMTP_HOST", default="smtp.gmail.com")
 EMAIL_HOST_USER = os.getenv("SMTP_USER")

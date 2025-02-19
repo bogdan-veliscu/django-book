@@ -38,7 +38,17 @@ PASSWORD_HASHERS = [
     "django.contrib.auth.hashers.MD5PasswordHasher",
 ]
 
-# Use fast template loaders
+# Use fast template loaders - safely initialize TEMPLATES if needed
+if not TEMPLATES:  # type: ignore
+    TEMPLATES = [  # type: ignore
+        {
+            "BACKEND": "django.template.backends.django.DjangoTemplates",
+            "OPTIONS": {},
+        }
+    ]
+elif "OPTIONS" not in TEMPLATES[0]:  # type: ignore
+    TEMPLATES[0]["OPTIONS"] = {}  # type: ignore
+
 TEMPLATES[0]["OPTIONS"]["loaders"] = [  # type: ignore
     (
         "django.template.loaders.cached.Loader",

@@ -1,6 +1,6 @@
 import logging
 
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate, login
 from django.contrib.auth import views as auth_views
 from django.contrib.auth.decorators import (
     login_required,
@@ -10,15 +10,16 @@ from django.contrib.auth.views import (
     LogoutView,
 )
 from django.http import HttpRequest, HttpResponse
-from django.shortcuts import redirect
+from django.shortcuts import redirect, get_object_or_404
 from django.views.decorators.http import (
     require_http_methods,
 )
 from django.views.generic import TemplateView
 from django.views.generic.edit import FormView
-from rest_framework import status, views, viewsets
+from rest_framework import status, views, viewsets, generics
 from rest_framework.decorators import action, api_view
 from rest_framework.permissions import (
+    AllowAny,
     IsAuthenticated,
     IsAuthenticatedOrReadOnly,
 )
@@ -26,10 +27,12 @@ from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import (
     RefreshToken,
 )
+from rest_framework.views import APIView
 
 from .forms import UserRegistrationForm
 from .models import User
 from .serializers import (
+    LoginSerializer,
     ProfileSerializer,
     UserSerializer,
 )
@@ -269,3 +272,73 @@ class ModularPasswordResetView(auth_views.PasswordResetView):
 
 class ModularPasswordResetCompleteView(TemplateView):
     template_name = "profiles/password_reset_complete.html"
+
+
+class UserRetrieveUpdateAPIView(generics.RetrieveUpdateAPIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = UserSerializer
+
+    def get_object(self):
+        return self.request.user
+
+    def update(self, request, *args, **kwargs):
+        serializer = self.serializer_class(
+            request.user, data=request.data, partial=True
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class ProfileViewSet(viewsets.ModelViewSet):
+    queryset = User.objects.all()
+    serializer_class = ProfileSerializer
+    permission_classes = (IsAuthenticated,)
+    lookup_field = 'username'
+
+    @action(detail=True, methods=['post'])
+    def follow(self, request, username=None):
+        user_to_follow = self.get_object()
+        if user_to_follow == request.user:
+            return Response(
+                {'errors': {'message': ['You cannot follow yourself']}},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        request.user.following.add(user_to_follow)
+        return Response(self.get_serializer(user_to_follow).data)
+
+    @action(detail=True, methods=['post'])
+    def unfollow(self, request, username=None):
+        user_to_unfollow = self.get_object()
+        request.user.following.remove(user_to_unfollow)
+        return Response(self.get_serializer(user_to_unfollow).data)
+
+
+class UserCreateAPIView(generics.CreateAPIView):
+    queryset = User.objects.all()
+    serializer_class = UserSerializer
+    permission_classes = (AllowAny,)
+
+
+class UserLoginAPIView(APIView):
+    permission_classes = (AllowAny,)
+    serializer_class = LoginSerializer
+
+    def post(self, request):
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        email = serializer.validated_data['email']
+        password = serializer.validated_data['password']
+
+        user = authenticate(request, email=email, password=password)
+
+        if user is None:
+            return Response(
+                {'errors': {'error': ['Invalid email or password']}},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        login(request, user)
+        return Response(UserSerializer(user).data)

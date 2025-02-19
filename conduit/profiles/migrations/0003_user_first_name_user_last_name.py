@@ -7,7 +7,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         (
-            "profiles",
+            "conduit_profiles",
             "0002_alter_user_options_remove_user_date_joined_and_more",
         ),
     ]

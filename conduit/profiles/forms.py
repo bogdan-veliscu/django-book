@@ -1,20 +1,16 @@
 from django import forms
+from django.contrib.auth.forms import UserCreationForm
 
-from .models import User
+from conduit.profiles.models import User
 
 
-class UserRegistrationForm(forms.ModelForm):
-    password = forms.CharField(widget=forms.PasswordInput)
-    confirm_password = forms.CharField(widget=forms.PasswordInput)
+class UserRegistrationForm(UserCreationForm):
+    email = forms.EmailField(required=True)
+    name = forms.CharField(max_length=255, required=True)
 
     class Meta:
         model = User
-        fields = [
-            "name",
-            "email",
-            "password",
-            "confirm_password",
-        ]
+        fields = ('email', 'name', 'password1', 'password2')
 
     def clean_confirm_password(self):
         password = self.cleaned_data.get("password")

@@ -2,13 +2,18 @@
 """Django's command-line utility for administrative tasks."""
 import os
 import sys
+from pathlib import Path
 
+# Add the parent directory to the Python path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 def main():
     """Run administrative tasks."""
-    os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.development")
-    os.environ["DJANGO_SETTINGS_MODULE"] = "config.settings.development"
+    os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'config.settings.production')
     print("DJANGO_SETTINGS_MODULE at startup:", os.getenv("DJANGO_SETTINGS_MODULE"))
+    print("PYTHONPATH:", os.getenv("PYTHONPATH"))
+    print("Current working directory:", os.getcwd())
+    print("sys.path:", sys.path)
 
     try:
         from django.core.management import (

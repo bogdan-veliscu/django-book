@@ -70,6 +70,7 @@ class Migration(migrations.Migration):
                 "indexes": [
                     models.Index(fields=["-updated", "slug"], name="article_index")
                 ],
+                "app_label": "conduit_articles",
             },
         ),
     ]

@@ -1,24 +1,53 @@
 import logging
 
-from profiles.models import User
+from django.contrib.auth import authenticate
 from rest_framework import serializers
+from rest_framework_simplejwt.tokens import RefreshToken
+
+from conduit.profiles.models import User
 
 logger = logging.getLogger(__name__)
 
 
 class UserSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+    token = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ("name", "email", "password", "bio", "image")
-        extra_kwargs = {"password": {"write_only": True}}
+        fields = ('email', 'name', 'password', 'token')
+
+    def get_token(self, obj):
+        refresh = RefreshToken.for_user(obj)
+        return str(refresh.access_token)
 
     def create(self, validated_data):
-        password = validated_data.pop("password")
-        user = User(**validated_data)
-        user.set_password(password)
-        user.save()
+        user = User.objects.create_user(
+            email=validated_data['email'],
+            name=validated_data['name'],
+            password=validated_data['password']
+        )
         return user
+
+
+class LoginSerializer(serializers.Serializer):
+    email = serializers.EmailField()
+    password = serializers.CharField()
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+    following = serializers.SerializerMethodField()
+
+    class Meta:
+        model = User
+        fields = ('username', 'bio', 'image', 'following')
+        read_only_fields = ('username',)
+
+    def get_following(self, instance):
+        request = self.context.get('request', None)
+        if request is None or not request.user.is_authenticated:
+            return False
+        return request.user.following.filter(pk=instance.pk).exists()
 
     def update(self, instance, validated_data):
         logger.info(f" # UPDATE : bio: {instance.bio}, image: {instance.image}")
@@ -36,21 +65,3 @@ class UserSerializer(serializers.ModelSerializer):
 
         instance.save()
         return instance
-
-
-class ProfileSerializer(serializers.ModelSerializer):
-    following = serializers.SerializerMethodField()
-
-    class Meta:
-        model = User
-        fields = ("name", "bio", "image", "following")
-
-    def get_following(self, obj):
-        request = self.context.get("request", None)
-        if request is None:
-            return False
-
-        if not request.user.is_authenticated:
-            return False
-
-        return obj.followers.filter(pk=request.user.id).exists()

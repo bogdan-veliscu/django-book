@@ -1,82 +1,84 @@
+version: "3.8"
+
 services:
   app:
     build:
       context: .
       dockerfile: Dockerfile
-      target: app
+      # image: conduit-api:latest
+      args:
+        INSTALL_DEV: false
+    restart: unless-stopped
+    expose:
+      - "8000"
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings.production
+      - PYTHONPATH=/code
+    env_file: .env.prod
     volumes:
       - static_volume:/code/conduit/static
       - media_volume:/code/conduit/media
-    environment:
-      - DJANGO_SETTINGS_MODULE=config.settings.production
-      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@${POSTGRES_HOST:-db}:${POSTGRES_PORT:-5432}/${POSTGRES_DB}
-      - SECRET_KEY=${DJANGO_SECRET_KEY}
-      - DEBUG=0
-      - ALLOWED_HOSTS=${DOMAIN},localhost,127.0.0.1
-      - POSTGRES_HOST=${POSTGRES_HOST:-db}
-      - POSTGRES_PORT=${POSTGRES_PORT:-5432}
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - logs_volume:/code/conduit/logs
     depends_on:
-      db:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      - redis
+      - postgres
+    networks:
+      - app-network
+    command: uvicorn config.asgi:application --host 0.0.0.0 --port 8000 --workers 4
 
-  frontend:
-    image: ghcr.io/bogdan-veliscu/conduit-frontend:latest
-    platform: linux/arm64
-    environment:
-      - NEXT_PUBLIC_API_URL=https://${DOMAIN}/api
-      - NEXTAUTH_URL=https://${DOMAIN}
-      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
-    depends_on:
-      app:
-        condition: service_healthy
-
-  db:
+  postgres:
     image: postgres:15
+    restart: unless-stopped
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+    env_file: .env.prod
+    networks:
+      - app-network
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+    networks:
+      - app-network
 
   nginx:
-    image: nginx:1.25-alpine
-    platform: linux/arm64
+    image: nginx:alpine
+    restart: unless-stopped
     ports:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx:/etc/nginx/conf.d
       - static_volume:/code/conduit/static
       - media_volume:/code/conduit/media
+      - ./nginx/conf.d/:/etc/nginx/conf.d/
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
     depends_on:
       - app
-      - frontend
+    networks:
+      - app-network
 
   certbot:
     image: certbot/certbot:latest
-    platform: linux/arm64
+    restart: unless-stopped
     volumes:
       - ./certbot/conf:/etc/letsencrypt
       - ./certbot/www:/var/www/certbot
-    command: certonly --webroot -w /var/www/certbot --keep-until-expiring --agree-tos --email ${CERTBOT_EMAIL} -d ${DOMAIN} --non-interactive
+    depends_on:
+      - nginx
+    networks:
+      - app-network
+    entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
 
 volumes:
   postgres_data:
+  redis_data:
   static_volume:
   media_volume:
+  logs_volume:
+
+networks:
+  app-network:
+    driver: bridge

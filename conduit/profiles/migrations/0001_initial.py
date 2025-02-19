@@ -111,6 +111,7 @@ class Migration(migrations.Migration):
                 "verbose_name": "user",
                 "verbose_name_plural": "users",
                 "abstract": False,
+                "app_label": "conduit_profiles",
             },
         ),
     ]

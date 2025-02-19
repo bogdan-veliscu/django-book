@@ -1,45 +1,30 @@
 import logging
 
-from articles.filters import ArticleFilter
-from articles.models import Article
-from articles.serializers import (
-    ArticleSerializer,
-    TagSerializer,
-)
-from comments.forms import CommentForm
-from comments.models import Comment
-from core.mixins import CachePageMixin
-from django.contrib.auth.decorators import (
-    login_required,
-)
+from django.contrib.auth.decorators import login_required
 from django.contrib.postgres.search import SearchVector
 from django.core.cache import cache
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, render
 from django.template.response import TemplateResponse
 from django.urls import reverse_lazy
-from django.views.decorators.http import (
-    require_http_methods,
-)
+from django.views.decorators.http import require_http_methods
 from django.views.generic import DetailView, ListView
 from django.views.generic.edit import CreateView
-from profiles.models import User
-from rest_framework import (
-    mixins,
-    status,
-    viewsets,
-)
+from rest_framework import generics, mixins, permissions, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.parsers import (
-    FormParser,
-    JSONParser,
-    MultiPartParser,
-)
-from rest_framework.permissions import (
-    IsAuthenticated,
-    IsAuthenticatedOrReadOnly,
-)
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from taggit.models import Tag
+
+from conduit.articles.filters import ArticleFilter
+from conduit.articles.models import Article
+from conduit.articles.serializers import ArticleSerializer, TagSerializer
+from conduit.comments.forms import CommentForm
+from conduit.comments.models import Comment
+from conduit.core.mixins import CachePageMixin
+from conduit.profiles.models import User
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)

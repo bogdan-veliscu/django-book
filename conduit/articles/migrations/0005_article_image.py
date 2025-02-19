@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("articles", "0004_article_metadata_alter_article_created"),
+        ("conduit_articles", "0004_article_metadata_alter_article_created"),
     ]
 
     operations = [

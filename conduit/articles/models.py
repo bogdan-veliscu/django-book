@@ -1,4 +1,5 @@
 import io
+import logging
 
 import markdown
 from core.models import SoftDeletableModel
@@ -14,6 +15,14 @@ from django.urls import reverse
 from django.utils.text import slugify
 from PIL import Image
 from taggit.managers import TaggableManager
+
+from conduit.profiles.models import User
+from conduit.comments.models import Comment
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+logger.debug("Loading Article model module")
 
 User = get_user_model()
 
@@ -52,53 +61,41 @@ class ArticleManager(models.Manager):
 
 
 class Article(SoftDeletableModel):
-    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    title = models.CharField(max_length=150, unique=True)
+    class Meta:
+        app_label = 'conduit_articles'
+        
+    logger.debug(f"Registering Article model with app_label: {Meta.app_label}")
+    logger.debug(f"Module path: {__name__}")
+
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='articles')
+    title = models.CharField(max_length=255)
+    slug = models.SlugField(max_length=255, unique=True, blank=True)
     summary = models.TextField(blank=True)
-    content = models.TextField(blank=True)
-    image = models.ImageField(upload_to="article_images/", blank=True, null=True)
-
-    created = models.DateTimeField(auto_now_add=True, db_index=True)
-    updated = models.DateTimeField(auto_now_add=True)
-
+    content = models.TextField()
+    image = models.ImageField(upload_to='articles/', null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     status = models.CharField(
         max_length=10,
         choices=[("draft", "Draft"), ("published", "Published")],
         default="draft",
     )
     comments = models.ManyToManyField(
-        settings.AUTH_USER_MODEL, through="comments.Comment", related_name="comments"
+        User,
+        through='conduit_comments.Comment',
+        related_name='commented_articles'
     )
     tags = TaggableManager(blank=True)
-    favorites = models.ManyToManyField(
-        settings.AUTH_USER_MODEL, blank=True, related_name="favorites"
-    )
-    slug = models.SlugField(unique=True, max_length=250, db_index=True)
+    favorites = models.ManyToManyField(User, related_name='favorite_articles', blank=True)
 
-    metadata = models.JSONField(default=dict)
-
-    objects = ArticleManager()
-
-    @property
-    def cache_key(self):
-        return f"article_{self.slug}"
+    logger.debug("Article model class defined")
 
     def __str__(self):
-        return f"<Article: {self.title}>"
-
-    class Meta:
-        ordering = ["-created"]
-        indexes = [
-            models.Index(fields=["-updated", "slug"], name="article_index"),
-            models.Index(
-                fields=["author", "-created"],
-                condition=models.Q(status="published"),
-                name="author_published_articles",
-            ),
-        ]
+        return self.title
 
     def save(self, *args, **kwargs):
-        self.slug = slugify(self.title)
+        if not self.slug:
+            self.slug = slugify(self.title)
         if self.image:
             pil_image = Image.open(self.image)
             if pil_image.mode in ("RGBA", "P"):
@@ -128,6 +125,28 @@ class Article(SoftDeletableModel):
 
     def as_markdown(self):
         return markdown.markdown(self.content, safe_mode="escape")
+
+    @property
+    def favorites_count(self):
+        return self.favorites.count()
+
+    @property
+    def comments_count(self):
+        return self.comments.count()
+
+    def is_favorited_by(self, user):
+        return self.favorites.filter(id=user.id).exists()
+
+    def add_favorite(self, user):
+        if not self.is_favorited_by(user):
+            self.favorites.add(user)
+
+    def remove_favorite(self, user):
+        if self.is_favorited_by(user):
+            self.favorites.remove(user)
+
+    def is_published(self):
+        return self.status == "published"
 
 
 def create_model(
