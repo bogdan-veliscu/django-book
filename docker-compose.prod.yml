@@ -22,6 +22,9 @@ services:
       - POSTGRES_DB=${POSTGRES_DB}
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - DOMAIN=${DOMAIN}
+      - ALLOWED_HOSTS=${DOMAIN}
+      - REDIS_HOST=redis
     expose:
       - "8000"
     depends_on:
@@ -38,7 +41,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-    command: gunicorn config.wsgi:application --bind 0.0.0.0:8000 --workers 4 --worker-class uvicorn.workers.UvicornWorker --max-requests 1000 --max-requests-jitter 50 --access-logfile - --error-logfile -
+    command: gunicorn conduit.config.asgi:application --bind 0.0.0.0:8000 --workers 4 --worker-class uvicorn.workers.UvicornWorker --max-requests 1000 --max-requests-jitter 50 --access-logfile - --error-logfile -
 
   frontend:
     image: ghcr.io/bogdan-veliscu/conduit-frontend:latest
@@ -68,8 +71,8 @@ services:
     restart: unless-stopped
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./postgres/postgresql.conf:/etc/postgresql/postgresql.conf
-      - ./postgres/ssl:/etc/postgresql/ssl
+      - ./postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
+      - ./postgres/ssl/postgresql:/etc/postgresql/ssl:ro
     command: postgres -c 'config_file=/etc/postgresql/postgresql.conf'
     environment:
       - POSTGRES_DB=${POSTGRES_DB}
@@ -90,7 +93,7 @@ services:
       - "80:80"
       - "443:443"
     volumes:
-      - ./nginx/conf.d:/etc/nginx/conf.d
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
       - static_volume:/code/conduit/staticfiles:ro
       - media_volume:/code/conduit/media:ro
       - ./certbot/conf:/etc/letsencrypt:ro

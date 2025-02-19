@@ -107,3 +107,31 @@ clean/py: ## remove Python test, coverage, file artifacts, and compiled message 
 
 start:
 	uvicorn conduit.config.asgi:application --host 0.0.0.0 --port 8000
+
+## [MONITORING]
+monitoring-up: ## Start monitoring services
+	docker compose -f docker-compose.monitoring.yml up -d
+
+monitoring-down: ## Stop monitoring services
+	docker compose -f docker-compose.monitoring.yml down
+
+## [BACKUP]
+backup-up: ## Start backup service
+	docker compose -f docker-compose.backup.yml up -d
+
+backup-down: ## Stop backup service
+	docker compose -f docker-compose.backup.yml down
+
+backup-now: ## Trigger an immediate backup
+	docker compose -f docker-compose.backup.yml exec backup /app/backup.sh
+
+backup-list: ## List available backups
+	docker compose -f docker-compose.backup.yml exec backup ls -la /backups
+
+backup-restore: ## Restore from backup (requires BACKUP_FILE env var)
+	@if [ -z "$(BACKUP_FILE)" ]; then \
+		echo "Error: BACKUP_FILE environment variable not set"; \
+		echo "Usage: make backup-restore BACKUP_FILE=db_20240219_120000.sql.gz"; \
+		exit 1; \
+	fi
+	docker compose -f docker-compose.backup.yml exec backup /app/restore.sh $(BACKUP_FILE)

@@ -27,24 +27,43 @@ sys.exit(0)
 END
 }
 
+# Function to check if Redis is ready
+redis_ready() {
+    python << END
+import sys
+import redis
+try:
+    r = redis.Redis(
+        host="${REDIS_HOST:-redis}",
+        port="${REDIS_PORT:-6379}",
+        db=0
+    )
+    r.ping()
+except redis.ConnectionError:
+    sys.exit(1)
+sys.exit(0)
+END
+}
+
 # Wait for PostgreSQL
 until postgres_ready; do
     log "PostgreSQL is unavailable - sleeping"
     sleep 1
 done
-log "PostgreSQL is up - executing command"
+log "PostgreSQL is up"
+
+# Wait for Redis
+until redis_ready; do
+    log "Redis is unavailable - sleeping"
+    sleep 1
+done
+log "Redis is up"
 
 # Ensure we're in the right directory
 cd /code/conduit
 
-# Update PYTHONPATH to include the project root and the conduit directory
-export PYTHONPATH=/code:/code/conduit:${PYTHONPATH:-}
-
 # Create necessary directories
 mkdir -p staticfiles media logs
-
-# Set Django settings module
-export DJANGO_SETTINGS_MODULE=config.settings.production
 
 # Apply database migrations
 log "Applying database migrations..."
@@ -57,13 +76,11 @@ python manage.py collectstatic --noinput --clear
 # Start the application
 log "Starting application..."
 if [ "$1" = "uvicorn" ]; then
-    cd /code  # Ensure we're in the root directory for proper module resolution
     exec uvicorn conduit.config.asgi:application \
         --host 0.0.0.0 \
         --port ${PORT:-8000} \
         --workers ${WORKERS:-4} \
-        --log-level info \
-        --reload-dir /code/conduit
+        --log-level info
 else
     exec "$@"
 fi
