@@ -71,7 +71,6 @@ services:
     restart: unless-stopped
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - postgres_certs:/etc/postgresql/ssl:ro
       - ./postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
     command: postgres -c 'config_file=/etc/postgresql/postgresql.conf'
     environment:
@@ -110,42 +109,8 @@ services:
       - ./certbot/www:/var/www/certbot
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
 
-  postgres-certs:
-    image: postgres:15
-    restart: "no"
-    volumes:
-      - postgres_certs:/ssl
-    user: "70:70"  # postgres user
-    entrypoint: |
-      bash -c '
-      echo "Debug: Current user and group" &&
-      id &&
-      echo "Debug: Creating temporary directory" &&
-      TEMP_DIR=$(mktemp -d) &&
-      echo "Debug: Temporary directory permissions" &&
-      ls -la $TEMP_DIR &&
-      echo "Debug: Generating certificate in temporary directory" &&
-      openssl req -new -x509 -days 365 -nodes \
-        -out $TEMP_DIR/server.crt \
-        -keyout $TEMP_DIR/server.key \
-        -subj "/C=US/ST=State/L=City/O=Organization/CN=localhost" &&
-      echo "Debug: Setting temporary file permissions" &&
-      chmod 600 $TEMP_DIR/server.key &&
-      chmod 644 $TEMP_DIR/server.crt &&
-      echo "Debug: SSL mount point permissions" &&
-      ls -la /ssl &&
-      echo "Debug: Copying files to final location" &&
-      cp $TEMP_DIR/server.key /ssl/ &&
-      cp $TEMP_DIR/server.crt /ssl/ &&
-      echo "Debug: Cleaning up temporary directory" &&
-      rm -rf $TEMP_DIR &&
-      echo "Debug: Final SSL directory contents" &&
-      ls -la /ssl/'
-    profiles: ["setup"]
-
 volumes:
   postgres_data:
-  postgres_certs:  # New volume for SSL certificates
   static_volume:
   media_volume:
   redis_data:
