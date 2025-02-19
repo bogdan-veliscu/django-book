@@ -71,8 +71,8 @@ services:
     restart: unless-stopped
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - postgres_certs:/etc/postgresql/ssl:ro
       - ./postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
-      - ./postgres/ssl:/etc/postgresql:ro
     command: postgres -c 'config_file=/etc/postgresql/postgresql.conf'
     environment:
       - POSTGRES_DB=${POSTGRES_DB}
@@ -110,8 +110,28 @@ services:
       - ./certbot/www:/var/www/certbot
     entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
 
+  postgres-certs:
+    image: postgres:15
+    restart: "no"
+    volumes:
+      - postgres_certs:/ssl
+    user: "70:70"  # postgres user
+    entrypoint: |
+      bash -c '
+      mkdir -p /ssl &&
+      if [ ! -f /ssl/server.key ]; then
+        openssl req -new -x509 -days 365 -nodes \
+          -out /ssl/server.crt \
+          -keyout /ssl/server.key \
+          -subj "/C=US/ST=State/L=City/O=Organization/CN=localhost" &&
+        chmod 600 /ssl/server.key &&
+        chmod 644 /ssl/server.crt
+      fi'
+    profiles: ["setup"]
+
 volumes:
   postgres_data:
+  postgres_certs:  # New volume for SSL certificates
   static_volume:
   media_volume:
   redis_data:
