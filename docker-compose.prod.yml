@@ -50,6 +50,8 @@ services:
       - NEXT_PUBLIC_API_URL=https://${DOMAIN}/api
       - NEXTAUTH_URL=https://${DOMAIN}
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+    expose:
+      - "3000"
     depends_on:
       app:
         condition: service_healthy
