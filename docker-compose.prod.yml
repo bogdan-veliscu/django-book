@@ -72,7 +72,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./postgres/postgresql.conf:/etc/postgresql/postgresql.conf:ro
-      - ./postgres/ssl/postgresql:/etc/postgresql/ssl:ro
+      - ./postgres/ssl:/etc/postgresql:ro
     command: postgres -c 'config_file=/etc/postgresql/postgresql.conf'
     environment:
       - POSTGRES_DB=${POSTGRES_DB}
