@@ -45,7 +45,6 @@ services:
 
   frontend:
     image: ghcr.io/bogdan-veliscu/conduit-frontend:latest
-    platform: linux/arm64
     environment:
       - NEXT_PUBLIC_API_URL=https://${DOMAIN}/api
       - NEXTAUTH_URL=https://${DOMAIN}
