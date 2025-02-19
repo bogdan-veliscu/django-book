@@ -13,3 +13,4 @@ htmlcov
 conduit/media
 .DS_Store
 logs/django.log
+logs/django.log
