@@ -1,0 +1,14 @@
+server {
+    listen 80;
+    listen [::]:80;
+    server_name ${DOMAIN} www.${DOMAIN};
+
+    location /.well-known/acme-challenge/ {
+        root /var/www/certbot;
+    }
+
+    location / {
+        return 200 'Ready for SSL certificate acquisition';
+        add_header Content-Type text/plain;
+    }
+}

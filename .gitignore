@@ -15,3 +15,5 @@ conduit/media
 logs/django.log
 logs/django.log
 logs/django.log
+logs/django.log
+/logs/

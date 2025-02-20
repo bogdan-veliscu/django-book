@@ -1,0 +1,12 @@
+
+services:
+  nginx:
+    image: nginx:1.25-alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/templates:/etc/nginx/templates:ro
+      - ./certbot/www:/var/www/certbot:ro
+    environment:
+      - DOMAIN=brandfocus.ai
+    command: sh -c "envsubst \"\\$$DOMAIN\" < /etc/nginx/templates/init.conf.template > /etc/nginx/conf.d/default.conf && nginx -g \"daemon off;\""

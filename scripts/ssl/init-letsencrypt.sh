@@ -3,58 +3,79 @@
 # Exit on error
 set -e
 
-# Domain names
-domains=(brandfocus.ai www.brandfocus.ai)
+# Configuration
+domain="brandfocus.ai"
 email="bogdan@codeswiftr.com"
-staging=0 # Set to 1 if you want to test with Let's Encrypt staging
+staging=0
 
-# Create directories for certbot
-mkdir -p certbot/conf/live/brandfocus.ai
-mkdir -p certbot/www
+# Create required directories with proper permissions
+sudo mkdir -p certbot/www certbot/conf/live/$domain
+sudo mkdir -p nginx/conf.d nginx/templates
+sudo chown -R $USER:$USER certbot nginx
 
-# Stop any running containers
-docker compose -f docker-compose.prod.yml down
-
-# Create temporary Nginx config for SSL acquisition
-cat > nginx/conf.d/default.conf << EOF
+# Create temporary Nginx config template for SSL acquisition
+cat > nginx/templates/init.conf.template << 'EOF'
 server {
     listen 80;
     listen [::]:80;
-    server_name ${domains[0]} www.${domains[0]};
+    server_name ${DOMAIN};
 
     location /.well-known/acme-challenge/ {
         root /var/www/certbot;
     }
 
     location / {
-        return 200 'Ready for SSL certificate acquisition';
+        return 200 'Ready for SSL acquisition';
         add_header Content-Type text/plain;
     }
 }
 EOF
 
-# Start nginx with minimal config
-docker compose -f docker-compose.prod.yml up --force-recreate -d nginx
+# Create temporary docker-compose file for SSL setup
+cat > docker-compose.ssl.yml << EOF
+services:
+  nginx:
+    image: nginx:1.25-alpine
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx/templates:/etc/nginx/templates:ro
+      - ./certbot/www:/var/www/certbot:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d
+    environment:
+      - DOMAIN=$domain
+    command: sh -c "envsubst '\$\$DOMAIN' < /etc/nginx/templates/init.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"
 
-# Wait for nginx to start
+  certbot:
+    image: certbot/certbot:latest
+    volumes:
+      - ./certbot/conf:/etc/letsencrypt
+      - ./certbot/www:/var/www/certbot
+EOF
+
+# Stop any running containers
+docker compose -f docker-compose.prod.yml down || true
+
+# Start nginx with minimal config
+docker compose -f docker-compose.ssl.yml up -d nginx
+
 echo "Waiting for nginx to start..."
 sleep 5
 
-# Get SSL certificate
-docker compose -f docker-compose.prod.yml run --rm certbot certonly \
+# Request the certificate
+docker compose -f docker-compose.ssl.yml run --rm certbot certonly \
     --webroot --webroot-path=/var/www/certbot \
     --email $email \
     --agree-tos --no-eff-email \
     ${staging:+"--staging"} \
-    ${domains[@]/#/-d }
+    -d $domain
 
-# Stop containers
-docker compose -f docker-compose.prod.yml down
+# Clean up
+docker compose -f docker-compose.ssl.yml down
+rm docker-compose.ssl.yml
 
-# Remove temporary config
-rm nginx/conf.d/default.conf
+echo "SSL certificates obtained successfully!"
+echo "Starting production services..."
 
-# Start all services with HTTPS
-docker compose -f docker-compose.prod.yml up -d
-
-echo "SSL certificates obtained successfully!" 
+# Start production services
+docker compose -f docker-compose.prod.yml up -d 
