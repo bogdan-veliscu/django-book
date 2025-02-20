@@ -51,6 +51,7 @@ services:
       - .env.prod
     environment:
       - NEXT_PUBLIC_API_URL=https://${DOMAIN}/api
+      - NEXT_PUBLIC_BACKEND_URL=https://${DOMAIN}
       - NEXTAUTH_URL=https://${DOMAIN}
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
       - NEXTAUTH_URL_INTERNAL=http://frontend:3000
@@ -59,10 +60,11 @@ services:
       - NEXT_PUBLIC_VERCEL_URL=${DOMAIN}
       - NEXT_PUBLIC_APP_URL=https://${DOMAIN}
       - NEXTAUTH_TRUST_HOST=true
+      - NODE_ENV=production
     expose:
       - "3000"
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1"]
+      test: ["CMD", "curl", "-f", "http://localhost:3000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -76,12 +78,19 @@ services:
     restart: unless-stopped
     volumes:
       - redis_data:/data
-    command: redis-server --appendonly yes
+    command: redis-server --appendonly yes --maxmemory 512mb --maxmemory-policy allkeys-lru
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 5s
       retries: 3
+      start_period: 30s
+    sysctls:
+      net.core.somaxconn: 1024
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
 
   db:
     image: postgres:15

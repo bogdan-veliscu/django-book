@@ -50,41 +50,48 @@ MEDIA_ROOT = '/code/conduit/media/'
 
 # Security settings
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-SESSION_COOKIE_SECURE = False  # Temporarily disabled for debugging
-CSRF_COOKIE_SECURE = False  # Temporarily disabled for debugging
-SECURE_SSL_REDIRECT = False  # Temporarily disabled for debugging
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
+SECURE_SSL_REDIRECT = True
 
 # HSTS settings
-SECURE_HSTS_SECONDS = 0  # Temporarily disabled for debugging
-SECURE_HSTS_INCLUDE_SUBDOMAINS = False  # Temporarily disabled for debugging
-SECURE_HSTS_PRELOAD = False  # Temporarily disabled for debugging
+SECURE_HSTS_SECONDS = 31536000  # 1 year
+SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+SECURE_HSTS_PRELOAD = True
 
 # Content security policy
 SECURE_CONTENT_TYPE_NOSNIFF = True
 SECURE_BROWSER_XSS_FILTER = True
 X_FRAME_OPTIONS = 'DENY'
 
-# Allowed hosts - Updated for brandfocus.ai
-ALLOWED_HOSTS = ['*']  # Allow all hosts temporarily for debugging
-USE_X_FORWARDED_HOST = True  # Trust X-Forwarded-Host header from proxy
-
-print(f"ALLOWED_HOSTS in production.py: {ALLOWED_HOSTS}")
+# Allowed hosts
+ALLOWED_HOSTS = [
+    'brandfocus.ai',
+    'www.brandfocus.ai',
+    'localhost',
+    '127.0.0.1',
+]
 
 # CORS settings
-CORS_ALLOW_ALL_ORIGINS = True  # Temporarily enabled for debugging
+CORS_ALLOW_ALL_ORIGINS = False
 CORS_ALLOWED_ORIGINS = [
     "https://brandfocus.ai",
     "https://www.brandfocus.ai",
-    "https://api.brandfocus.ai",
-    "http://localhost:3000",
-    "http://localhost:8000",
+]
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_METHODS = [
+    'DELETE',
+    'GET',
+    'OPTIONS',
+    'PATCH',
+    'POST',
+    'PUT',
 ]
 
 # Security settings
 CSRF_TRUSTED_ORIGINS = [
     "https://brandfocus.ai",
     "https://www.brandfocus.ai",
-    "https://api.brandfocus.ai",
 ]
 
 # Cache settings
@@ -92,8 +99,28 @@ CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.redis.RedisCache',
         'LOCATION': os.getenv('REDIS_URL', 'redis://redis:6379/0'),
+        'OPTIONS': {
+            'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+            'PARSER_CLASS': 'redis.connection.HiredisParser',
+            'CONNECTION_POOL_CLASS': 'redis.BlockingConnectionPool',
+            'CONNECTION_POOL_CLASS_KWARGS': {
+                'max_connections': 50,
+                'timeout': 20,
+            },
+            'RETRY_ON_TIMEOUT': True,
+            'SOCKET_CONNECT_TIMEOUT': 5,
+            'SOCKET_TIMEOUT': 5,
+        },
+        'KEY_PREFIX': 'conduit',
     }
 }
+
+# Redis as session backend
+SESSION_ENGINE = 'django.contrib.sessions.backends.cache'
+SESSION_CACHE_ALIAS = 'default'
+
+# Cache time to live is 15 minutes
+CACHE_TTL = 60 * 15
 
 # Email settings
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
@@ -162,9 +189,17 @@ print(f"Log file path: {LOGGING['handlers']['file']['filename']}")
 
 DATA_UPLOAD_MAX_MEMORY_SIZE = 10485760  # 10 MB
 
-# INSTALLED_APPS += ['corsheaders']  # Removed duplicate entry - already in base.py
-
-MIDDLEWARE = ['corsheaders.middleware.CorsMiddleware'] + MIDDLEWARE
+# Middleware order is important
+MIDDLEWARE = [
+    'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+    'django.contrib.sessions.middleware.SessionMiddleware',
+    'django.middleware.common.CommonMiddleware',
+    'django.middleware.csrf.CsrfViewMiddleware',
+    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'django.contrib.messages.middleware.MessageMiddleware',
+    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
 
 # Rate limiting
 RATELIMIT_ENABLE = True
