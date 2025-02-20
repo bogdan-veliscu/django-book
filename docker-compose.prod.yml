@@ -135,10 +135,10 @@ services:
       echo "Using domain: $$DOMAIN" &&
       if [ -f /etc/letsencrypt/live/brandfocus.ai/fullchain.pem ]; then
         echo "Found SSL certificates, using HTTPS config" &&
-        envsubst "$$DOMAIN" < /etc/nginx/templates/https.conf.template > /tmp/nginx/default.conf;
+        envsubst '$$domain' < /etc/nginx/templates/https.conf.template > /tmp/nginx/default.conf;
       else
         echo "No SSL certificates found, using HTTP config" &&
-        envsubst "$$DOMAIN" < /etc/nginx/templates/http.conf.template > /tmp/nginx/default.conf;
+        envsubst '$$domain' < /etc/nginx/templates/http.conf.template > /tmp/nginx/default.conf;
       fi &&
       echo "Generated Nginx config:" &&
       cat /tmp/nginx/default.conf &&

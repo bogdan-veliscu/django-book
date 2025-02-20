@@ -10,7 +10,7 @@ upstream frontend {
 server {
     listen 80;
     listen [::]:80;
-    server_name ${DOMAIN} www.${DOMAIN};
+    server_name $domain www.$domain;
 
     # Allow Let's Encrypt validation
     location /.well-known/acme-challenge/ {
