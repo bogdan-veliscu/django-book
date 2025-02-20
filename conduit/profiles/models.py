@@ -39,6 +39,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     bio: str = models.TextField(blank=True)
     image: str | None = models.URLField(null=True, blank=True)
     is_active: bool = models.BooleanField(default=True)
+    is_staff: bool = models.BooleanField(default=False)
 
     EMAIL_FIELD = "email"
     USERNAME_FIELD = "email"
