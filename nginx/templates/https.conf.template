@@ -10,12 +10,12 @@ upstream frontend {
 server {
     listen 443 ssl http2;
     listen [::]:443 ssl http2;
-    server_name ${DOMAIN};
+    server_name ${DOMAIN} www.${DOMAIN};
 
     # SSL configuration
-    ssl_certificate /etc/letsencrypt/live/brandfocus.ai/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/brandfocus.ai/privkey.pem;
-    ssl_trusted_certificate /etc/letsencrypt/live/brandfocus.ai/chain.pem;
+    ssl_certificate /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
+    ssl_trusted_certificate /etc/letsencrypt/live/${DOMAIN}/chain.pem;
 
     # SSL optimization
     ssl_session_timeout 1d;
@@ -37,7 +37,7 @@ server {
     add_header X-Content-Type-Options nosniff;
     add_header X-XSS-Protection "1; mode=block";
     add_header Referrer-Policy "no-referrer-when-downgrade";
-    add_header Content-Security-Policy "default-src 'self' https: data: 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https://${DOMAIN} wss://${DOMAIN} https://${DOMAIN}/api/* http://localhost:* http://127.0.0.1:*; font-src 'self' https: data:; img-src 'self' https: data:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';" always;
+    add_header Content-Security-Policy "default-src 'self' https: data: 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https://${DOMAIN} wss://${DOMAIN} https://${DOMAIN}/api/* http://localhost:* http://127.0.0.1:* https://api.dicebear.com; font-src 'self' https: data:; img-src 'self' https: data: https://api.dicebear.com; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';" always;
 
     # Frontend proxy
     location / {
@@ -51,6 +51,8 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_cache_bypass $http_upgrade;
         proxy_buffering off;
+        proxy_read_timeout 300s;
+        proxy_connect_timeout 75s;
     }
 
     # API proxy
@@ -64,6 +66,8 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_cache_bypass $http_upgrade;
+        proxy_read_timeout 300s;
+        proxy_connect_timeout 75s;
     }
 
     # Static files
