@@ -46,10 +46,10 @@ def health_check(request):
 
 urlpatterns = [
     path("admin/", admin.site.urls),
-    path("", include("articles.urls")),
-    path("", include("profiles.urls")),
-    path("", include("comments.urls")),
-    path('health/', health_check),
+    path(f"{api_prefix}/", include("articles.urls")),
+    path(f"{api_prefix}/", include("profiles.urls")),
+    path(f"{api_prefix}/", include("comments.urls")),
+    path(f"{api_prefix}/health/", health_check),
 ]
 
 if settings.DEBUG:
