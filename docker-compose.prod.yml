@@ -58,7 +58,7 @@ services:
     expose:
       - "3000"
     healthcheck:
-      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1"]
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -129,6 +129,8 @@ services:
       echo "Generated Nginx config:" &&
       cat /tmp/nginx/default.conf &&
       cp /tmp/nginx/default.conf /etc/nginx/conf.d/ &&
+      echo "Starting Nginx..." &&
+      nginx -t &&
       nginx -g "daemon off;"'
     depends_on:
       app:
