@@ -14,6 +14,8 @@ from django.middleware.gzip import (
     GZipMiddleware as DjangoGZipMiddleware,
 )
 from django.utils.deprecation import MiddlewareMixin
+from asgiref.sync import sync_to_async
+from django.utils.decorators import sync_and_async_middleware
 
 logger = logging.getLogger(__name__)
 
@@ -42,30 +44,29 @@ class CustomAuthenticationMiddleware(AuthenticationMiddleware):
         super().process_request(request)
 
 
-class GlobalCacheMiddleware(MiddlewareMixin):
+@sync_and_async_middleware
+class GlobalCacheMiddleware:
     CACHE_TIME = GLOBAL_CACHE_TIME  # Cache time in seconds (5 minutes)
 
-    def process_request(self, request):
-        # Skip caching for admin or authenticated users
-        if (
-            request.path.startswith("/admin/")
-            or request.user.is_authenticated
-            or request.method != "GET"
-        ):
-            return None
+    async def __call__(self, request):
+        if request.path.startswith("/admin/") or request.user.is_authenticated or request.method != "GET":
+            return await self.get_response(request)
 
         cache_key = f"cache:{request.get_full_path()}"
-        response = cache.get(cache_key)
-        if response:
-            return response
+        cached_response = await sync_to_async(cache.get)(cache_key)
+        
+        if cached_response:
+            return cached_response
 
-    def process_response(self, request, response):
-        if request.path.startswith("/admin/") or request.user.is_authenticated:
-            return response
+        response = await self.get_response(request)
 
-        cache_key = f"cache:{request.get_full_path()}"
-        cache.set(cache_key, response, self.CACHE_TIME)
+        if not request.path.startswith("/admin/") and not request.user.is_authenticated:
+            await sync_to_async(cache.set)(cache_key, response, self.CACHE_TIME)
+
         return response
+
+    def __init__(self, get_response):
+        self.get_response = get_response
 
 
 class CustomGZipMiddleware(DjangoGZipMiddleware):
