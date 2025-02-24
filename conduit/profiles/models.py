@@ -34,22 +34,18 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractUser):
-
+    # Make username nullable and not required
+    username = models.CharField(
+        max_length=150,
+        unique=True,
+        null=True,
+        blank=True
+    )
+    
     email = models.EmailField(unique=True)
     name: str = models.CharField("Name", max_length=60)
     bio: str = models.TextField(blank=True)
     image: str | None = models.URLField(null=True, blank=True)
-
-    EMAIL_FIELD = "email"
-    USERNAME_FIELD = "email"
-    REQUIRED_FIELDS = []
-
-    def __str__(self):
-        return f"<User: {self.email}>"
-
-    def get_full_name(self) -> str:
-        return self.name
-
     linkedin_url: str = models.URLField(blank=True)
 
     followers = models.ManyToManyField(
@@ -58,4 +54,20 @@ class User(AbstractUser):
         symmetrical=False
     )
 
+    EMAIL_FIELD = "email"
+    USERNAME_FIELD = "email"
+    REQUIRED_FIELDS = []  # Remove 'username' from required fields
+
     objects = UserManager()
+
+    def __str__(self):
+        return f"<User: {self.email}>"
+
+    def get_full_name(self) -> str:
+        return self.name
+
+    def save(self, *args, **kwargs):
+        # Set username to email if not provided
+        if not self.username:
+            self.username = self.email
+        super().save(*args, **kwargs)
