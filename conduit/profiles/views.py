@@ -332,7 +332,7 @@ class UserLoginAPIView(APIView):
         email = serializer.validated_data['email']
         password = serializer.validated_data['password']
 
-        user = authenticate(request, email=email, password=password)
+        user = authenticate(request._request, email=email, password=password)
 
         if user is None:
             return Response(
@@ -340,5 +340,5 @@ class UserLoginAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        login(request, user)
+        login(request._request, user)
         return Response(UserSerializer(user).data)
