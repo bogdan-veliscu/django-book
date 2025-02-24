@@ -332,7 +332,11 @@ class UserLoginAPIView(APIView):
         email = serializer.validated_data['email']
         password = serializer.validated_data['password']
 
-        user = authenticate(request._request, email=email, password=password)
+        user = authenticate(
+            request._request,
+            username=email,
+            password=password
+        )
 
         if user is None:
             return Response(
