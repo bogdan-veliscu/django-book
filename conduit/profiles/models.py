@@ -2,6 +2,7 @@ from django.contrib.auth.models import (
     AbstractBaseUser,
     BaseUserManager,
     PermissionsMixin,
+    AbstractUser,
 )
 from django.db import models
 
@@ -32,14 +33,12 @@ class UserManager(BaseUserManager):
         return user
 
 
-class User(AbstractBaseUser, PermissionsMixin):
+class User(AbstractUser):
 
     email: str = models.EmailField("Email Address", unique=True)
     name: str = models.CharField("Name", max_length=60)
     bio: str = models.TextField(blank=True)
     image: str | None = models.URLField(null=True, blank=True)
-    is_active: bool = models.BooleanField(default=True)
-    is_staff: bool = models.BooleanField(default=False)
 
     EMAIL_FIELD = "email"
     USERNAME_FIELD = "email"
