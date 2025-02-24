@@ -321,24 +321,22 @@ class UserCreateAPIView(generics.CreateAPIView):
     permission_classes = (AllowAny,)
 
 
-class UserLoginAPIView(APIView):
+class LoginAPIView(APIView):
     permission_classes = (AllowAny,)
     serializer_class = LoginSerializer
 
     def post(self, request):
-        serializer = self.serializer_class(data=request.data)
+        user = request.data.get('user', {})
+        serializer = self.serializer_class(data=user)
         serializer.is_valid(raise_exception=True)
 
-        email = serializer.validated_data['email']
-        password = serializer.validated_data['password']
-
-        user = authenticate(request, email=email, password=password)
-
+        user = authenticate(username=user.get('email'), password=user.get('password'))
         if user is None:
             return Response(
-                {'errors': {'error': ['Invalid email or password']}},
-                status=status.HTTP_400_BAD_REQUEST
+                {'error': 'A user with this email and password was not found.'},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
-        login(request, user)
-        return Response(UserSerializer(user).data)
+        login(request._request, user)
+
+        return Response(UserSerializer(user).data, status=status.HTTP_200_OK)
