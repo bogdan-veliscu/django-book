@@ -1,0 +1,22 @@
+version: "3"
+
+services:
+  app:
+    environment:
+      - DJANGO_SUPERUSER_USERNAME=admin
+      - DJANGO_SUPERUSER_EMAIL=admin@example.com
+      - DJANGO_SUPERUSER_PASSWORD=admin
+    command: >
+      bash -c "
+        python manage.py makemigrations --noinput &&
+        python manage.py migrate --noinput &&
+        python manage.py collectstatic --noinput &&
+        python manage.py createsuperuser --noinput 2>/dev/null || true &&
+        uvicorn config.asgi:application --host 0.0.0.0 --port 8000
+      "
+
+  db:
+    environment:
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_DB=postgres

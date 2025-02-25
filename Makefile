@@ -135,3 +135,19 @@ backup-restore: ## Restore from backup (requires BACKUP_FILE env var)
 		exit 1; \
 	fi
 	docker compose -f docker-compose.backup.yml exec backup /app/restore.sh $(BACKUP_FILE)
+
+create-db:
+	docker-compose exec db psql -U postgres -c "CREATE DATABASE conduit_user;"
+
+# Initialize the database and apply migrations
+setup-db: create-db migrate
+
+# Run migrations
+migrate:
+	docker-compose exec app python manage.py migrate
+
+# Reset database (be careful with this in production!)
+reset-db:
+	docker-compose exec db psql -U postgres -c "DROP DATABASE IF EXISTS conduit_user;"
+	make create-db
+	make migrate

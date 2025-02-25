@@ -13,6 +13,9 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 import os
 from datetime import timedelta
 from pathlib import Path
+import sys
+import warnings
+from django.core.signals import setting_changed
 
 # from os.path import dirname, join
 
@@ -170,30 +173,14 @@ ASGI_APPLICATION = "config.asgi.application"
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
 DATABASES = {
-    # "shard1": {
-    #     "ENGINE": "django.db.backends.postgresql",
-    #     "NAME": os.getenv("POSTGRES_DB", default="conduit"),
-    #     "USER": os.getenv("POSTGRES_USER", default="conduit"),
-    #     "PASSWORD": os.getenv("POSTGRES_PASSWORD", default="conduit"),
-    #     "HOST": os.getenv("POSTGRES_SHARD1_SERVER", default="localhost"),
-    #     "PORT": os.getenv("POSTGRES_SHARD1_PORT", default="5432"),
-    # },
-    # "shard2": {
-    #     "ENGINE": "django.db.backends.postgresql",
-    #     "NAME": os.getenv("POSTGRES_DB", default="conduit"),
-    #     "USER": os.getenv("POSTGRES_USER", default="conduit"),
-    #     "PASSWORD": os.getenv("POSTGRES_PASSWORD", default="conduit"),
-    #     "HOST": os.getenv("POSTGRES_SHARD2_SERVER", default="localhost"),
-    #     "PORT": os.getenv("POSTGRES_SHARD2_PORT", default="5432"),
-    # },
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": os.getenv("POSTGRES_DB", default="conduit"),
-        "USER": os.getenv("POSTGRES_USER", default="conduit"),
-        "PASSWORD": os.getenv("POSTGRES_PASSWORD", default="conduit"),
-        "HOST": os.getenv("POSTGRES_DEFAULT_SERVER", default="localhost"),
-        "PORT": os.getenv("POSTGRES_DEFAULT_PORT", default="5432"),
-    },
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'conduit_user',  # This must match the database name we're creating
+        'USER': os.environ.get('POSTGRES_USER', 'postgres'),
+        'PASSWORD': os.environ.get('POSTGRES_PASSWORD', 'postgres'),
+        'HOST': os.environ.get('POSTGRES_HOST', 'db'),
+        'PORT': os.environ.get('POSTGRES_PORT', '5432'),
+    }
 }
 
 # DATABASE_ROUTERS = ["config.database_routers.ShardRouter"]
@@ -312,3 +299,9 @@ CACHES = {
 
 
 GLOBAL_CACHE_TIME = 300  # 5 minutes
+
+# Add at the top to help with debugging
+print(f"Using settings file: {__file__}", file=sys.stderr)
+
+# Add this to silence the warnings if needed
+warnings.filterwarnings("ignore", message="async_to_sync was passed a non-async-marked callable")
