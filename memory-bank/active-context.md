@@ -35,6 +35,7 @@ Our current focus is on monitoring these changes and implementing the remaining 
   - No cache invalidation strategy for modified resources
   - Cache time is fixed at 5 minutes (300 seconds) for all resources
   - The middleware doesn't properly handle coroutines in async context, causing 500 errors
+  - The middleware was trying to access database in async context without using sync_to_async
 
 ## Recent Changes
 1. **Database Query Optimization**:
@@ -65,12 +66,16 @@ Our current focus is on monitoring these changes and implementing the remaining 
    - Added cache invalidation for modified resources
    - Reduced cache time for frequently updated resources
    - Fixed the `GlobalCacheMiddleware` to properly handle coroutines in async context by adding proper error handling and checking if response objects have status_code attributes before accessing them
+   - Created a separate async version of the cache key generation function that doesn't check authentication to avoid database access in async context
+   - Improved error handling in both sync and async middleware paths
 
 5. **Middleware Fixes**:
    - Fixed the `GlobalCacheMiddleware` to properly handle coroutines in async context
    - Added try/except blocks to catch AttributeError when accessing status_code on coroutine objects
    - Added hasattr checks to ensure response objects have the expected attributes before accessing them
    - Improved error logging for middleware issues
+   - Fixed the SynchronousOnlyOperation error by avoiding database access in async context
+   - Created separate sync and async code paths for the middleware
 
 ## Next Steps
 1. **Monitor Performance**:

@@ -341,3 +341,17 @@ WARNING 2025-02-26 16:29:55,358 log 1 281472924512640 Bad Request: /api/users/lo
 WARNING 2025-02-26 16:30:02,212 log 1 281472924512640 Bad Request: /api/users/login
 INFO 2025-02-26 16:30:56,209 signals 1 281472940437888 pre_save called on Just do it again3
 INFO 2025-02-26 16:30:56,247 serializers 1 281472940437888  get_favorited user: <User: admin@example.com>, obj: Just do it again3
+DEBUG 2025-02-26 16:56:18,438 models 1 281473714221088 Loading Comment model module
+DEBUG 2025-02-26 16:56:18,438 models 1 281473714221088 Registering Comment model with app_label: conduit_comments
+DEBUG 2025-02-26 16:56:18,438 models 1 281473714221088 Comment model class defined
+DEBUG 2025-02-26 16:56:18,438 models 1 281473714221088 Loading Article model module
+DEBUG 2025-02-26 16:56:18,438 models 1 281473714221088 Registering Article model with app_label: conduit_articles
+DEBUG 2025-02-26 16:56:18,438 models 1 281473714221088 Module path: conduit.articles.models
+DEBUG 2025-02-26 16:56:18,438 models 1 281473714221088 Article model class defined
+WARNING 2025-02-26 16:56:20,186 log 1 281473500311936 Unauthorized: /api/articles/just-do-it-again3
+INFO 2025-02-26 16:56:45,301 serializers 1 281473603268992  get_favorited user: <User: admin@example.com>, obj: Just do it again3
+ERROR 2025-02-26 16:57:05,841 views 1 281473603268992 {'title': [ErrorDetail(string='This field is required.', code='required')], 'description': [ErrorDetail(string='This field is required.', code='required')], 'body': [ErrorDetail(string='This field is required.', code='required')]}
+WARNING 2025-02-26 16:57:05,843 log 1 281473500311936 Bad Request: /api/articles
+INFO 2025-02-26 16:57:15,930 signals 1 281473603268992 pre_save called on Testing async middleware
+INFO 2025-02-26 16:57:15,983 serializers 1 281473603268992  get_favorited user: <User: admin@example.com>, obj: Testing async middleware
+INFO 2025-02-26 16:57:26,348 serializers 1 281473603268992  get_favorited user: <User: admin@example.com>, obj: Testing async middleware

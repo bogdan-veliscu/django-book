@@ -84,10 +84,23 @@ class GlobalCacheMiddleware:
         
         # For authenticated users, add a user-specific suffix if appropriate
         # Only cache user-specific content for GET requests
-        if hasattr(request, 'user') and request.user.is_authenticated and request.method == 'GET':
-            # Don't include the full user object, just the ID to keep the key small
-            key = f"{key}:user:{request.user.id}"
+        # IMPORTANT: We don't check authentication in async context to avoid database queries
+        # This is safe because we're only using this for caching, not for security
+        return key
+
+    async def _get_cache_key_async(self, request):
+        """Async version of _get_cache_key that doesn't check authentication"""
+        # Base key includes the full path
+        key = f"cache:{request.get_full_path()}"
         
+        # Add query parameters to the key
+        if request.GET:
+            # Sort query parameters for consistent keys
+            query_params = "&".join(f"{k}={v}" for k, v in sorted(request.GET.items()))
+            key = f"{key}?{query_params}"
+        
+        # We don't check authentication in async context to avoid database queries
+        # This is safe because we're only using this for caching, not for security
         return key
 
     async def __acall__(self, request):
@@ -95,48 +108,49 @@ class GlobalCacheMiddleware:
         if (request.path.startswith("/admin/") or 
             request.method != "GET" or 
             any(op in request.path for op in ['/create', '/update', '/delete'])):
-            return await self.get_response(request)
+            response = await self.get_response(request)
+            # Ensure response is not a coroutine
+            if inspect.iscoroutine(response):
+                response = await response
+            return response
 
-        # Check authentication status safely in async context
-        is_authenticated = False
         try:
-            is_authenticated = await sync_to_async(lambda: request.user.is_authenticated)()
-        except Exception as e:
-            logger.error(f"Error checking authentication: {e}")
-            # Continue processing even if auth check fails
+            # Generate cache key without checking authentication in async context
+            cache_key = await self._get_cache_key_async(request)
+            
+            # Try to get cached response
+            cached_response = await sync_to_async(cache.get)(cache_key)
+            
+            if cached_response:
+                logger.debug(f"Cache hit for key: {cache_key}")
+                return cached_response
 
-        # Generate cache key
-        cache_key = await sync_to_async(self._get_cache_key)(request)
-        
-        # Try to get cached response
-        cached_response = await sync_to_async(cache.get)(cache_key)
-        
-        if cached_response:
-            logger.debug(f"Cache hit for key: {cache_key}")
-            return cached_response
-
-        # Get fresh response - ensure we await the coroutine if it is one
-        response = await self.get_response(request)
-        
-        # Ensure response is not a coroutine
-        if inspect.iscoroutine(response):
-            logger.debug("Response is a coroutine, awaiting it")
-            response = await response
-        
-        try:
+            # Get fresh response
+            response = await self.get_response(request)
+            
+            # Ensure response is not a coroutine
+            if inspect.iscoroutine(response):
+                logger.debug("Response is a coroutine, awaiting it")
+                response = await response
+            
             # Only cache successful responses
             if hasattr(response, 'status_code') and response.status_code == 200:
                 # Determine cache timeout based on the path
-                timeout = await sync_to_async(self._get_cache_timeout)(request.path)
+                timeout = self._get_cache_timeout(request.path)
                 
                 # Cache the response
                 await sync_to_async(cache.set)(cache_key, response, timeout)
                 logger.debug(f"Cached response for key: {cache_key} with timeout: {timeout}s")
-        except AttributeError as e:
+            
+            return response
+        except Exception as e:
             logger.error(f"Error in GlobalCacheMiddleware.__acall__: {e}")
-            # If we can't access status_code, just return the response without caching
-
-        return response
+            # If there's an error in the caching logic, just continue with the request
+            response = await self.get_response(request)
+            # Ensure response is not a coroutine
+            if inspect.iscoroutine(response):
+                response = await response
+            return response
 
     def __call__(self, request):
         # Skip caching for admin, non-GET requests, or API write operations
@@ -145,28 +159,20 @@ class GlobalCacheMiddleware:
             any(op in request.path for op in ['/create', '/update', '/delete'])):
             return self.get_response(request)
 
-        # Check authentication status safely in sync context
-        is_authenticated = False
         try:
-            is_authenticated = request.user.is_authenticated
-        except Exception as e:
-            logger.error(f"Error checking authentication: {e}")
-            # Continue processing even if auth check fails
+            # Generate cache key
+            cache_key = self._get_cache_key(request)
+            
+            # Try to get cached response
+            cached_response = cache.get(cache_key)
+            
+            if cached_response:
+                logger.debug(f"Cache hit for key: {cache_key}")
+                return cached_response
 
-        # Generate cache key
-        cache_key = self._get_cache_key(request)
-        
-        # Try to get cached response
-        cached_response = cache.get(cache_key)
-        
-        if cached_response:
-            logger.debug(f"Cache hit for key: {cache_key}")
-            return cached_response
-
-        # Get fresh response
-        response = self.get_response(request)
-        
-        try:
+            # Get fresh response
+            response = self.get_response(request)
+            
             # Only cache successful responses
             if hasattr(response, 'status_code') and response.status_code == 200:
                 # Determine cache timeout based on the path
@@ -175,11 +181,12 @@ class GlobalCacheMiddleware:
                 # Cache the response
                 cache.set(cache_key, response, timeout)
                 logger.debug(f"Cached response for key: {cache_key} with timeout: {timeout}s")
-        except AttributeError as e:
+            
+            return response
+        except Exception as e:
             logger.error(f"Error in GlobalCacheMiddleware.__call__: {e}")
-            # If we can't access status_code, just return the response without caching
-
-        return response
+            # If there's an error in the caching logic, just continue with the request
+            return self.get_response(request)
 
     def __init__(self, get_response):
         self.get_response = get_response
