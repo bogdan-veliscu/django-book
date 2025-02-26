@@ -4,13 +4,14 @@
 We have implemented several key optimizations to address the performance issues in the Conduit API. We've optimized database queries in the ArticleViewSet, reduced memory usage in the Article model, improved worker configuration, and enhanced the caching strategy.
 
 ## What Works
-- The application is functional with article creation now working properly
+- The application is fully functional with article creation and retrieval working properly
 - Database queries use select_related and prefetch_related for some optimization
-- Basic caching is implemented for unauthenticated users
+- Basic caching is implemented for both authenticated and unauthenticated users
 - The Docker setup has been improved with memory limits and reduced worker count
 - The GlobalCacheMiddleware has been fixed to properly handle async/sync contexts
 - The Article model and serializer have been fixed to handle the metadata field properly
 - Article retrieval now works correctly with the fixed middleware
+- The SynchronousOnlyOperation error has been resolved by avoiding database access in async context
 
 ## Completed Optimizations
 1. **Worker Configuration Adjustments**:
@@ -33,6 +34,8 @@ We have implemented several key optimizations to address the performance issues 
    - Added proper attribute checking before accessing status_code on response objects
    - Implemented try/except blocks to catch AttributeError when accessing coroutine objects
    - Improved error logging for middleware issues
+   - Created a separate async version of the cache key generation function that doesn't check authentication to avoid database access in async context
+   - Implemented comprehensive error handling in both sync and async middleware paths
 
 3. **Article Model Fixes**:
    - Made the metadata field optional in the ArticleSerializer
@@ -67,6 +70,7 @@ We have implemented several key optimizations to address the performance issues 
    - Implemented caching for authenticated users where appropriate
    - Added cache invalidation for modified resources
    - Reduced cache time for frequently updated resources
+   - Created a separate async version of the cache key generation function that doesn't check authentication to avoid database access in async context
 
 ## What's Left to Implement
 1. **Database Indexes**:
@@ -91,6 +95,7 @@ We have implemented several key optimizations to address the performance issues 
 3. **Database Queries**: Inefficient database queries, especially in the feed and recent methods - should be resolved with the query optimizations
 4. **Caching Strategy**: Limited caching strategy that only benefits unauthenticated users - should be improved with the new caching strategy
 5. **Middleware Errors**: The GlobalCacheMiddleware was causing 500 errors when trying to access status_code on coroutine objects - now resolved with proper attribute checking and error handling
+6. **Async Context Issues**: The SynchronousOnlyOperation error was occurring when trying to access database in async context - now resolved by avoiding database access in async context
 
 ## Next Steps
 1. Monitor the performance of the optimized code in production
