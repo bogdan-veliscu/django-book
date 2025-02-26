@@ -38,7 +38,7 @@ if os.getenv("CORS_ALLOW_ALL_ORIGINS", "False").lower() == "true":
         f"http://{domain.strip()}" for domain in os.getenv("ALLOWED_HOSTS", "").split(",")
     ]
     # Add localhost development origins
-    CORS_ALLOWED_ORIGINS += ["http://localhost:3000", "http://127.0.0.1:3000"]
+    CORS_ALLOWED_ORIGINS += ["http://localhost:3000", "http://127.0.0.1:3000", "http://frontend:3000"]
 
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_METHODS = [
@@ -50,6 +50,13 @@ CORS_ALLOW_METHODS = [
     'PUT',
 ]
 
+# Add trusted hosts for CSRF
+CSRF_TRUSTED_ORIGINS = [
+    f"https://{domain.strip()}" for domain in os.getenv("ALLOWED_HOSTS", "").split(",")
+]
+CSRF_TRUSTED_ORIGINS += [f"http://{domain.strip()}" for domain in os.getenv("ALLOWED_HOSTS", "").split(",")]
+CSRF_TRUSTED_ORIGINS += ["http://localhost:3000", "http://127.0.0.1:3000", "http://frontend:3000"]
+
 # Print security settings for debugging
 print(f"SECURE_SSL_REDIRECT: {SECURE_SSL_REDIRECT}")
 print(f"SESSION_COOKIE_SECURE: {SESSION_COOKIE_SECURE}")
@@ -59,6 +66,7 @@ print(f"SECURE_HSTS_INCLUDE_SUBDOMAINS: {SECURE_HSTS_INCLUDE_SUBDOMAINS}")
 print(f"SECURE_HSTS_PRELOAD: {SECURE_HSTS_PRELOAD}")
 print(f"CORS_ALLOW_ALL_ORIGINS: {CORS_ALLOW_ALL_ORIGINS}")
 print(f"CORS_ALLOWED_ORIGINS: {CORS_ALLOWED_ORIGINS}")
+print(f"CSRF_TRUSTED_ORIGINS: {CSRF_TRUSTED_ORIGINS}")
 
 # Static files
 STATIC_ROOT = os.path.join(BASE_DIR, "staticfiles")

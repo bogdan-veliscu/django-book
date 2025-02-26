@@ -82,6 +82,7 @@ services:
       - NEXT_PUBLIC_TRUSTED_HOSTS=${DOMAIN}
       - NEXT_PUBLIC_SITE_URL=https://${DOMAIN}
       - NODE_ENV=production
+      - DOMAIN=${DOMAIN}
     expose:
       - "3000"
     healthcheck:
