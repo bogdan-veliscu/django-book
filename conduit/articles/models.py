@@ -87,6 +87,7 @@ class Article(SoftDeletableModel):
     )
     tags = TaggableManager(blank=True)
     favorites = models.ManyToManyField(User, related_name='favorite_articles', blank=True)
+    metadata = models.JSONField(default=dict)
 
     logger.debug("Article model class defined")
 

@@ -188,3 +188,10 @@ DEBUG 2025-02-26 11:06:04,679 models 1 281473019088928 Loading Article model mod
 DEBUG 2025-02-26 11:06:04,679 models 1 281473019088928 Registering Article model with app_label: conduit_articles
 DEBUG 2025-02-26 11:06:04,679 models 1 281473019088928 Module path: conduit.articles.models
 DEBUG 2025-02-26 11:06:04,679 models 1 281473019088928 Article model class defined
+DEBUG 2025-02-26 11:27:03,934 models 1 281473466261536 Loading Comment model module
+DEBUG 2025-02-26 11:27:03,934 models 1 281473466261536 Registering Comment model with app_label: conduit_comments
+DEBUG 2025-02-26 11:27:03,934 models 1 281473466261536 Comment model class defined
+DEBUG 2025-02-26 11:27:03,934 models 1 281473466261536 Loading Article model module
+DEBUG 2025-02-26 11:27:03,934 models 1 281473466261536 Registering Article model with app_label: conduit_articles
+DEBUG 2025-02-26 11:27:03,934 models 1 281473466261536 Module path: conduit.articles.models
+DEBUG 2025-02-26 11:27:03,935 models 1 281473466261536 Article model class defined

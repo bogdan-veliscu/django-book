@@ -14,6 +14,7 @@ We are currently analyzing the performance issues in the Conduit API, focusing o
 - Multiple middleware components add overhead to each request
 - Caching is only implemented for unauthenticated users
 - The GlobalCacheMiddleware had an async/sync context issue causing article creation to fail
+- The Article model was missing the metadata field in some environments, causing article creation to fail
 
 ## Recent Changes
 1. **Memory Limits Configuration**:
@@ -28,6 +29,12 @@ We are currently analyzing the performance issues in the Conduit API, focusing o
    - Separated sync and async code paths with proper error handling
    - Fixed the SynchronousOnlyOperation error that was preventing article creation
    - Added more robust error handling for authentication checks
+
+3. **Article Model Fix**:
+   - Made the metadata field optional in the ArticleSerializer
+   - Added default value (empty dict) for the metadata field
+   - Ensured the metadata field exists in the Article model
+   - Fixed the "unexpected keyword arguments: 'metadata'" error
 
 ## Next Steps
 1. Optimize the ArticleViewSet to reduce database queries and add pagination
