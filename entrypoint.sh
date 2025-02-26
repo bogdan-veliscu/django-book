@@ -74,20 +74,63 @@ log "Collecting static files..."
 python manage.py collectstatic --noinput --clear
 
 # Calculate optimal worker count based on available memory
-# Default to 2 workers if WORKERS env var is not set
-WORKER_COUNT=${WORKERS:-2}
-log "Using $WORKER_COUNT workers"
+# For small droplets, use 1 worker to avoid memory issues
+# For larger droplets, calculate based on available memory
+AVAILABLE_MEMORY_MB=$(free -m | awk '/^Mem:/{print $2}')
+log "Available memory: ${AVAILABLE_MEMORY_MB}MB"
+
+# Default to 1 worker for small droplets (less than 2GB)
+if [ ${AVAILABLE_MEMORY_MB} -lt 2048 ]; then
+    WORKER_COUNT=1
+    log "Small droplet detected (< 2GB RAM), using 1 worker"
+else
+    # For larger droplets, use the WORKERS env var or calculate based on memory
+    # Each worker needs about 512MB of memory
+    CALCULATED_WORKERS=$((AVAILABLE_MEMORY_MB / 512))
+    # Use the smaller of WORKERS env var or calculated value, default to 1
+    WORKER_COUNT=${WORKERS:-$CALCULATED_WORKERS}
+    # Ensure at least 1 worker
+    WORKER_COUNT=$(( WORKER_COUNT > 0 ? WORKER_COUNT : 1 ))
+    log "Larger droplet detected, calculated ${CALCULATED_WORKERS} workers"
+fi
+
+log "Using ${WORKER_COUNT} workers"
+
+# Set timeout values
+TIMEOUT=${TIMEOUT:-60}
+GRACEFUL_TIMEOUT=${GRACEFUL_TIMEOUT:-60}
+KEEP_ALIVE=${KEEP_ALIVE:-5}
+MAX_REQUESTS=${MAX_REQUESTS:-1000}
+MAX_REQUESTS_JITTER=${MAX_REQUESTS_JITTER:-100}
 
 # Start the application
 log "Starting application..."
 if [ "$1" = "uvicorn" ]; then
+    # Handle graceful shutdown
+    function graceful_shutdown() {
+        log "Received shutdown signal, stopping gracefully..."
+        kill -TERM $PID
+        wait $PID
+    }
+    
+    # Set up signal handling
+    trap graceful_shutdown SIGTERM SIGINT
+    
+    # Start uvicorn with optimized settings
     exec uvicorn conduit.config.asgi:application \
         --host 0.0.0.0 \
         --port ${PORT:-8000} \
         --workers ${WORKER_COUNT} \
         --log-level info \
-        --timeout-keep-alive 75 \
-        --limit-max-requests 1000
+        --timeout-keep-alive ${KEEP_ALIVE} \
+        --timeout ${TIMEOUT} \
+        --limit-max-requests ${MAX_REQUESTS} \
+        --limit-max-requests-jitter ${MAX_REQUESTS_JITTER} \
+        --backlog 2048 \
+        --no-access-log &
+    
+    PID=$!
+    wait $PID
 else
     exec "$@"
 fi

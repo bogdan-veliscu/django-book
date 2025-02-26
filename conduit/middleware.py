@@ -46,11 +46,54 @@ class CustomAuthenticationMiddleware(AuthenticationMiddleware):
 
 @sync_and_async_middleware
 class GlobalCacheMiddleware:
-    CACHE_TIME = GLOBAL_CACHE_TIME  # Cache time in seconds (5 minutes)
+    # Cache times in seconds for different resource types
+    CACHE_TIMES = {
+        'articles': 300,      # 5 minutes for article lists
+        'article': 600,       # 10 minutes for individual articles
+        'profiles': 900,      # 15 minutes for profile lists
+        'profile': 1800,      # 30 minutes for individual profiles
+        'tags': 3600,         # 1 hour for tags
+        'default': GLOBAL_CACHE_TIME  # Default from settings (5 minutes)
+    }
+    
+    def _get_cache_timeout(self, path):
+        """Determine cache timeout based on the request path"""
+        if '/api/articles/' in path and not path.endswith('/articles/'):
+            return self.CACHE_TIMES['article']
+        elif '/api/articles' in path:
+            return self.CACHE_TIMES['articles']
+        elif '/api/profiles/' in path and not path.endswith('/profiles/'):
+            return self.CACHE_TIMES['profile']
+        elif '/api/profiles' in path:
+            return self.CACHE_TIMES['profiles']
+        elif '/api/tags' in path:
+            return self.CACHE_TIMES['tags']
+        return self.CACHE_TIMES['default']
+    
+    def _get_cache_key(self, request):
+        """Generate a more granular cache key based on request parameters"""
+        # Base key includes the full path
+        key = f"cache:{request.get_full_path()}"
+        
+        # Add query parameters to the key
+        if request.GET:
+            # Sort query parameters for consistent keys
+            query_params = "&".join(f"{k}={v}" for k, v in sorted(request.GET.items()))
+            key = f"{key}?{query_params}"
+        
+        # For authenticated users, add a user-specific suffix if appropriate
+        # Only cache user-specific content for GET requests
+        if hasattr(request, 'user') and request.user.is_authenticated and request.method == 'GET':
+            # Don't include the full user object, just the ID to keep the key small
+            key = f"{key}:user:{request.user.id}"
+        
+        return key
 
     async def __acall__(self, request):
-        # Safe way to check if path starts with /admin/ in async context
-        if request.path.startswith("/admin/") or request.method != "GET":
+        # Skip caching for admin, non-GET requests, or API write operations
+        if (request.path.startswith("/admin/") or 
+            request.method != "GET" or 
+            any(op in request.path for op in ['/create', '/update', '/delete'])):
             return await self.get_response(request)
 
         # Check authentication status safely in async context
@@ -61,26 +104,35 @@ class GlobalCacheMiddleware:
             logger.error(f"Error checking authentication: {e}")
             # Continue processing even if auth check fails
 
-        if is_authenticated:
-            return await self.get_response(request)
-
-        cache_key = f"cache:{request.get_full_path()}"
+        # Generate cache key
+        cache_key = await sync_to_async(self._get_cache_key)(request)
+        
+        # Try to get cached response
         cached_response = await sync_to_async(cache.get)(cache_key)
         
         if cached_response:
+            logger.debug(f"Cache hit for key: {cache_key}")
             return cached_response
 
+        # Get fresh response
         response = await self.get_response(request)
-
-        # Only cache for unauthenticated users
-        if not request.path.startswith("/admin/") and not is_authenticated:
-            await sync_to_async(cache.set)(cache_key, response, self.CACHE_TIME)
+        
+        # Only cache successful responses
+        if response.status_code == 200:
+            # Determine cache timeout based on the path
+            timeout = await sync_to_async(self._get_cache_timeout)(request.path)
+            
+            # Cache the response
+            await sync_to_async(cache.set)(cache_key, response, timeout)
+            logger.debug(f"Cached response for key: {cache_key} with timeout: {timeout}s")
 
         return response
 
     def __call__(self, request):
-        # Synchronous path - check if path starts with /admin/
-        if request.path.startswith("/admin/") or request.method != "GET":
+        # Skip caching for admin, non-GET requests, or API write operations
+        if (request.path.startswith("/admin/") or 
+            request.method != "GET" or 
+            any(op in request.path for op in ['/create', '/update', '/delete'])):
             return self.get_response(request)
 
         # Check authentication status safely in sync context
@@ -91,20 +143,27 @@ class GlobalCacheMiddleware:
             logger.error(f"Error checking authentication: {e}")
             # Continue processing even if auth check fails
 
-        if is_authenticated:
-            return self.get_response(request)
-
-        cache_key = f"cache:{request.get_full_path()}"
+        # Generate cache key
+        cache_key = self._get_cache_key(request)
+        
+        # Try to get cached response
         cached_response = cache.get(cache_key)
         
         if cached_response:
+            logger.debug(f"Cache hit for key: {cache_key}")
             return cached_response
 
+        # Get fresh response
         response = self.get_response(request)
-
-        # Only cache for unauthenticated users
-        if not request.path.startswith("/admin/") and not is_authenticated:
-            cache.set(cache_key, response, self.CACHE_TIME)
+        
+        # Only cache successful responses
+        if response.status_code == 200:
+            # Determine cache timeout based on the path
+            timeout = self._get_cache_timeout(request.path)
+            
+            # Cache the response
+            cache.set(cache_key, response, timeout)
+            logger.debug(f"Cached response for key: {cache_key} with timeout: {timeout}s")
 
         return response
 

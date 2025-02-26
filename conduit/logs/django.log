@@ -195,3 +195,7 @@ DEBUG 2025-02-26 11:27:03,934 models 1 281473466261536 Loading Article model mod
 DEBUG 2025-02-26 11:27:03,934 models 1 281473466261536 Registering Article model with app_label: conduit_articles
 DEBUG 2025-02-26 11:27:03,934 models 1 281473466261536 Module path: conduit.articles.models
 DEBUG 2025-02-26 11:27:03,935 models 1 281473466261536 Article model class defined
+WARNING 2025-02-26 12:33:28,479 log 1 281473339421056 Unauthorized: /api/articles
+WARNING 2025-02-26 12:33:57,450 log 1 281473339421056 Unauthorized: /api/articles
+INFO 2025-02-26 12:59:39,107 signals 1 281473355346304 pre_save called on Test Article
+INFO 2025-02-26 12:59:39,145 serializers 1 281473355346304  get_favorited user: <User: test@example.com>, obj: Test Article

@@ -1,5 +1,6 @@
 import io
 import logging
+import tempfile
 
 import markdown
 from core.models import SoftDeletableModel
@@ -9,6 +10,7 @@ from django.contrib.auth.models import AnonymousUser
 from django.core.files.uploadedfile import (
     InMemoryUploadedFile,
 )
+from django.core.files import File
 from django.db import models
 from django.db.models import Count
 from django.urls import reverse
@@ -97,26 +99,45 @@ class Article(SoftDeletableModel):
     def save(self, *args, **kwargs):
         if not self.slug:
             self.slug = slugify(self.title)
+        
         if self.image:
-            pil_image = Image.open(self.image)
-            if pil_image.mode in ("RGBA", "P"):
-                pil_image = pil_image.convert("RGB")
-
-            pil_image = pil_image.resize((800, 800), Image.Resampling.LANCZOS)
-
-            new_image = io.BytesIO()
-            pil_image.save(new_image, format="JPEG", quality=75)
-
-            temp_name = self.image.name
-            self.image = InMemoryUploadedFile(
-                new_image,
-                "ImageField",
-                "%s.jpg" % temp_name.split(".")[0],
-                "image/jpeg",
-                new_image.tell,
-                None,
-            )
-
+            try:
+                # Open the image
+                pil_image = Image.open(self.image)
+                
+                # Check image size and limit if too large (5MB)
+                if self.image.size > 5 * 1024 * 1024:  # 5MB limit
+                    logger.warning(f"Image too large ({self.image.size} bytes), resizing")
+                
+                # Convert to RGB if needed
+                if pil_image.mode in ("RGBA", "P"):
+                    pil_image = pil_image.convert("RGB")
+                
+                # Calculate new dimensions while maintaining aspect ratio
+                max_size = (400, 400)
+                pil_image.thumbnail(max_size, Image.Resampling.LANCZOS)
+                
+                # Create a temporary file instead of using BytesIO
+                temp_file = tempfile.NamedTemporaryFile(suffix='.jpg', delete=False)
+                
+                # Save the image to the temporary file with compression
+                pil_image.save(temp_file.name, format="JPEG", quality=75, optimize=True)
+                
+                # Get the original filename
+                temp_name = self.image.name
+                filename = f"{temp_name.split('.')[0]}.jpg"
+                
+                # Reopen the temporary file and assign it to the image field
+                self.image = File(open(temp_file.name, 'rb'), name=filename)
+                
+                # Close the temporary file
+                temp_file.close()
+                
+                logger.debug(f"Image processed and resized to max dimensions {max_size}")
+            except Exception as e:
+                logger.error(f"Error processing image: {str(e)}")
+                # Continue saving even if image processing fails
+        
         super().save(*args, **kwargs)
 
     def get_absolute_url(self):
