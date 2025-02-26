@@ -1,13 +1,14 @@
 # Progress: Conduit API Performance Optimization
 
 ## Current Status
-We have completed the first phase of optimizations by configuring memory limits for all Docker containers and reducing the worker count. We are now moving to the next phases of optimization.
+We have completed the first phase of optimizations by configuring memory limits for all Docker containers and reducing the worker count. We've also fixed a critical middleware issue that was preventing article creation. We are now moving to the next phases of optimization.
 
 ## What Works
-- The application is functional but experiencing performance issues
+- The application is functional with article creation now working properly
 - Database queries use select_related and prefetch_related for some optimization
 - Basic caching is implemented for unauthenticated users
 - The Docker setup has been improved with memory limits and reduced worker count
+- The GlobalCacheMiddleware has been fixed to properly handle async/sync contexts
 
 ## Completed Optimizations
 1. **Worker Configuration Adjustments**:
@@ -20,6 +21,12 @@ We have completed the first phase of optimizations by configuring memory limits 
      - Nginx container: 256MB limit with 128MB reservation
    - Added timeout settings to prevent long-running requests
    - Modified entrypoint.sh to use the new worker count
+
+2. **Middleware Fixes**:
+   - Fixed the GlobalCacheMiddleware to properly handle async context
+   - Separated sync and async code paths with proper error handling
+   - Fixed the SynchronousOnlyOperation error that was preventing article creation
+   - Added more robust error handling for authentication checks
 
 ## What's Left to Implement
 1. **Database Query Optimization**:

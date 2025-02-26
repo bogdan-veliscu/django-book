@@ -7,6 +7,7 @@
    - Database queries, especially in ArticleViewSet, are inefficient
    - Image processing in the Article model consumes excessive memory
    - Worker configuration (4 workers by default) may be too high for available resources
+   - Middleware async/sync context issues can cause critical functionality to break
 
 2. **Optimization Strategies**
    - Reduce database queries through better use of select_related, prefetch_related, only(), and defer()
@@ -14,6 +15,7 @@
    - Limit image sizes and memory usage during processing
    - Adjust worker count to match available resources
    - Enhance caching strategy to include authenticated users where appropriate
+   - Properly handle async/sync contexts in middleware
 
 3. **Implementation Paths**
    - Focus on quick wins first (configuration changes, simple code optimizations)
@@ -50,6 +52,12 @@
    - Determining what to cache and for how long
    - Implementing cache invalidation strategies
 
+4. **Async/Sync Context Handling**
+   - Django's async support requires careful handling of database operations
+   - Middleware that accesses request.user must handle both sync and async contexts
+   - SynchronousOnlyOperation errors occur when database operations are performed in async context
+   - Always use sync_to_async for database operations in async context
+
 ## Tool Usage Patterns
 
 1. **Docker Configuration**
@@ -64,4 +72,5 @@
 3. **Code Optimization**
    - Add pagination to ViewSets
    - Optimize database queries
-   - Limit memory usage in image processing 
+   - Limit memory usage in image processing
+   - Properly handle async/sync contexts in middleware 

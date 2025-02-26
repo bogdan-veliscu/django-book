@@ -181,3 +181,10 @@ DEBUG 2025-02-25 11:28:59,292 models 1 281473436930080 Article model class defin
 WARNING 2025-02-25 11:29:15,667 log 1 281473231876480 Not Found: /health
 WARNING 2025-02-25 11:51:36,017 log 1 281473231876480 Not Found: /health/
 WARNING 2025-02-25 11:52:41,858 log 1 281473231876480 Not Found: /api/health
+DEBUG 2025-02-26 11:06:04,678 models 1 281473019088928 Loading Comment model module
+DEBUG 2025-02-26 11:06:04,678 models 1 281473019088928 Registering Comment model with app_label: conduit_comments
+DEBUG 2025-02-26 11:06:04,679 models 1 281473019088928 Comment model class defined
+DEBUG 2025-02-26 11:06:04,679 models 1 281473019088928 Loading Article model module
+DEBUG 2025-02-26 11:06:04,679 models 1 281473019088928 Registering Article model with app_label: conduit_articles
+DEBUG 2025-02-26 11:06:04,679 models 1 281473019088928 Module path: conduit.articles.models
+DEBUG 2025-02-26 11:06:04,679 models 1 281473019088928 Article model class defined

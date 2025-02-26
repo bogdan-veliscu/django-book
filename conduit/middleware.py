@@ -48,8 +48,20 @@ class CustomAuthenticationMiddleware(AuthenticationMiddleware):
 class GlobalCacheMiddleware:
     CACHE_TIME = GLOBAL_CACHE_TIME  # Cache time in seconds (5 minutes)
 
-    async def __call__(self, request):
-        if request.path.startswith("/admin/") or request.user.is_authenticated or request.method != "GET":
+    async def __acall__(self, request):
+        # Safe way to check if path starts with /admin/ in async context
+        if request.path.startswith("/admin/") or request.method != "GET":
+            return await self.get_response(request)
+
+        # Check authentication status safely in async context
+        is_authenticated = False
+        try:
+            is_authenticated = await sync_to_async(lambda: request.user.is_authenticated)()
+        except Exception as e:
+            logger.error(f"Error checking authentication: {e}")
+            # Continue processing even if auth check fails
+
+        if is_authenticated:
             return await self.get_response(request)
 
         cache_key = f"cache:{request.get_full_path()}"
@@ -60,8 +72,39 @@ class GlobalCacheMiddleware:
 
         response = await self.get_response(request)
 
-        if not request.path.startswith("/admin/") and not request.user.is_authenticated:
+        # Only cache for unauthenticated users
+        if not request.path.startswith("/admin/") and not is_authenticated:
             await sync_to_async(cache.set)(cache_key, response, self.CACHE_TIME)
+
+        return response
+
+    def __call__(self, request):
+        # Synchronous path - check if path starts with /admin/
+        if request.path.startswith("/admin/") or request.method != "GET":
+            return self.get_response(request)
+
+        # Check authentication status safely in sync context
+        is_authenticated = False
+        try:
+            is_authenticated = request.user.is_authenticated
+        except Exception as e:
+            logger.error(f"Error checking authentication: {e}")
+            # Continue processing even if auth check fails
+
+        if is_authenticated:
+            return self.get_response(request)
+
+        cache_key = f"cache:{request.get_full_path()}"
+        cached_response = cache.get(cache_key)
+        
+        if cached_response:
+            return cached_response
+
+        response = self.get_response(request)
+
+        # Only cache for unauthenticated users
+        if not request.path.startswith("/admin/") and not is_authenticated:
+            cache.set(cache_key, response, self.CACHE_TIME)
 
         return response
 

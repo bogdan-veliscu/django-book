@@ -13,6 +13,7 @@ We are currently analyzing the performance issues in the Conduit API, focusing o
 - The worker count (4 by default) may be too high for the available resources
 - Multiple middleware components add overhead to each request
 - Caching is only implemented for unauthenticated users
+- The GlobalCacheMiddleware had an async/sync context issue causing article creation to fail
 
 ## Recent Changes
 1. **Memory Limits Configuration**:
@@ -21,6 +22,12 @@ We are currently analyzing the performance issues in the Conduit API, focusing o
    - Reduced worker count from 4 to 2 by default
    - Added timeout settings to prevent long-running requests
    - Modified entrypoint.sh to use the new worker count
+
+2. **Middleware Fix**:
+   - Fixed the GlobalCacheMiddleware to properly handle async context
+   - Separated sync and async code paths with proper error handling
+   - Fixed the SynchronousOnlyOperation error that was preventing article creation
+   - Added more robust error handling for authentication checks
 
 ## Next Steps
 1. Optimize the ArticleViewSet to reduce database queries and add pagination
