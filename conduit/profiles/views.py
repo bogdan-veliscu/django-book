@@ -1,6 +1,7 @@
 import logging
 
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate
+from django.contrib.auth import login as auth_login
 from django.contrib.auth import views as auth_views
 from django.contrib.auth.decorators import (
     login_required,
@@ -61,13 +62,13 @@ def account_registration(request):
 
 
 @api_view(["POST"])
-def login(request):
+def auth_login_view(request):
     try:
-        logger.info(f"login() request.data: {request.data}")
+        logger.info(f"auth_login_view() request.data: {request.data}")
         user_data = request.data.get("user")
-        logger.info(f"login() user_data: {user_data}")
+        logger.info(f"auth_login_view() user_data: {user_data}")
         user = authenticate(email=user_data["email"], password=user_data["password"])
-        logger.info(f"login() user: {user}")
+        logger.info(f"auth_login_view() user: {user}")
         serializer = UserSerializer(user)
         jwt_token = RefreshToken.for_user(user)
         serializer_data = serializer.data
@@ -344,5 +345,5 @@ class UserLoginAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        login(request._request, user)
+        auth_login(request._request, user)
         return Response(UserSerializer(user).data)
