@@ -73,14 +73,21 @@ python manage.py migrate --noinput
 log "Collecting static files..."
 python manage.py collectstatic --noinput --clear
 
+# Calculate optimal worker count based on available memory
+# Default to 2 workers if WORKERS env var is not set
+WORKER_COUNT=${WORKERS:-2}
+log "Using $WORKER_COUNT workers"
+
 # Start the application
 log "Starting application..."
 if [ "$1" = "uvicorn" ]; then
     exec uvicorn conduit.config.asgi:application \
         --host 0.0.0.0 \
         --port ${PORT:-8000} \
-        --workers ${WORKERS:-4} \
-        --log-level info
+        --workers ${WORKER_COUNT} \
+        --log-level info \
+        --timeout-keep-alive 75 \
+        --limit-max-requests 1000
 else
     exec "$@"
 fi
