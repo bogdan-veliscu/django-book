@@ -1,5 +1,6 @@
 import logging
 import time
+import inspect
 
 from config.settings.base import GLOBAL_CACHE_TIME
 from django.contrib.auth.middleware import (
@@ -114,17 +115,26 @@ class GlobalCacheMiddleware:
             logger.debug(f"Cache hit for key: {cache_key}")
             return cached_response
 
-        # Get fresh response
+        # Get fresh response - ensure we await the coroutine if it is one
         response = await self.get_response(request)
         
-        # Only cache successful responses
-        if response.status_code == 200:
-            # Determine cache timeout based on the path
-            timeout = await sync_to_async(self._get_cache_timeout)(request.path)
-            
-            # Cache the response
-            await sync_to_async(cache.set)(cache_key, response, timeout)
-            logger.debug(f"Cached response for key: {cache_key} with timeout: {timeout}s")
+        # Ensure response is not a coroutine
+        if inspect.iscoroutine(response):
+            logger.debug("Response is a coroutine, awaiting it")
+            response = await response
+        
+        try:
+            # Only cache successful responses
+            if hasattr(response, 'status_code') and response.status_code == 200:
+                # Determine cache timeout based on the path
+                timeout = await sync_to_async(self._get_cache_timeout)(request.path)
+                
+                # Cache the response
+                await sync_to_async(cache.set)(cache_key, response, timeout)
+                logger.debug(f"Cached response for key: {cache_key} with timeout: {timeout}s")
+        except AttributeError as e:
+            logger.error(f"Error in GlobalCacheMiddleware.__acall__: {e}")
+            # If we can't access status_code, just return the response without caching
 
         return response
 
@@ -156,14 +166,18 @@ class GlobalCacheMiddleware:
         # Get fresh response
         response = self.get_response(request)
         
-        # Only cache successful responses
-        if response.status_code == 200:
-            # Determine cache timeout based on the path
-            timeout = self._get_cache_timeout(request.path)
-            
-            # Cache the response
-            cache.set(cache_key, response, timeout)
-            logger.debug(f"Cached response for key: {cache_key} with timeout: {timeout}s")
+        try:
+            # Only cache successful responses
+            if hasattr(response, 'status_code') and response.status_code == 200:
+                # Determine cache timeout based on the path
+                timeout = self._get_cache_timeout(request.path)
+                
+                # Cache the response
+                cache.set(cache_key, response, timeout)
+                logger.debug(f"Cached response for key: {cache_key} with timeout: {timeout}s")
+        except AttributeError as e:
+            logger.error(f"Error in GlobalCacheMiddleware.__call__: {e}")
+            # If we can't access status_code, just return the response without caching
 
         return response
 

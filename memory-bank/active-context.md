@@ -6,6 +6,7 @@ We have implemented several key optimizations to address the performance issues 
 2. Memory usage reduction in the Article model
 3. Worker configuration improvements
 4. Caching strategy enhancements
+5. Middleware fixes for async compatibility
 
 Our current focus is on monitoring these changes and implementing the remaining optimizations if needed.
 
@@ -33,6 +34,7 @@ Our current focus is on monitoring these changes and implementing the remaining 
   - Cache keys don't include query parameters or user context
   - No cache invalidation strategy for modified resources
   - Cache time is fixed at 5 minutes (300 seconds) for all resources
+  - The middleware doesn't properly handle coroutines in async context, causing 500 errors
 
 ## Recent Changes
 1. **Database Query Optimization**:
@@ -62,6 +64,13 @@ Our current focus is on monitoring these changes and implementing the remaining 
    - Implemented caching for authenticated users where appropriate
    - Added cache invalidation for modified resources
    - Reduced cache time for frequently updated resources
+   - Fixed the `GlobalCacheMiddleware` to properly handle coroutines in async context by adding proper error handling and checking if response objects have status_code attributes before accessing them
+
+5. **Middleware Fixes**:
+   - Fixed the `GlobalCacheMiddleware` to properly handle coroutines in async context
+   - Added try/except blocks to catch AttributeError when accessing status_code on coroutine objects
+   - Added hasattr checks to ensure response objects have the expected attributes before accessing them
+   - Improved error logging for middleware issues
 
 ## Next Steps
 1. **Monitor Performance**:
@@ -69,6 +78,7 @@ Our current focus is on monitoring these changes and implementing the remaining 
    - Monitor worker memory usage and CPU utilization
    - Track response times for key endpoints
    - Monitor cache hit rates
+   - Check for any middleware-related errors in the logs
 
 2. **Remaining Optimizations**:
    - Add database indexes for frequently queried fields

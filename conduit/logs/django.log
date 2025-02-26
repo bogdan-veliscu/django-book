@@ -199,3 +199,145 @@ WARNING 2025-02-26 12:33:28,479 log 1 281473339421056 Unauthorized: /api/article
 WARNING 2025-02-26 12:33:57,450 log 1 281473339421056 Unauthorized: /api/articles
 INFO 2025-02-26 12:59:39,107 signals 1 281473355346304 pre_save called on Test Article
 INFO 2025-02-26 12:59:39,145 serializers 1 281473355346304  get_favorited user: <User: test@example.com>, obj: Test Article
+WARNING 2025-02-26 15:17:56,900 log 1 281473339421056 Bad Request: /api/users/login
+WARNING 2025-02-26 15:18:04,304 log 1 281473339421056 Bad Request: /api/users/login
+WARNING 2025-02-26 15:18:20,830 log 1 281473339421056 Bad Request: /api/users/login
+WARNING 2025-02-26 15:18:26,318 log 1 281473339421056 Bad Request: /api/users/login
+WARNING 2025-02-26 15:18:41,258 log 1 281473339421056 Bad Request: /api/users/login
+WARNING 2025-02-26 15:18:52,099 log 1 281473339421056 Bad Request: /api/users/login
+WARNING 2025-02-26 15:18:59,293 log 1 281473339421056 Bad Request: /api/users
+WARNING 2025-02-26 15:19:18,194 log 1 281473339421056 Unauthorized: /api/articles
+WARNING 2025-02-26 15:19:50,801 log 1 281473339421056 Unauthorized: /api/articles
+INFO 2025-02-26 15:20:12,001 signals 1 281473355346304 pre_save called on Just do it again2
+INFO 2025-02-26 15:20:12,037 serializers 1 281473355346304  get_favorited user: <User: test@example.com>, obj: Just do it again2
+ERROR 2025-02-26 15:57:13,118 log 1 281473466261536 Internal Server Error: /api/articles/just-do-it-again2
+Traceback (most recent call last):
+  File "/code/.venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/code/conduit/middleware.py", line 107, in __call__
+    # Generate cache key
+        ^^^^^^^^^^^^^^^^^
+  File "/code/.venv/lib/python3.12/site-packages/django/core/cache/backends/redis.py", line 191, in set
+    self._cache.set(key, value, self.get_backend_timeout(timeout))
+  File "/code/.venv/lib/python3.12/site-packages/django/core/cache/backends/redis.py", line 104, in set
+    value = self._serializer.dumps(value)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/code/.venv/lib/python3.12/site-packages/django/core/cache/backends/redis.py", line 21, in dumps
+    return pickle.dumps(obj, self.protocol)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: cannot pickle 'coroutine' object
+ERROR 2025-02-26 15:57:13,120 log 1 281473355346304 Internal Server Error: /api/articles/just-do-it-again2
+Traceback (most recent call last):
+  File "/code/.venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/code/conduit/middleware.py", line 29, in __call__
+    response = self.get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/code/.venv/lib/python3.12/site-packages/asgiref/sync.py", line 254, in __call__
+    return call_result.result()
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/code/.venv/lib/python3.12/site-packages/asgiref/sync.py", line 331, in main_wrap
+    result = await self.awaitable(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: object HttpResponseServerError can't be used in 'await' expression
+DEBUG 2025-02-26 15:58:05,482 models 1 281473211723808 Loading Comment model module
+DEBUG 2025-02-26 15:58:05,482 models 1 281473211723808 Registering Comment model with app_label: conduit_comments
+DEBUG 2025-02-26 15:58:05,482 models 1 281473211723808 Comment model class defined
+DEBUG 2025-02-26 15:58:05,482 models 1 281473211723808 Loading Article model module
+DEBUG 2025-02-26 15:58:05,482 models 1 281473211723808 Registering Article model with app_label: conduit_articles
+DEBUG 2025-02-26 15:58:05,482 models 1 281473211723808 Module path: conduit.articles.models
+DEBUG 2025-02-26 15:58:05,483 models 1 281473211723808 Article model class defined
+ERROR 2025-02-26 15:58:23,051 log 1 281473211723808 Internal Server Error: /api/articles/just-do-it-again2
+Traceback (most recent call last):
+  File "/code/.venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/code/.venv/lib/python3.12/site-packages/django/utils/deprecation.py", line 131, in __call__
+    response = self.process_response(request, response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/code/.venv/lib/python3.12/site-packages/django/contrib/sessions/middleware.py", line 46, in process_response
+    patch_vary_headers(response, ("Cookie",))
+  File "/code/.venv/lib/python3.12/site-packages/django/utils/cache.py", line 309, in patch_vary_headers
+    if response.has_header("Vary"):
+       ^^^^^^^^^^^^^^^^^^^
+AttributeError: 'coroutine' object has no attribute 'has_header'
+ERROR 2025-02-26 15:58:23,052 log 1 281473030549888 Internal Server Error: /api/articles/just-do-it-again2
+Traceback (most recent call last):
+  File "/code/.venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/code/conduit/middleware.py", line 29, in __call__
+    response = self.get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/code/.venv/lib/python3.12/site-packages/asgiref/sync.py", line 254, in __call__
+    return call_result.result()
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/code/.venv/lib/python3.12/site-packages/asgiref/sync.py", line 331, in main_wrap
+    result = await self.awaitable(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: object HttpResponseServerError can't be used in 'await' expression
+DEBUG 2025-02-26 16:25:00,029 models 1 281473256681504 Loading Comment model module
+DEBUG 2025-02-26 16:25:00,029 models 1 281473256681504 Registering Comment model with app_label: conduit_comments
+DEBUG 2025-02-26 16:25:00,029 models 1 281473256681504 Comment model class defined
+DEBUG 2025-02-26 16:25:00,029 models 1 281473256681504 Loading Article model module
+DEBUG 2025-02-26 16:25:00,029 models 1 281473256681504 Registering Article model with app_label: conduit_articles
+DEBUG 2025-02-26 16:25:00,029 models 1 281473256681504 Module path: conduit.articles.models
+DEBUG 2025-02-26 16:25:00,030 models 1 281473256681504 Article model class defined
+ERROR 2025-02-26 16:27:34,002 log 1 281473256681504 Internal Server Error: /api/articles/just-do-it-again2
+Traceback (most recent call last):
+  File "/code/.venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/code/.venv/lib/python3.12/site-packages/django/utils/deprecation.py", line 131, in __call__
+    response = self.process_response(request, response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/code/.venv/lib/python3.12/site-packages/django/contrib/sessions/middleware.py", line 46, in process_response
+    patch_vary_headers(response, ("Cookie",))
+  File "/code/.venv/lib/python3.12/site-packages/django/utils/cache.py", line 309, in patch_vary_headers
+    if response.has_header("Vary"):
+       ^^^^^^^^^^^^^^^^^^^
+AttributeError: 'coroutine' object has no attribute 'has_header'
+ERROR 2025-02-26 16:27:34,004 log 1 281473145762176 Internal Server Error: /api/articles/just-do-it-again2
+Traceback (most recent call last):
+  File "/code/.venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/code/conduit/middleware.py", line 30, in __call__
+    response = self.get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/code/.venv/lib/python3.12/site-packages/asgiref/sync.py", line 254, in __call__
+    return call_result.result()
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/code/.venv/lib/python3.12/site-packages/asgiref/sync.py", line 331, in main_wrap
+    result = await self.awaitable(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: object HttpResponseServerError can't be used in 'await' expression
+DEBUG 2025-02-26 16:29:14,919 models 1 281473051357216 Loading Comment model module
+DEBUG 2025-02-26 16:29:14,920 models 1 281473051357216 Registering Comment model with app_label: conduit_comments
+DEBUG 2025-02-26 16:29:14,920 models 1 281473051357216 Comment model class defined
+DEBUG 2025-02-26 16:29:14,920 models 1 281473051357216 Loading Article model module
+DEBUG 2025-02-26 16:29:14,920 models 1 281473051357216 Registering Article model with app_label: conduit_articles
+DEBUG 2025-02-26 16:29:14,920 models 1 281473051357216 Module path: conduit.articles.models
+DEBUG 2025-02-26 16:29:14,921 models 1 281473051357216 Article model class defined
+WARNING 2025-02-26 16:29:47,942 log 1 281472924512640 Unauthorized: /api/articles
+WARNING 2025-02-26 16:29:55,358 log 1 281472924512640 Bad Request: /api/users/login
+WARNING 2025-02-26 16:30:02,212 log 1 281472924512640 Bad Request: /api/users/login
+INFO 2025-02-26 16:30:56,209 signals 1 281472940437888 pre_save called on Just do it again3
+INFO 2025-02-26 16:30:56,247 serializers 1 281472940437888  get_favorited user: <User: admin@example.com>, obj: Just do it again3

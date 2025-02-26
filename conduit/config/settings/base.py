@@ -134,12 +134,12 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     # Custom middleware
-    "middleware.PerformanceLoggingMiddleware",
-    "middleware.CustomSessionMiddleware",
-    "middleware.CustomAuthenticationMiddleware",
-    "middleware.GlobalCacheMiddleware",
-    "middleware.CustomGZipMiddleware",
-    "middleware.QueryCountMiddleware",
+    "conduit.middleware.PerformanceLoggingMiddleware",
+    "conduit.middleware.CustomSessionMiddleware",
+    "conduit.middleware.CustomAuthenticationMiddleware",
+    "conduit.middleware.GlobalCacheMiddleware",
+    "conduit.middleware.CustomGZipMiddleware",
+    "conduit.middleware.QueryCountMiddleware",
 ]
 
 CORS_ALLOWED_ORIGINS = [

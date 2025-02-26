@@ -10,6 +10,7 @@ We have implemented several key optimizations to address the performance issues 
 - The Docker setup has been improved with memory limits and reduced worker count
 - The GlobalCacheMiddleware has been fixed to properly handle async/sync contexts
 - The Article model and serializer have been fixed to handle the metadata field properly
+- Article retrieval now works correctly with the fixed middleware
 
 ## Completed Optimizations
 1. **Worker Configuration Adjustments**:
@@ -28,6 +29,10 @@ We have implemented several key optimizations to address the performance issues 
    - Separated sync and async code paths with proper error handling
    - Fixed the SynchronousOnlyOperation error that was preventing article creation
    - Added more robust error handling for authentication checks
+   - Fixed the coroutine handling in GlobalCacheMiddleware to prevent 500 errors
+   - Added proper attribute checking before accessing status_code on response objects
+   - Implemented try/except blocks to catch AttributeError when accessing coroutine objects
+   - Improved error logging for middleware issues
 
 3. **Article Model Fixes**:
    - Made the metadata field optional in the ArticleSerializer
@@ -85,6 +90,7 @@ We have implemented several key optimizations to address the performance issues 
 2. **Memory Usage**: Excessive memory usage, particularly during image processing - should be improved with the new image processing approach
 3. **Database Queries**: Inefficient database queries, especially in the feed and recent methods - should be resolved with the query optimizations
 4. **Caching Strategy**: Limited caching strategy that only benefits unauthenticated users - should be improved with the new caching strategy
+5. **Middleware Errors**: The GlobalCacheMiddleware was causing 500 errors when trying to access status_code on coroutine objects - now resolved with proper attribute checking and error handling
 
 ## Next Steps
 1. Monitor the performance of the optimized code in production
@@ -93,3 +99,4 @@ We have implemented several key optimizations to address the performance issues 
 4. Implement streaming responses for large datasets
 5. Replace property methods with annotated fields
 6. Configure Redis as the session backend 
+7. Continue monitoring for any remaining middleware or async-related issues 
