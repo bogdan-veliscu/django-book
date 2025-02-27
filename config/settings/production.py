@@ -73,11 +73,20 @@ ALLOWED_HOSTS = [
 ]
 
 # CORS settings
-CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOW_ALL_ORIGINS = os.getenv("CORS_ALLOW_ALL_ORIGINS", "False").lower() == "true"
 CORS_ALLOWED_ORIGINS = [
-    "https://brandfocus.ai",
-    "https://www.brandfocus.ai",
+    f"https://{domain.strip()}" for domain in os.getenv("ALLOWED_HOSTS", "").split(",")
 ]
+if os.getenv("CORS_ALLOW_ALL_ORIGINS", "False").lower() == "true":
+    # Add development origins
+    CORS_ALLOWED_ORIGINS += [
+        "http://localhost:3000",
+        "http://localhost:8000",
+        "http://127.0.0.1:3000",
+        "http://127.0.0.1:8000",
+        "http://frontend:3000"
+    ]
+
 CORS_ALLOW_CREDENTIALS = True
 CORS_ALLOW_METHODS = [
     'DELETE',
@@ -88,10 +97,28 @@ CORS_ALLOW_METHODS = [
     'PUT',
 ]
 
-# Security settings
+CORS_ALLOW_HEADERS = [
+    'accept',
+    'accept-encoding',
+    'authorization',
+    'content-type',
+    'dnt',
+    'origin',
+    'user-agent',
+    'x-csrftoken',
+    'x-requested-with',
+]
+
+# Add trusted hosts for CSRF
 CSRF_TRUSTED_ORIGINS = [
-    "https://brandfocus.ai",
-    "https://www.brandfocus.ai",
+    f"https://{domain.strip()}" for domain in os.getenv("ALLOWED_HOSTS", "").split(",")
+]
+CSRF_TRUSTED_ORIGINS += [
+    "http://localhost:3000",
+    "http://localhost:8000",
+    "http://127.0.0.1:3000",
+    "http://127.0.0.1:8000",
+    "http://frontend:3000"
 ]
 
 # Cache settings
