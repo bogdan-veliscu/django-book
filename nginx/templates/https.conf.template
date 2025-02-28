@@ -10,8 +10,8 @@ upstream frontend {
 server {
     listen 80;
     listen [::]:80;
-    server_name $domain www.$domain;
-    return 301 https://$server_name$request_uri;
+    server_name brandfocus.ai www.brandfocus.ai;
+    return 301 https://${DOLLAR}host${DOLLAR}request_uri;
 }
 
 # HTTPS server
@@ -19,7 +19,7 @@ server {
     listen 443 ssl;
     listen [::]:443 ssl;
     http2 on;
-    server_name $domain www.$domain;
+    server_name brandfocus.ai www.brandfocus.ai;
 
     # SSL configuration
     ssl_certificate /etc/letsencrypt/live/brandfocus.ai/fullchain.pem;
@@ -46,11 +46,11 @@ server {
     add_header X-Content-Type-Options nosniff;
     add_header X-XSS-Protection "1; mode=block";
     add_header Referrer-Policy "no-referrer-when-downgrade";
-    add_header Content-Security-Policy "default-src 'self' https: data: 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https://$domain wss://$domain https://$domain/api/ http://localhost:* http://127.0.0.1:* https://api.dicebear.com; font-src 'self' https: data:; img-src 'self' https: data: https://api.dicebear.com; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';" always;
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src 'self' https://brandfocus.ai wss://brandfocus.ai https://brandfocus.ai/api/ https://api.dicebear.com; font-src 'self' data:; img-src 'self' data: https://api.dicebear.com https://brandfocus.ai; style-src 'self' 'unsafe-inline';" always;
 
-    # Frontend proxy
+    # Frontend proxy - properly handle Next.js routing
     location / {
-        proxy_pass http://frontend;
+        proxy_pass http://frontend:3000;
         proxy_http_version 1.1;
         proxy_set_header Upgrade ${DOLLAR}http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -58,59 +58,71 @@ server {
         proxy_set_header X-Real-IP ${DOLLAR}remote_addr;
         proxy_set_header X-Forwarded-For ${DOLLAR}proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto ${DOLLAR}scheme;
+        proxy_set_header X-Forwarded-Host ${DOLLAR}host;
         proxy_cache_bypass ${DOLLAR}http_upgrade;
-        proxy_buffering off;
-        proxy_read_timeout 300s;
-        proxy_connect_timeout 75s;
+        proxy_read_timeout 120s;
+        
+        # Avoid 502 errors during long-running operations
+        proxy_connect_timeout 120s;
+        proxy_send_timeout 120s;
     }
 
-    # API proxy
+    # API proxy with proper CORS handling
     location /api/ {
         proxy_pass http://django;
         proxy_http_version 1.1;
-        proxy_set_header Upgrade ${DOLLAR}http_upgrade;
-        proxy_set_header Connection 'upgrade';
         proxy_set_header Host ${DOLLAR}host;
         proxy_set_header X-Real-IP ${DOLLAR}remote_addr;
         proxy_set_header X-Forwarded-For ${DOLLAR}proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto ${DOLLAR}scheme;
-        proxy_cache_bypass ${DOLLAR}http_upgrade;
-        proxy_read_timeout 300s;
-        proxy_connect_timeout 75s;
-
+        
         # CORS headers
+        add_header 'Access-Control-Allow-Origin' ${DOLLAR}http_origin always;
+        add_header 'Access-Control-Allow-Credentials' 'true' always;
+        add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
+        add_header 'Access-Control-Allow-Headers' 'Accept,Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive,Origin,User-Agent,X-Requested-With,X-CSRF-Token' always;
+        
+        # Handle preflight requests
         if (${DOLLAR}request_method = 'OPTIONS') {
             add_header 'Access-Control-Allow-Origin' ${DOLLAR}http_origin always;
+            add_header 'Access-Control-Allow-Credentials' 'true' always;
             add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
             add_header 'Access-Control-Allow-Headers' 'Accept,Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive,Origin,User-Agent,X-Requested-With,X-CSRF-Token' always;
-            add_header 'Access-Control-Allow-Credentials' 'true' always;
             add_header 'Access-Control-Max-Age' 1728000;
             add_header 'Content-Type' 'text/plain charset=UTF-8';
             add_header 'Content-Length' 0;
             return 204;
         }
+    }
 
-        add_header 'Access-Control-Allow-Origin' ${DOLLAR}http_origin always;
-        add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
-        add_header 'Access-Control-Allow-Headers' 'Accept,Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive,Origin,User-Agent,X-Requested-With,X-CSRF-Token' always;
-        add_header 'Access-Control-Allow-Credentials' 'true' always;
-        add_header 'Access-Control-Expose-Headers' 'Authorization' always;
+    # Next.js static files
+    location /_next/static/ {
+        proxy_pass http://frontend:3000/_next/static/;
+        proxy_cache_bypass ${DOLLAR}http_upgrade;
+        expires 365d;
+        add_header Cache-Control "public, max-age=31536000, immutable";
+    }
+
+    # Handle Next.js public files
+    location /public/ {
+        proxy_pass http://frontend:3000/public/;
+        proxy_cache_bypass ${DOLLAR}http_upgrade;
+        expires 30d;
+        add_header Cache-Control "public, max-age=2592000";
     }
 
     # Static files
     location /static/ {
-        alias /code/conduit/staticfiles/;
+        alias /code/conduit/static/;
         expires 30d;
-        access_log off;
-        add_header Cache-Control "public, no-transform";
+        add_header Cache-Control "public, max-age=2592000";
     }
 
     # Media files
     location /media/ {
         alias /code/conduit/media/;
         expires 30d;
-        access_log off;
-        add_header Cache-Control "public, no-transform";
+        add_header Cache-Control "public, max-age=2592000";
     }
 
     # Health check endpoint

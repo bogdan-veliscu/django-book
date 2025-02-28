@@ -57,15 +57,16 @@ services:
       "
 
   frontend:
-    image: ghcr.io/bogdan-veliscu/conduit-frontend:latest
-    platform: linux/amd64
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
     restart: unless-stopped
     deploy:
       resources:
         limits:
-          memory: 512M
+          memory: 1G
         reservations:
-          memory: 256M
+          memory: 512M
     env_file:
       - .env.prod
     environment:
@@ -74,6 +75,7 @@ services:
       - NEXT_PUBLIC_BACKEND_URL=https://${DOMAIN}
       - NEXT_PUBLIC_APP_URL=https://${DOMAIN}
       - NEXT_PUBLIC_SITE_URL=https://${DOMAIN}
+      - NEXT_PUBLIC_BASE_URL=https://${DOMAIN}
       - NEXT_PUBLIC_VERCEL_URL=${DOMAIN}
 
       # NextAuth Configuration
@@ -81,15 +83,16 @@ services:
       - NEXTAUTH_URL_INTERNAL=http://frontend:3000
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
       - NEXTAUTH_TRUST_HOST=true
-      - NEXTAUTH_TRUST_HOSTS=${DOMAIN},www.${DOMAIN},localhost,127.0.0.1,frontend
-      - NEXTAUTH_ALLOWED_HOSTS=${DOMAIN},www.${DOMAIN},localhost,127.0.0.1,frontend
+      - NEXTAUTH_TRUST_HOSTS=${DOMAIN},www.${DOMAIN}
+      - NEXTAUTH_ALLOWED_HOSTS=${DOMAIN},www.${DOMAIN}
       - AUTH_TRUST_HOST=true
-      - NEXT_PUBLIC_TRUSTED_HOSTS=${DOMAIN},www.${DOMAIN},localhost,127.0.0.1,frontend
+      - NEXT_PUBLIC_TRUSTED_HOSTS=${DOMAIN},www.${DOMAIN}
 
       # Server Configuration
       - HOSTNAME=0.0.0.0
       - PORT=3000
       - NODE_ENV=production
+      - NEXT_TELEMETRY_DISABLED=1
 
       # Domain Configuration
       - DOMAIN=${DOMAIN}
