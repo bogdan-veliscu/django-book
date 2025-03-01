@@ -68,6 +68,9 @@ server {
 
     # NextAuth.js API routes - must come before the general API proxy
     location /api/auth/ {
+        # Disable trailing slash redirects for NextAuth routes
+        absolute_redirect off;
+        
         # Direct proxy to the frontend service for auth endpoints
         proxy_pass http://frontend:3000/api/auth/;
         proxy_http_version 1.1;
@@ -96,6 +99,27 @@ server {
         add_header 'Access-Control-Allow-Origin' ${DOLLAR}http_origin always;
         add_header 'Access-Control-Allow-Credentials' 'true' always;
         add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
+        add_header 'Access-Control-Allow-Headers' 'Accept,Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive,Origin,User-Agent,X-Requested-With,X-CSRF-Token' always;
+    }
+
+    # Specific location for NextAuth session endpoint to prevent redirect loops
+    location = /api/auth/session {
+        absolute_redirect off;
+        proxy_pass http://frontend:3000/api/auth/session;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade ${DOLLAR}http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host ${DOLLAR}host;
+        proxy_set_header X-Real-IP ${DOLLAR}remote_addr;
+        proxy_set_header X-Forwarded-For ${DOLLAR}proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto ${DOLLAR}scheme;
+        proxy_set_header X-Forwarded-Host ${DOLLAR}host;
+        proxy_cache_bypass ${DOLLAR}http_upgrade;
+        
+        # CORS headers for NextAuth
+        add_header 'Access-Control-Allow-Origin' ${DOLLAR}http_origin always;
+        add_header 'Access-Control-Allow-Credentials' 'true' always;
+        add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
         add_header 'Access-Control-Allow-Headers' 'Accept,Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive,Origin,User-Agent,X-Requested-With,X-CSRF-Token' always;
     }
 
