@@ -42,7 +42,7 @@ server {
     add_header X-Content-Type-Options nosniff always;
     add_header X-XSS-Protection "1; mode=block" always;
     add_header Referrer-Policy "no-referrer-when-downgrade" always;
-    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; connect-src 'self' https://brandfocus.ai wss://brandfocus.ai https://api.dicebear.com; font-src 'self' data:; img-src 'self' data: https://api.dicebear.com https://brandfocus.ai; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'; form-action 'self';" always;
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https://brandfocus.ai wss://brandfocus.ai https://api.dicebear.com http://localhost:* http://127.0.0.1:* http://*.local:* https://brandfocus.ai/api; font-src 'self' data:; img-src 'self' data: https://api.dicebear.com https://brandfocus.ai; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'; form-action 'self';" always;
 
     # Handle Next.js static files with high priority - must come before the main location block
     location /_next/static/ {

@@ -60,6 +60,9 @@ services:
     build:
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        - NODE_ENV=production
+        - NEXT_PUBLIC_API_URL=https://${DOMAIN}/api
     restart: unless-stopped
     deploy:
       resources:
@@ -71,7 +74,6 @@ services:
       - .env.prod
     environment:
       # Base URLs
-      - NEXT_PUBLIC_API_URL=https://${DOMAIN}/api
       - NEXT_PUBLIC_BACKEND_URL=https://${DOMAIN}
       - NEXT_PUBLIC_APP_URL=https://${DOMAIN}
       - NEXT_PUBLIC_SITE_URL=https://${DOMAIN}
@@ -91,7 +93,6 @@ services:
       # Server Configuration
       - HOSTNAME=0.0.0.0
       - PORT=3000
-      - NODE_ENV=production
       - NEXT_TELEMETRY_DISABLED=1
 
       # Domain Configuration
