@@ -2,10 +2,6 @@ upstream django {
     server app:8000;
 }
 
-upstream frontend {
-    server frontend:3000;
-}
-
 # HTTP redirect server
 server {
     listen 80;
@@ -50,6 +46,7 @@ server {
 
     # Handle Next.js static files with high priority - must come before the main location block
     location /_next/static/ {
+        # Direct proxy to the frontend service
         proxy_pass http://frontend:3000/_next/static/;
         proxy_http_version 1.1;
         proxy_set_header Host ${DOLLAR}host;
@@ -60,6 +57,7 @@ server {
 
     # Handle Next.js public files
     location /public/ {
+        # Direct proxy to the frontend service
         proxy_pass http://frontend:3000/public/;
         proxy_http_version 1.1;
         proxy_set_header Host ${DOLLAR}host;
@@ -125,6 +123,7 @@ server {
 
     # Frontend proxy - should be last to catch all other requests
     location / {
+        # Direct proxy to the frontend service
         proxy_pass http://frontend:3000;
         proxy_http_version 1.1;
         proxy_set_header Upgrade ${DOLLAR}http_upgrade;
