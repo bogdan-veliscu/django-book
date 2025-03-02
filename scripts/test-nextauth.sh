@@ -9,6 +9,19 @@ echo "===== Testing NextAuth Configuration ====="
 echo "$(date)"
 echo
 
+# Check if docker-compose.prod.yml or docker compose.prod.yml exists
+if [ -f "docker-compose.prod.yml" ]; then
+  COMPOSE_FILE="docker-compose.prod.yml"
+elif [ -f "docker compose.prod.yml" ]; then
+  COMPOSE_FILE="docker compose.prod.yml"
+else
+  echo "Error: Cannot find docker-compose.prod.yml or docker compose.prod.yml"
+  exit 1
+fi
+
+echo "Using compose file: $COMPOSE_FILE"
+echo
+
 # Function to test an endpoint
 test_endpoint() {
     local endpoint=$1
@@ -36,6 +49,6 @@ echo "If you see 308 redirects in the output, the issue is still present."
 echo "If you see 200 OK responses, the fix has been applied successfully."
 echo
 echo "Next steps if issues persist:"
-echo "1. Check Nginx error logs: docker compose -f docker compose.prod.yml logs nginx"
-echo "2. Check frontend logs: docker compose -f docker compose.prod.yml logs frontend"
+echo "1. Check Nginx error logs: docker compose -f $COMPOSE_FILE logs nginx"
+echo "2. Check frontend logs: docker compose -f $COMPOSE_FILE logs frontend"
 echo "3. Verify the Nginx configuration is being applied correctly" 
