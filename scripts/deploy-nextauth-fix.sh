@@ -190,15 +190,17 @@ server {
         }
     }
     
-    # Django API endpoints - note the trailing slash in proxy_pass
+    # Django API endpoints - FIXED: Don't strip /api prefix when proxying to Django
     location /api/ {
-        proxy_pass http://django_backend/;
+        # Make sure app:8000 receives the /api/ prefix in the URL
+        proxy_pass http://django_backend;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Prefix /api;  # Add this to inform Django about the /api prefix
         
         # CORS headers for API
         add_header Access-Control-Allow-Origin * always;
@@ -312,7 +314,7 @@ echo
 
 # 7. Check service status
 echo "===== Checking service status ====="
-docker compose -f "$COMPOSE_FILE" ps nginx frontend
+docker compose -f "$COMPOSE_FILE" ps nginx frontend app
 echo
 
 # 8. Test NextAuth endpoints
@@ -325,6 +327,8 @@ echo
 echo "===== Testing API endpoints ====="
 echo "Testing /api/health/ endpoint..."
 curl -s -I https://brandfocus.ai/api/health/ || echo "Could not reach API health endpoint"
+echo "Testing /api/articles endpoint..."
+curl -s -I https://brandfocus.ai/api/articles || echo "Could not reach API articles endpoint"
 echo
 
 # Cleanup
@@ -336,6 +340,6 @@ echo
 echo "To verify the fix:"
 echo "1. Run the test script: ./scripts/test-nextauth.sh"
 echo "2. Check browser console for any errors when logging in"
-echo "3. If issues persist, check logs with: docker compose -f $COMPOSE_FILE logs nginx"
+echo "3. If issues persist, check logs with: docker compose -f $COMPOSE_FILE logs nginx app frontend"
 echo
 echo "If you need to rollback, restore from the backup in $backup_dir" 
