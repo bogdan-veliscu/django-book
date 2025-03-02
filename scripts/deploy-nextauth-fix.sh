@@ -38,11 +38,11 @@ echo "===== Stopping Nginx service ====="
 docker compose -f "$COMPOSE_FILE" stop nginx
 echo
 
-# 2. Clear Nginx cache and remove default.conf
-echo "===== Clearing Nginx cache and removing default configuration ====="
+# 2. Clear Nginx cache and remove ALL default configurations
+echo "===== Clearing Nginx cache and removing default configurations ====="
 docker compose -f "$COMPOSE_FILE" exec -T frontend sh -c "rm -rf /tmp/.next/cache" || true
-echo "Removing default.conf..."
-docker compose -f "$COMPOSE_FILE" exec -T nginx rm -f /etc/nginx/conf.d/default.conf || true
+echo "Removing ALL Nginx configurations..."
+docker compose -f "$COMPOSE_FILE" run --rm --entrypoint sh nginx -c "rm -f /etc/nginx/conf.d/*.conf" || true
 echo "Pruning unused Docker resources..."
 docker system prune -f
 echo
@@ -52,9 +52,14 @@ echo "===== Rebuilding Nginx ====="
 docker compose -f "$COMPOSE_FILE" build nginx
 echo
 
-# 4. Verify Nginx configuration before starting
-echo "===== Verifying Nginx configuration before starting ====="
-docker compose -f "$COMPOSE_FILE" run --rm nginx nginx -t
+# 4. Create a test container to verify the configuration
+echo "===== Creating test container to verify Nginx configuration ====="
+docker compose -f "$COMPOSE_FILE" run --rm --name nginx-test nginx nginx -t
+if [ $? -ne 0 ]; then
+  echo "ERROR: Nginx configuration test failed. Please check the configuration."
+  exit 1
+fi
+echo "Nginx configuration test passed!"
 echo
 
 # 5. Start Nginx
@@ -81,9 +86,15 @@ echo
 
 # 9. Verify Nginx configuration
 echo "===== Verifying Nginx configuration ====="
+docker compose -f "$COMPOSE_FILE" exec -T nginx nginx -T | grep -A 10 "upstream"
 docker compose -f "$COMPOSE_FILE" exec -T nginx nginx -T | grep -A 10 "location /api/auth"
 docker compose -f "$COMPOSE_FILE" exec -T nginx nginx -T | grep -A 10 "location = /api/auth/session"
-docker compose -f "$COMPOSE_FILE" exec -T nginx nginx -T | grep -A 10 "location = /api/auth/csrf"
+echo
+
+# 10. Test NextAuth endpoints
+echo "===== Testing NextAuth endpoints ====="
+echo "Testing /api/auth/session endpoint..."
+curl -s -I https://brandfocus.ai/api/auth/session || echo "Could not reach session endpoint"
 echo
 
 echo "===== Deployment Complete ====="
