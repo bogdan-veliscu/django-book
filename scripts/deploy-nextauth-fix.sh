@@ -59,43 +59,57 @@ echo
 echo "===== Starting Nginx with clean configuration ====="
 # Create a temporary directory for the configuration
 mkdir -p tmp_nginx_conf
+
+# Create environment variables file for Nginx
+cat > tmp_nginx_conf/nginx.env << 'EOF'
+VIRTUAL_HOST=brandfocus.ai
+EOF
+
+# Create main configuration file
 cat > tmp_nginx_conf/default.conf << 'EOF'
 # Main Nginx configuration
-# Based on proven patterns from Django 5 Web Development Cookbook
+# Based on proven patterns and previous working configuration
 
-# Define upstream servers
-upstream backend {
+# Environment variables
+env VIRTUAL_HOST;
+
+# Define upstream servers with clear naming
+upstream django_backend {
     server app:8000;
+    keepalive 32;
 }
 
-upstream frontend {
+upstream nextjs_frontend {
     server frontend:3000;
+    keepalive 32;
 }
 
 # HTTP server - redirects to HTTPS
 server {
     listen 80;
     listen [::]:80;
-    server_name brandfocus.ai www.brandfocus.ai;
+    server_name ${VIRTUAL_HOST} www.${VIRTUAL_HOST};
     
     # Simple redirect to HTTPS
-    return 301 https://$host$request_uri;
+    return 301 https://${VIRTUAL_HOST}$request_uri;
 }
 
 # HTTPS server - main configuration
 server {
     listen 443 ssl http2;
     listen [::]:443 ssl http2;
-    server_name brandfocus.ai www.brandfocus.ai;
+    server_name ${VIRTUAL_HOST} www.${VIRTUAL_HOST};
+    charset utf-8;
     
-    # Disable automatic redirects that cause problems with NextAuth
+    # Critical for NextAuth - disable automatic redirects
     absolute_redirect off;
     port_in_redirect off;
+    server_name_in_redirect off;
     
     # SSL configuration
-    ssl_certificate /etc/letsencrypt/live/brandfocus.ai/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/brandfocus.ai/privkey.pem;
-    ssl_trusted_certificate /etc/letsencrypt/live/brandfocus.ai/chain.pem;
+    ssl_certificate /etc/letsencrypt/live/${VIRTUAL_HOST}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${VIRTUAL_HOST}/privkey.pem;
+    ssl_trusted_certificate /etc/letsencrypt/live/${VIRTUAL_HOST}/chain.pem;
     
     # SSL optimization
     ssl_session_cache shared:SSL:10m;
@@ -104,76 +118,103 @@ server {
     ssl_prefer_server_ciphers off;
     
     # Security headers
-    add_header X-Content-Type-Options nosniff;
-    add_header X-Frame-Options SAMEORIGIN;
-    add_header X-XSS-Protection "1; mode=block";
+    add_header X-Content-Type-Options nosniff always;
+    add_header X-Frame-Options SAMEORIGIN always;
+    add_header X-XSS-Protection "1; mode=block" always;
     
-    # NextAuth specific endpoints - must be before the general API location
-    location = /api/auth/session {
-        proxy_pass http://frontend/api/auth/session;
+    # Next.js static assets - high priority
+    location ^~ /_next/static/ {
+        proxy_pass http://nextjs_frontend/_next/static/;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        
-        # CORS headers for NextAuth
-        add_header Access-Control-Allow-Origin * always;
-        add_header Access-Control-Allow-Methods "GET, POST, OPTIONS" always;
-        add_header Access-Control-Allow-Headers "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization" always;
-        add_header Access-Control-Allow-Credentials "true" always;
-        
-        # Handle preflight requests
-        if ($request_method = OPTIONS) {
-            return 204;
-        }
-    }
-    
-    location ^~ /api/auth/ {
-        proxy_pass http://frontend/api/auth/;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        
-        # CORS headers for NextAuth
-        add_header Access-Control-Allow-Origin * always;
-        add_header Access-Control-Allow-Methods "GET, POST, OPTIONS" always;
-        add_header Access-Control-Allow-Headers "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization" always;
-        add_header Access-Control-Allow-Credentials "true" always;
-        
-        # Handle preflight requests
-        if ($request_method = OPTIONS) {
-            return 204;
-        }
-    }
-    
-    # Next.js static assets
-    location /_next/static/ {
-        proxy_pass http://frontend/_next/static/;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        add_header Cache-Control "public, max-age=31536000, immutable";
+        add_header Cache-Control "public, max-age=31536000, immutable" always;
         expires 365d;
+        access_log off;
     }
     
-    # Django API endpoints
-    location /api/ {
-        proxy_pass http://backend/;
+    # NextAuth specific endpoints - exact match for session to prevent redirect loops
+    location = /api/auth/session {
+        proxy_pass http://nextjs_frontend/api/auth/session;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        
+        # CORS headers for NextAuth
+        add_header Access-Control-Allow-Origin * always;
+        add_header Access-Control-Allow-Methods "GET, POST, OPTIONS" always;
+        add_header Access-Control-Allow-Headers "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization" always;
+        add_header Access-Control-Allow-Credentials "true" always;
+        
+        # Handle preflight requests
+        if ($request_method = OPTIONS) {
+            add_header Access-Control-Allow-Origin * always;
+            add_header Access-Control-Allow-Methods "GET, POST, OPTIONS" always;
+            add_header Access-Control-Allow-Headers "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization" always;
+            add_header Access-Control-Allow-Credentials "true" always;
+            add_header Access-Control-Max-Age 1728000 always;
+            add_header Content-Type "text/plain charset=UTF-8" always;
+            add_header Content-Length 0 always;
+            return 204;
+        }
+    }
+    
+    # Other NextAuth endpoints
+    location ^~ /api/auth/ {
+        proxy_pass http://nextjs_frontend/api/auth/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        
+        # CORS headers for NextAuth
+        add_header Access-Control-Allow-Origin * always;
+        add_header Access-Control-Allow-Methods "GET, POST, OPTIONS" always;
+        add_header Access-Control-Allow-Headers "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization" always;
+        add_header Access-Control-Allow-Credentials "true" always;
+        
+        # Handle preflight requests
+        if ($request_method = OPTIONS) {
+            add_header Access-Control-Allow-Origin * always;
+            add_header Access-Control-Allow-Methods "GET, POST, OPTIONS" always;
+            add_header Access-Control-Allow-Headers "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization" always;
+            add_header Access-Control-Allow-Credentials "true" always;
+            add_header Access-Control-Max-Age 1728000 always;
+            add_header Content-Type "text/plain charset=UTF-8" always;
+            add_header Content-Length 0 always;
+            return 204;
+        }
+    }
+    
+    # Django API endpoints - note the trailing slash in proxy_pass
+    location /api/ {
+        proxy_pass http://django_backend/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
         
         # CORS headers for API
         add_header Access-Control-Allow-Origin * always;
         add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS" always;
         add_header Access-Control-Allow-Headers "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization" always;
+        add_header Access-Control-Allow-Credentials "true" always;
         
         # Handle preflight requests
         if ($request_method = OPTIONS) {
+            add_header Access-Control-Allow-Origin * always;
+            add_header Access-Control-Allow-Methods "GET, POST, PUT, DELETE, OPTIONS" always;
+            add_header Access-Control-Allow-Headers "DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type,Authorization" always;
+            add_header Access-Control-Allow-Credentials "true" always;
+            add_header Access-Control-Max-Age 1728000 always;
+            add_header Content-Type "text/plain charset=UTF-8" always;
+            add_header Content-Length 0 always;
             return 204;
         }
     }
@@ -182,12 +223,16 @@ server {
     location /static/ {
         alias /code/conduit/static/;
         expires 30d;
+        access_log off;
+        add_header Cache-Control "public, max-age=2592000" always;
     }
     
     # Media files
     location /media/ {
         alias /code/conduit/media/;
         expires 30d;
+        access_log off;
+        add_header Cache-Control "public, max-age=2592000" always;
     }
     
     # Health check endpoint
@@ -197,9 +242,14 @@ server {
         add_header Content-Type text/plain;
     }
     
+    # Try files pattern for static HTML (for Next.js static exports if used)
+    location ~ \.html$ {
+        try_files $uri =404;
+    }
+    
     # Frontend application - catch all remaining requests
     location / {
-        proxy_pass http://frontend;
+        proxy_pass http://nextjs_frontend;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
@@ -207,22 +257,36 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_cache_bypass $http_upgrade;
         
         # Increase timeouts for long-running operations
         proxy_connect_timeout 60s;
         proxy_send_timeout 60s;
         proxy_read_timeout 60s;
     }
+    
+    # Error handling
+    error_page 404 /404.html;
+    error_page 500 502 503 504 /50x.html;
 }
 EOF
 
 # Copy the configuration to the container
 docker compose -f "$COMPOSE_FILE" up -d nginx
 sleep 5
+
+# Copy environment variables file
+docker cp tmp_nginx_conf/nginx.env $(docker compose -f "$COMPOSE_FILE" ps -q nginx):/etc/nginx/nginx.env
+
+# Copy the configuration
 docker cp tmp_nginx_conf/default.conf $(docker compose -f "$COMPOSE_FILE" ps -q nginx):/etc/nginx/conf.d/default.conf
 
 # Remove any other configuration files that might conflict
 docker compose -f "$COMPOSE_FILE" exec nginx sh -c "rm -f /etc/nginx/conf.d/http.conf /etc/nginx/conf.d/https.conf"
+
+# Update main nginx.conf to include env variables
+docker compose -f "$COMPOSE_FILE" exec nginx sh -c "sed -i '1s/^/env VIRTUAL_HOST;\n/' /etc/nginx/nginx.conf"
 
 # Verify the configuration
 echo "===== Verifying Nginx configuration ====="
