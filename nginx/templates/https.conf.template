@@ -1,10 +1,10 @@
 # Upstream definitions with keepalive - fixed format
-upstream django {
+upstream django_backend {
     server app:8000;
     keepalive 32;
 }
 
-upstream frontend {
+upstream frontend_app {
     server frontend:3000;
     keepalive 32;
 }
@@ -58,7 +58,7 @@ server {
 
     # Handle Next.js static files with high priority - must come before the main location block
     location /_next/static/ {
-        proxy_pass http://frontend/_next/static/;
+        proxy_pass http://frontend_app/_next/static/;
         proxy_http_version 1.1;
         proxy_set_header Host ${DOLLAR}host;
         add_header Cache-Control "public, max-age=31536000, immutable" always;
@@ -68,7 +68,7 @@ server {
 
     # Handle Next.js public files
     location /public/ {
-        proxy_pass http://frontend/public/;
+        proxy_pass http://frontend_app/public/;
         proxy_http_version 1.1;
         proxy_set_header Host ${DOLLAR}host;
         add_header Cache-Control "public, max-age=2592000" always;
@@ -79,7 +79,7 @@ server {
     # NextAuth.js API routes - must come before the general API proxy
     # Fixed to use exact matching for critical endpoints
     location ^~ /api/auth/ {
-        proxy_pass http://frontend/api/auth/;
+        proxy_pass http://frontend_app/api/auth/;
         proxy_http_version 1.1;
         proxy_set_header Upgrade ${DOLLAR}http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -111,7 +111,7 @@ server {
 
     # Specific location for NextAuth session endpoint to prevent redirect loops
     location = /api/auth/session {
-        proxy_pass http://frontend/api/auth/session;
+        proxy_pass http://frontend_app/api/auth/session;
         proxy_http_version 1.1;
         proxy_set_header Upgrade ${DOLLAR}http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -131,7 +131,7 @@ server {
 
     # API proxy with proper CORS handling
     location /api/ {
-        proxy_pass http://django/;
+        proxy_pass http://django_backend/;
         proxy_http_version 1.1;
         proxy_set_header Host ${DOLLAR}host;
         proxy_set_header X-Real-IP ${DOLLAR}remote_addr;
@@ -186,7 +186,7 @@ server {
 
     # Frontend proxy - should be last to catch all other requests
     location / {
-        proxy_pass http://frontend;
+        proxy_pass http://frontend_app;
         proxy_http_version 1.1;
         proxy_set_header Upgrade ${DOLLAR}http_upgrade;
         proxy_set_header Connection 'upgrade';
