@@ -38,9 +38,11 @@ echo "===== Stopping Nginx service ====="
 docker compose -f "$COMPOSE_FILE" stop nginx
 echo
 
-# 2. Clear Nginx cache
-echo "===== Clearing Nginx cache ====="
+# 2. Clear Nginx cache and remove default.conf
+echo "===== Clearing Nginx cache and removing default configuration ====="
 docker compose -f "$COMPOSE_FILE" exec -T frontend sh -c "rm -rf /tmp/.next/cache" || true
+echo "Removing default.conf..."
+docker compose -f "$COMPOSE_FILE" exec -T nginx rm -f /etc/nginx/conf.d/default.conf || true
 echo "Pruning unused Docker resources..."
 docker system prune -f
 echo
