@@ -28,56 +28,82 @@ fi
 echo "Using compose file: $COMPOSE_FILE"
 echo
 
+# Load environment variables from .env.prod
+if [ -f ".env.prod" ]; then
+    echo "Loading environment variables from .env.prod"
+    export $(cat .env.prod | grep -v '^#' | xargs)
+fi
+
 # Ensure NextAuth environment variables are set properly
 echo "===== Checking NextAuth environment variables ====="
-if grep -q "NEXTAUTH_SECRET" .env.prod; then
-  echo "NEXTAUTH_SECRET found in .env.prod"
+if [ -z "$NEXTAUTH_SECRET" ]; then
+    echo "NEXTAUTH_SECRET not found in environment. Generating new one..."
+    export NEXTAUTH_SECRET=$(openssl rand -base64 32)
+    echo "NEXTAUTH_SECRET=$NEXTAUTH_SECRET" >> .env.prod
+    echo "Added NEXTAUTH_SECRET to .env.prod"
 else
-  echo "NEXTAUTH_SECRET not found in .env.prod. Adding it..."
-  # Generate a secure random secret if not present
-  NEXTAUTH_SECRET=$(openssl rand -base64 32)
-  echo "NEXTAUTH_SECRET=$NEXTAUTH_SECRET" >> .env.prod
-  echo "Added NEXTAUTH_SECRET to .env.prod"
+    echo "NEXTAUTH_SECRET is set"
 fi
 
-if grep -q "NEXTAUTH_URL" .env.prod; then
-  echo "NEXTAUTH_URL found in .env.prod"
+if [ -z "$NEXTAUTH_URL" ]; then
+    echo "NEXTAUTH_URL not found in environment. Adding it..."
+    export NEXTAUTH_URL=https://brandfocus.ai
+    echo "NEXTAUTH_URL=$NEXTAUTH_URL" >> .env.prod
+    echo "Added NEXTAUTH_URL to .env.prod"
 else
-  echo "NEXTAUTH_URL not found in .env.prod. Adding it..."
-  echo "NEXTAUTH_URL=https://brandfocus.ai" >> .env.prod
-  echo "Added NEXTAUTH_URL to .env.prod"
+    echo "NEXTAUTH_URL is set"
 fi
 echo
 
-# 1. Stop nginx container
-echo "===== Stopping Nginx service ====="
-docker compose -f "$COMPOSE_FILE" stop nginx
+# Stop all services to ensure clean state
+echo "===== Stopping all services ====="
+docker compose -f "$COMPOSE_FILE" down
 echo
 
-# 2. Create a backup of the current Nginx configuration
+# Create a backup of the current Nginx configuration
 echo "===== Creating backup of current Nginx configuration ====="
 timestamp=$(date +%Y%m%d%H%M%S)
 backup_dir="nginx_backup_$timestamp"
 mkdir -p "$backup_dir"
 
 # Extract current configuration files for backup
-docker compose -f "$COMPOSE_FILE" run --rm --entrypoint sh nginx -c "tar -cf - /etc/nginx" | tar -xf - -C "$backup_dir"
-echo "Backup created in $backup_dir"
+if docker compose -f "$COMPOSE_FILE" ps -q nginx > /dev/null 2>&1; then
+    docker compose -f "$COMPOSE_FILE" run --rm --entrypoint sh nginx -c "tar -cf - /etc/nginx" | tar -xf - -C "$backup_dir"
+    echo "Backup created in $backup_dir"
+else
+    echo "No running Nginx container found for backup"
+fi
 echo
 
-# 3. Remove the Nginx container and volume to ensure a clean state
-echo "===== Removing Nginx container and volumes ====="
-docker compose -f "$COMPOSE_FILE" rm -f nginx
-docker volume rm $(docker volume ls -q | grep nginx) || true
+# Remove all containers and volumes to ensure clean state
+echo "===== Removing containers and volumes ====="
+docker compose -f "$COMPOSE_FILE" down -v
 echo
 
-# 4. Rebuild Nginx from scratch
-echo "===== Rebuilding Nginx from scratch ====="
-docker compose -f "$COMPOSE_FILE" build --no-cache nginx
+# Rebuild all services from scratch
+echo "===== Rebuilding services from scratch ====="
+docker compose -f "$COMPOSE_FILE" build --no-cache
 echo
 
-# 5. Start Nginx with a clean configuration
-echo "===== Starting Nginx with clean configuration ====="
+# Start services in the correct order
+echo "===== Starting services ====="
+# Start dependencies first
+docker compose -f "$COMPOSE_FILE" up -d db redis
+echo "Waiting for database to be ready..."
+sleep 10
+
+# Start the backend
+docker compose -f "$COMPOSE_FILE" up -d app
+echo "Waiting for backend to be ready..."
+sleep 5
+
+# Start the frontend
+docker compose -f "$COMPOSE_FILE" up -d frontend
+echo "Waiting for frontend to be ready..."
+sleep 5
+
+# Configure and start Nginx last
+echo "===== Configuring Nginx ====="
 # Create a temporary directory for the configuration
 mkdir -p tmp_nginx_conf
 
@@ -345,63 +371,53 @@ server {
 }
 EOF
 
-# Copy the configuration to the container
+# Start Nginx
 docker compose -f "$COMPOSE_FILE" up -d nginx
+echo "Waiting for Nginx to start..."
 sleep 5
 
-# Copy environment variables file
+# Copy configurations
+echo "===== Applying Nginx configuration ====="
 docker cp tmp_nginx_conf/nginx.env $(docker compose -f "$COMPOSE_FILE" ps -q nginx):/etc/nginx/nginx.env
-
-# Copy the configuration
 docker cp tmp_nginx_conf/default.conf $(docker compose -f "$COMPOSE_FILE" ps -q nginx):/etc/nginx/conf.d/default.conf
 
 # Remove any other configuration files that might conflict
 docker compose -f "$COMPOSE_FILE" exec nginx sh -c "rm -f /etc/nginx/conf.d/http.conf /etc/nginx/conf.d/https.conf"
 
 # Update main nginx.conf to include env variables
-docker compose -f "$COMPOSE_FILE" exec nginx sh -c "sed -i '1s/^/env VIRTUAL_HOST;\n/' /etc/nginx/nginx.conf"
+docker compose -f "$COMPOSE_FILE" exec nginx sh -c "cp /etc/nginx/nginx.conf /etc/nginx/nginx.conf.bak && echo 'env VIRTUAL_HOST;' | cat - /etc/nginx/nginx.conf.bak > /etc/nginx/nginx.conf"
 
 # Verify the configuration
 echo "===== Verifying Nginx configuration ====="
-docker compose -f "$COMPOSE_FILE" exec nginx sh -c "ls -la /etc/nginx/conf.d/ && nginx -t"
+docker compose -f "$COMPOSE_FILE" exec nginx nginx -t
 if [ $? -ne 0 ]; then
-  echo "ERROR: Nginx configuration test failed. Rolling back to previous configuration."
-  docker compose -f "$COMPOSE_FILE" stop nginx
-  docker compose -f "$COMPOSE_FILE" rm -f nginx
-  echo "Please check the configuration manually."
-  exit 1
+    echo "ERROR: Nginx configuration test failed. Rolling back..."
+    docker compose -f "$COMPOSE_FILE" exec nginx sh -c "mv /etc/nginx/nginx.conf.bak /etc/nginx/nginx.conf"
+    echo "Please check the configuration manually."
+    exit 1
 fi
 
-# Restart Nginx with the new configuration
-echo "===== Restarting Nginx with new configuration ====="
+# Reload Nginx configuration
+echo "===== Reloading Nginx configuration ====="
 docker compose -f "$COMPOSE_FILE" exec nginx nginx -s reload
 echo
 
-# Restart the frontend container to pick up the NextAuth environment variables
-echo "===== Restarting frontend container to pick up NextAuth environment variables ====="
-docker compose -f "$COMPOSE_FILE" stop frontend
-docker compose -f "$COMPOSE_FILE" up -d frontend
+# Wait for all services to be fully ready
+echo "===== Waiting for all services to be ready ====="
+echo "Waiting 15 seconds for services to initialize..."
+sleep 15
 echo
 
-# 6. Wait for services to start
-echo "===== Waiting for services to start ====="
-echo "Waiting 10 seconds for services to initialize..."
-sleep 10
-echo
-
-# 7. Check service status
+# Check service status
 echo "===== Checking service status ====="
-docker compose -f "$COMPOSE_FILE" ps nginx frontend app
+docker compose -f "$COMPOSE_FILE" ps
 echo
 
-# 8. Test NextAuth endpoints
-echo "===== Testing NextAuth endpoints ====="
+# Test endpoints
+echo "===== Testing endpoints ====="
 echo "Testing /api/auth/session endpoint..."
 curl -s -I https://brandfocus.ai/api/auth/session || echo "Could not reach session endpoint"
 echo
-
-# 9. Test API endpoints
-echo "===== Testing API endpoints ====="
 echo "Testing /api/health/ endpoint..."
 curl -s -I https://brandfocus.ai/api/health/ || echo "Could not reach API health endpoint"
 echo "Testing /api/articles endpoint..."
