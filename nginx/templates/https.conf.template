@@ -1,9 +1,12 @@
+# Upstream definitions with keepalive
 upstream django {
     server app:8000;
+    keepalive 32;
 }
 
 upstream frontend {
     server frontend:3000;
+    keepalive 32;
 }
 
 # HTTP redirect server
