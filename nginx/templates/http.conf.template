@@ -1,11 +1,3 @@
-upstream django {
-    server app:8000;
-}
-
-upstream frontend {
-    server frontend:3000;
-}
-
 # HTTP server
 server {
     listen 80;

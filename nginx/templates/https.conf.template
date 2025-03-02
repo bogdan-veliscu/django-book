@@ -2,6 +2,10 @@ upstream django {
     server app:8000;
 }
 
+upstream frontend {
+    server frontend:3000;
+}
+
 # HTTP redirect server
 server {
     listen 80;
