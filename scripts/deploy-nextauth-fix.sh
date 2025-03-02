@@ -28,6 +28,27 @@ fi
 echo "Using compose file: $COMPOSE_FILE"
 echo
 
+# Ensure NextAuth environment variables are set properly
+echo "===== Checking NextAuth environment variables ====="
+if grep -q "NEXTAUTH_SECRET" .env.prod; then
+  echo "NEXTAUTH_SECRET found in .env.prod"
+else
+  echo "NEXTAUTH_SECRET not found in .env.prod. Adding it..."
+  # Generate a secure random secret if not present
+  NEXTAUTH_SECRET=$(openssl rand -base64 32)
+  echo "NEXTAUTH_SECRET=$NEXTAUTH_SECRET" >> .env.prod
+  echo "Added NEXTAUTH_SECRET to .env.prod"
+fi
+
+if grep -q "NEXTAUTH_URL" .env.prod; then
+  echo "NEXTAUTH_URL found in .env.prod"
+else
+  echo "NEXTAUTH_URL not found in .env.prod. Adding it..."
+  echo "NEXTAUTH_URL=https://brandfocus.ai" >> .env.prod
+  echo "Added NEXTAUTH_URL to .env.prod"
+fi
+echo
+
 # 1. Stop nginx container
 echo "===== Stopping Nginx service ====="
 docker compose -f "$COMPOSE_FILE" stop nginx
@@ -134,6 +155,11 @@ server {
     
     # NextAuth specific endpoints - exact match for session to prevent redirect loops
     location = /api/auth/session {
+        absolute_redirect off;
+        port_in_redirect off;
+        server_name_in_redirect off;
+        proxy_redirect off;
+        
         proxy_pass http://nextjs_frontend/api/auth/session;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
@@ -141,6 +167,12 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Ssl on;
+        
+        # Buffer settings to prevent issues with larger session data
+        proxy_buffer_size 128k;
+        proxy_buffers 4 256k;
+        proxy_busy_buffers_size 256k;
         
         # CORS headers for NextAuth
         add_header Access-Control-Allow-Origin * always;
@@ -161,15 +193,54 @@ server {
         }
     }
     
-    # Other NextAuth endpoints
-    location ^~ /api/auth/ {
-        proxy_pass http://nextjs_frontend/api/auth/;
+    # Also add exact matches for other critical NextAuth endpoints
+    location = /api/auth/signin {
+        absolute_redirect off;
+        port_in_redirect off;
+        server_name_in_redirect off;
+        proxy_redirect off;
+        
+        proxy_pass http://nextjs_frontend/api/auth/signin;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Ssl on;
+    }
+
+    location = /api/auth/signout {
+        absolute_redirect off;
+        port_in_redirect off;
+        server_name_in_redirect off;
+        proxy_redirect off;
+        
+        proxy_pass http://nextjs_frontend/api/auth/signout;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Ssl on;
+    }
+    
+    # Other NextAuth endpoints
+    location ~ ^/api/auth/ {
+        absolute_redirect off;
+        port_in_redirect off;
+        server_name_in_redirect off;
+        proxy_redirect off;
+        
+        proxy_pass http://nextjs_frontend;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Ssl on;
         
         # CORS headers for NextAuth
         add_header Access-Control-Allow-Origin * always;
@@ -306,10 +377,16 @@ echo "===== Restarting Nginx with new configuration ====="
 docker compose -f "$COMPOSE_FILE" exec nginx nginx -s reload
 echo
 
+# Restart the frontend container to pick up the NextAuth environment variables
+echo "===== Restarting frontend container to pick up NextAuth environment variables ====="
+docker compose -f "$COMPOSE_FILE" stop frontend
+docker compose -f "$COMPOSE_FILE" up -d frontend
+echo
+
 # 6. Wait for services to start
 echo "===== Waiting for services to start ====="
-echo "Waiting 5 seconds for services to initialize..."
-sleep 5
+echo "Waiting 10 seconds for services to initialize..."
+sleep 10
 echo
 
 # 7. Check service status
