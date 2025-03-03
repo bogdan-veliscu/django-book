@@ -1,11 +1,11 @@
 # Upstream definitions with keepalive for better performance
 upstream django_backend {
-    server backend:8000;
+    server conduit-api:8000;
     keepalive 32;  # Keep connections alive for better performance
 }
 
 upstream nextjs_frontend {
-    server frontend:3000;
+    server conduit-frontend:3000;
     keepalive 32;  # Keep connections alive for better performance
 }
 
