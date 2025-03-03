@@ -13,7 +13,7 @@ upstream nextjs_frontend {
 server {
     listen 80;
     server_name ${VIRTUAL_HOST};
-    return 301 https://$server_name$request_uri;
+    return 301 https://${DOLLAR}server_name${DOLLAR}request_uri;
 }
 
 # Main HTTPS server
@@ -57,7 +57,7 @@ server {
     location /_next/static/ {
         proxy_pass http://nextjs_frontend/_next/static/;
         proxy_http_version 1.1;
-        proxy_set_header Host $host;
+        proxy_set_header Host ${DOLLAR}host;
         add_header Cache-Control "public, max-age=31536000, immutable" always;
         access_log off;
         expires 365d;
@@ -67,7 +67,7 @@ server {
     location /public/ {
         proxy_pass http://nextjs_frontend/public/;
         proxy_http_version 1.1;
-        proxy_set_header Host $host;
+        proxy_set_header Host ${DOLLAR}host;
         add_header Cache-Control "public, max-age=2592000" always;
         access_log off;
         expires 30d;
@@ -80,13 +80,13 @@ server {
         
         proxy_pass http://nextjs_frontend;
         proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Upgrade ${DOLLAR}http_upgrade;
         proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Host ${DOLLAR}host;
+        proxy_cache_bypass ${DOLLAR}http_upgrade;
+        proxy_set_header X-Real-IP ${DOLLAR}remote_addr;
+        proxy_set_header X-Forwarded-For ${DOLLAR}proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto ${DOLLAR}scheme;
         
         # Critical: Prevent redirect loops
         proxy_redirect off;
@@ -99,7 +99,7 @@ server {
         add_header 'Access-Control-Allow-Headers' 'Accept,Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive,Origin,User-Agent,X-Requested-With,X-CSRF-Token' always;
         
         # Handle preflight requests
-        if ($request_method = 'OPTIONS') {
+        if (${DOLLAR}request_method = 'OPTIONS') {
             add_header 'Access-Control-Allow-Origin' '*' always;
             add_header 'Access-Control-Allow-Credentials' 'true' always;
             add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
@@ -121,13 +121,13 @@ server {
         # Critical: Don't strip /api prefix when proxying to Django
         proxy_pass http://django_backend;
         proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Upgrade ${DOLLAR}http_upgrade;
         proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Host ${DOLLAR}host;
+        proxy_cache_bypass ${DOLLAR}http_upgrade;
+        proxy_set_header X-Real-IP ${DOLLAR}remote_addr;
+        proxy_set_header X-Forwarded-For ${DOLLAR}proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto ${DOLLAR}scheme;
         proxy_set_header X-Forwarded-Prefix /api;  # Inform Django about the /api prefix
         
         # CORS headers for API
@@ -137,7 +137,7 @@ server {
         add_header 'Access-Control-Allow-Headers' 'Accept,Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive,Origin,User-Agent,X-Requested-With,X-CSRF-Token' always;
         
         # Handle preflight requests
-        if ($request_method = 'OPTIONS') {
+        if (${DOLLAR}request_method = 'OPTIONS') {
             add_header 'Access-Control-Allow-Origin' '*' always;
             add_header 'Access-Control-Allow-Credentials' 'true' always;
             add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
@@ -174,13 +174,13 @@ server {
     location / {
         proxy_pass http://nextjs_frontend;
         proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Upgrade ${DOLLAR}http_upgrade;
         proxy_set_header Connection 'upgrade';
-        proxy_set_header Host $host;
-        proxy_cache_bypass $http_upgrade;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header Host ${DOLLAR}host;
+        proxy_cache_bypass ${DOLLAR}http_upgrade;
+        proxy_set_header X-Real-IP ${DOLLAR}remote_addr;
+        proxy_set_header X-Forwarded-For ${DOLLAR}proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto ${DOLLAR}scheme;
     }
 
     # Error pages
