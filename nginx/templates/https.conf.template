@@ -76,91 +76,11 @@ server {
         expires 30d;
     }
 
-    # Specific location for NextAuth session endpoint to prevent redirect loops
-    location = /api/auth/session {
-        # Prevent redirect loops by disabling all redirects
-        absolute_redirect off;
-        port_in_redirect off;
-        server_name_in_redirect off;
-        proxy_redirect off;
-
-        # Ensure all proxy headers are set correctly and consistently
-        proxy_pass http://frontend_app/api/auth/session;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade ${DOLLAR}http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host ${DOLLAR}host;
-        proxy_set_header X-Real-IP ${DOLLAR}remote_addr;
-        proxy_set_header X-Forwarded-For ${DOLLAR}proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto ${DOLLAR}scheme;
-        proxy_set_header X-Forwarded-Host ${DOLLAR}host;
-        proxy_set_header X-Forwarded-Ssl on;
-        proxy_buffer_size 128k;
-        proxy_buffers 4 256k;
-        proxy_busy_buffers_size 256k;
-        proxy_cache_bypass ${DOLLAR}http_upgrade;
-        
-        # Extended timeouts for session operations
-        proxy_connect_timeout 60s;
-        proxy_send_timeout 60s;
-        proxy_read_timeout 60s;
-        
-        # CORS headers for NextAuth
-        add_header 'Access-Control-Allow-Origin' '*' always;
-        add_header 'Access-Control-Allow-Credentials' 'true' always;
-        add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
-        add_header 'Access-Control-Allow-Headers' 'Accept,Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive,Origin,User-Agent,X-Requested-With,X-CSRF-Token' always;
-        
-        # Handle preflight OPTIONS requests
-        if (${DOLLAR}request_method = 'OPTIONS') {
-            add_header 'Access-Control-Allow-Origin' '*' always;
-            add_header 'Access-Control-Allow-Credentials' 'true' always;
-            add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
-            add_header 'Access-Control-Allow-Headers' 'Accept,Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive,Origin,User-Agent,X-Requested-With,X-CSRF-Token' always;
-            add_header 'Access-Control-Max-Age' 1728000 always;
-            add_header 'Content-Type' 'text/plain charset=UTF-8' always;
-            add_header 'Content-Length' 0 always;
-            return 204;
-        }
-    }
-
-    # Also add exact matches for other critical NextAuth endpoints
-    location = /api/auth/signin {
-        absolute_redirect off;
-        port_in_redirect off;
-        server_name_in_redirect off;
-        proxy_redirect off;
-        
-        proxy_pass http://frontend_app/api/auth/signin;
-        proxy_http_version 1.1;
-        proxy_set_header Host ${DOLLAR}host;
-        proxy_set_header X-Real-IP ${DOLLAR}remote_addr;
-        proxy_set_header X-Forwarded-For ${DOLLAR}proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto ${DOLLAR}scheme;
-        proxy_set_header X-Forwarded-Host ${DOLLAR}host;
-        proxy_set_header X-Forwarded-Ssl on;
-        proxy_cache_bypass ${DOLLAR}http_upgrade;
-    }
-
-    location = /api/auth/signout {
-        absolute_redirect off;
-        port_in_redirect off;
-        server_name_in_redirect off;
-        proxy_redirect off;
-        
-        proxy_pass http://frontend_app/api/auth/signout;
-        proxy_http_version 1.1;
-        proxy_set_header Host ${DOLLAR}host;
-        proxy_set_header X-Real-IP ${DOLLAR}remote_addr;
-        proxy_set_header X-Forwarded-For ${DOLLAR}proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto ${DOLLAR}scheme;
-        proxy_set_header X-Forwarded-Host ${DOLLAR}host;
-        proxy_set_header X-Forwarded-Ssl on;
-        proxy_cache_bypass ${DOLLAR}http_upgrade;
-    }
-
     # NextAuth.js API routes - must come before the general API proxy
-    location ~ ^/api/auth/.+ {
+    location ~ ^/api/auth/(.*?)/?$ {
+        # Remove trailing slash if present
+        rewrite ^/api/auth/(.*?)/?$ /api/auth/$1 break;
+        
         # Prevent redirect loops
         absolute_redirect off;
         port_in_redirect off;
@@ -178,17 +98,27 @@ server {
         proxy_set_header X-Forwarded-Host ${DOLLAR}host;
         proxy_cache_bypass ${DOLLAR}http_upgrade;
         
+        # Buffer settings for better performance
+        proxy_buffer_size 128k;
+        proxy_buffers 4 256k;
+        proxy_busy_buffers_size 256k;
+        
+        # Extended timeouts for session operations
+        proxy_connect_timeout 60s;
+        proxy_send_timeout 60s;
+        proxy_read_timeout 60s;
+        
         # CORS headers for NextAuth
         add_header 'Access-Control-Allow-Origin' '*' always;
         add_header 'Access-Control-Allow-Credentials' 'true' always;
-        add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
+        add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
         add_header 'Access-Control-Allow-Headers' 'Accept,Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive,Origin,User-Agent,X-Requested-With,X-CSRF-Token' always;
         
         # Handle preflight OPTIONS requests
         if (${DOLLAR}request_method = 'OPTIONS') {
             add_header 'Access-Control-Allow-Origin' '*' always;
             add_header 'Access-Control-Allow-Credentials' 'true' always;
-            add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
             add_header 'Access-Control-Allow-Headers' 'Accept,Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive,Origin,User-Agent,X-Requested-With,X-CSRF-Token' always;
             add_header 'Access-Control-Max-Age' 1728000 always;
             add_header 'Content-Type' 'text/plain charset=UTF-8' always;

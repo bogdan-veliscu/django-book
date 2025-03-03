@@ -372,12 +372,10 @@ server {
     
     # NextAuth specific endpoints - exact match for session to prevent redirect loops
     location = /api/auth/session {
-        absolute_redirect off;
-        port_in_redirect off;
-        server_name_in_redirect off;
-        proxy_redirect off;
+        # Remove trailing slash if present
+        rewrite ^/api/auth/session/?$ /api/auth/session break;
         
-        proxy_pass http://nextjs_frontend/api/auth/session;
+        proxy_pass http://nextjs_frontend;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
@@ -410,45 +408,10 @@ server {
         }
     }
     
-    # Also add exact matches for other critical NextAuth endpoints
-    location = /api/auth/signin {
-        absolute_redirect off;
-        port_in_redirect off;
-        server_name_in_redirect off;
-        proxy_redirect off;
-        
-        proxy_pass http://nextjs_frontend/api/auth/signin;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_set_header X-Forwarded-Host $host;
-        proxy_set_header X-Forwarded-Ssl on;
-    }
-
-    location = /api/auth/signout {
-        absolute_redirect off;
-        port_in_redirect off;
-        server_name_in_redirect off;
-        proxy_redirect off;
-        
-        proxy_pass http://nextjs_frontend/api/auth/signout;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_set_header X-Forwarded-Host $host;
-        proxy_set_header X-Forwarded-Ssl on;
-    }
-    
-    # Other NextAuth endpoints
-    location ~ ^/api/auth/ {
-        absolute_redirect off;
-        port_in_redirect off;
-        server_name_in_redirect off;
-        proxy_redirect off;
+    # Other NextAuth endpoints - handle both with and without trailing slash
+    location ~ ^/api/auth/(.*?)/?$ {
+        # Remove trailing slash if present
+        rewrite ^/api/auth/(.*?)/?$ /api/auth/$1 break;
         
         proxy_pass http://nextjs_frontend;
         proxy_http_version 1.1;
