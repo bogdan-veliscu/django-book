@@ -1,28 +1,25 @@
 # Upstream definitions with keepalive - fixed format
 upstream django_backend {
-    server app:8000;
+    server backend:8000;
     keepalive 32;
 }
 
-upstream frontend_app {
+upstream nextjs_frontend {
     server frontend:3000;
     keepalive 32;
 }
 
-# HTTP redirect server
+# Redirect HTTP to HTTPS
 server {
     listen 80;
-    listen [::]:80;
-    server_name brandfocus.ai www.brandfocus.ai;
-    return 301 https://${DOLLAR}host${DOLLAR}request_uri;
+    server_name ${VIRTUAL_HOST};
+    return 301 https://$server_name$request_uri;
 }
 
 # HTTPS server
 server {
-    listen 443 ssl;
-    listen [::]:443 ssl;
-    http2 on;
-    server_name brandfocus.ai www.brandfocus.ai;
+    listen 443 ssl http2;
+    server_name ${VIRTUAL_HOST};
 
     # Disable trailing slash redirects globally
     absolute_redirect off;
@@ -30,8 +27,8 @@ server {
     port_in_redirect off;
 
     # SSL configuration
-    ssl_certificate /etc/letsencrypt/live/brandfocus.ai/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/brandfocus.ai/privkey.pem;
+    ssl_certificate /etc/nginx/ssl/live/${VIRTUAL_HOST}/fullchain.pem;
+    ssl_certificate_key /etc/nginx/ssl/live/${VIRTUAL_HOST}/privkey.pem;
     ssl_trusted_certificate /etc/letsencrypt/live/brandfocus.ai/chain.pem;
 
     # SSL optimization
@@ -50,15 +47,15 @@ server {
 
     # Security headers
     add_header Strict-Transport-Security "max-age=63072000" always;
-    add_header X-Frame-Options DENY always;
-    add_header X-Content-Type-Options nosniff always;
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
     add_header X-XSS-Protection "1; mode=block" always;
     add_header Referrer-Policy "no-referrer-when-downgrade" always;
-    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https://brandfocus.ai wss://brandfocus.ai https://api.dicebear.com http://localhost:* http://127.0.0.1:* http://*.local:* https://brandfocus.ai/api https://brandfocus.ai/api/auth/*; font-src 'self' data:; img-src 'self' data: https://api.dicebear.com https://brandfocus.ai; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'; form-action 'self';" always;
+    add_header Content-Security-Policy "default-src 'self' http: https: data: blob: 'unsafe-inline'" always;
 
     # Handle Next.js static files with high priority - must come before the main location block
     location /_next/static/ {
-        proxy_pass http://frontend_app/_next/static/;
+        proxy_pass http://nextjs_frontend/_next/static/;
         proxy_http_version 1.1;
         proxy_set_header Host ${DOLLAR}host;
         add_header Cache-Control "public, max-age=31536000, immutable" always;
@@ -68,7 +65,7 @@ server {
 
     # Handle Next.js public files
     location /public/ {
-        proxy_pass http://frontend_app/public/;
+        proxy_pass http://nextjs_frontend/public/;
         proxy_http_version 1.1;
         proxy_set_header Host ${DOLLAR}host;
         add_header Cache-Control "public, max-age=2592000" always;
@@ -76,104 +73,54 @@ server {
         expires 30d;
     }
 
-    # NextAuth.js API routes - must come before the general API proxy
-    location ~ ^/api/auth/(.*?)/?$ {
-        # Remove trailing slash if present
-        rewrite ^/api/auth/(.*?)/?$ /api/auth/$1 break;
+    # NextAuth endpoints
+    location /api/auth/ {
+        proxy_pass http://nextjs_frontend;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
         
         # Prevent redirect loops
-        absolute_redirect off;
-        port_in_redirect off;
-        server_name_in_redirect off;
         proxy_redirect off;
+        proxy_buffering off;
         
-        proxy_pass http://frontend_app;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade ${DOLLAR}http_upgrade;
-        proxy_set_header Connection 'upgrade';
-        proxy_set_header Host ${DOLLAR}host;
-        proxy_set_header X-Real-IP ${DOLLAR}remote_addr;
-        proxy_set_header X-Forwarded-For ${DOLLAR}proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto ${DOLLAR}scheme;
-        proxy_set_header X-Forwarded-Host ${DOLLAR}host;
-        proxy_cache_bypass ${DOLLAR}http_upgrade;
-        
-        # Buffer settings for better performance
-        proxy_buffer_size 128k;
-        proxy_buffers 4 256k;
-        proxy_busy_buffers_size 256k;
-        
-        # Extended timeouts for session operations
+        # Increase timeouts for auth operations
         proxy_connect_timeout 60s;
         proxy_send_timeout 60s;
         proxy_read_timeout 60s;
-        
-        # CORS headers for NextAuth
-        add_header 'Access-Control-Allow-Origin' '*' always;
-        add_header 'Access-Control-Allow-Credentials' 'true' always;
-        add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
-        add_header 'Access-Control-Allow-Headers' 'Accept,Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive,Origin,User-Agent,X-Requested-With,X-CSRF-Token' always;
-        
-        # Handle preflight OPTIONS requests
-        if (${DOLLAR}request_method = 'OPTIONS') {
-            add_header 'Access-Control-Allow-Origin' '*' always;
-            add_header 'Access-Control-Allow-Credentials' 'true' always;
-            add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
-            add_header 'Access-Control-Allow-Headers' 'Accept,Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive,Origin,User-Agent,X-Requested-With,X-CSRF-Token' always;
-            add_header 'Access-Control-Max-Age' 1728000 always;
-            add_header 'Content-Type' 'text/plain charset=UTF-8' always;
-            add_header 'Content-Length' 0 always;
-            return 204;
-        }
     }
 
-    # API proxy with proper CORS handling
+    # Django API endpoints
     location /api/ {
         proxy_pass http://django_backend;
         proxy_http_version 1.1;
-        proxy_set_header Host ${DOLLAR}host;
-        proxy_set_header X-Real-IP ${DOLLAR}remote_addr;
-        proxy_set_header X-Forwarded-For ${DOLLAR}proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto ${DOLLAR}scheme;
-        proxy_set_header X-Forwarded-Host ${DOLLAR}host;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
         proxy_set_header X-Forwarded-Prefix /api;
-        proxy_buffering on;
-        proxy_buffer_size 8k;
-        proxy_buffers 8 8k;
-        
-        # Handle preflight OPTIONS requests
-        if (${DOLLAR}request_method = 'OPTIONS') {
-            add_header 'Access-Control-Allow-Origin' '*' always;
-            add_header 'Access-Control-Allow-Credentials' 'true' always;
-            add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
-            add_header 'Access-Control-Allow-Headers' 'Accept,Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive,Origin,User-Agent,X-Requested-With,X-CSRF-Token' always;
-            add_header 'Access-Control-Max-Age' 1728000 always;
-            add_header 'Content-Type' 'text/plain charset=UTF-8' always;
-            add_header 'Content-Length' 0 always;
-            return 204;
-        }
-        
-        # Regular requests
-        add_header 'Access-Control-Allow-Origin' '*' always;
-        add_header 'Access-Control-Allow-Credentials' 'true' always;
-        add_header 'Access-Control-Allow-Methods' 'GET, POST, PUT, DELETE, OPTIONS' always;
-        add_header 'Access-Control-Allow-Headers' 'Accept,Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive,Origin,User-Agent,X-Requested-With,X-CSRF-Token' always;
     }
 
     # Static files
     location /static/ {
-        alias /code/conduit/static/;
-        add_header Cache-Control "public, max-age=2592000" always;
-        access_log off;
+        alias /app/static/;
         expires 30d;
+        add_header Cache-Control "public, no-transform";
     }
 
     # Media files
     location /media/ {
-        alias /code/conduit/media/;
-        add_header Cache-Control "public, max-age=2592000" always;
-        access_log off;
+        alias /app/media/;
         expires 30d;
+        add_header Cache-Control "public, no-transform";
     }
 
     # Health check endpoint
@@ -183,27 +130,23 @@ server {
         add_header Content-Type text/plain;
     }
 
-    # Frontend proxy - should be last to catch all other requests
+    # Frontend application
     location / {
-        proxy_pass http://frontend_app;
+        proxy_pass http://nextjs_frontend;
         proxy_http_version 1.1;
-        proxy_set_header Upgrade ${DOLLAR}http_upgrade;
+        proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection 'upgrade';
-        proxy_set_header Host ${DOLLAR}host;
-        proxy_set_header X-Real-IP ${DOLLAR}remote_addr;
-        proxy_set_header X-Forwarded-For ${DOLLAR}proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto ${DOLLAR}scheme;
-        proxy_set_header X-Forwarded-Host ${DOLLAR}host;
-        proxy_cache_bypass ${DOLLAR}http_upgrade;
-        
-        # Avoid 502 errors during long-running operations
-        proxy_connect_timeout 120s;
-        proxy_send_timeout 120s;
-        proxy_read_timeout 120s;
-        
-        # Buffer settings for better performance
-        proxy_buffering on;
-        proxy_buffer_size 8k;
-        proxy_buffers 8 8k;
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Error pages
+    error_page 404 /404.html;
+    error_page 500 502 503 504 /50x.html;
+    location = /50x.html {
+        root /usr/share/nginx/html;
     }
 } 
