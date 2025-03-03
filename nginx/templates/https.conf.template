@@ -2,11 +2,13 @@
 upstream django_backend {
     server conduit-api:8000;
     keepalive 32;  # Keep connections alive for better performance
+    resolver 127.0.0.11 valid=30s;  # Docker's internal DNS resolver
 }
 
 upstream nextjs_frontend {
     server conduit-frontend:3000;
     keepalive 32;  # Keep connections alive for better performance
+    resolver 127.0.0.11 valid=30s;  # Docker's internal DNS resolver
 }
 
 # HTTP to HTTPS redirect
@@ -21,6 +23,13 @@ server {
     listen 443 ssl http2;
     server_name ${VIRTUAL_HOST};
 
+    # Add Docker DNS resolver
+    resolver 127.0.0.11 valid=30s;  # Docker's internal DNS resolver
+    
+    # Set variables for backend services
+    set $backend_host conduit-api;
+    set $frontend_host conduit-frontend;
+
     # Critical: Disable all automatic redirects to prevent loops
     absolute_redirect off;
     server_name_in_redirect off;
@@ -29,7 +38,7 @@ server {
     # SSL configuration
     ssl_certificate /etc/nginx/ssl/live/${VIRTUAL_HOST}/fullchain.pem;
     ssl_certificate_key /etc/nginx/ssl/live/${VIRTUAL_HOST}/privkey.pem;
-    ssl_trusted_certificate /etc/letsencrypt/live/brandfocus.ai/chain.pem;
+    ssl_trusted_certificate /etc/letsencrypt/live/${VIRTUAL_HOST}/chain.pem;
 
     # SSL optimization settings
     ssl_session_timeout 1d;
@@ -53,6 +62,10 @@ server {
     add_header Referrer-Policy "no-referrer-when-downgrade" always;
     add_header Content-Security-Policy "default-src 'self' http: https: data: blob: 'unsafe-inline'" always;
 
+    # Security headers with NextAuth specific adjustments
+    add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self' https://${VIRTUAL_HOST} ws://${VIRTUAL_HOST};" always;
+
     # Next.js static assets - must come before other location blocks
     location /_next/static/ {
         proxy_pass http://nextjs_frontend/_next/static/;
@@ -75,10 +88,26 @@ server {
 
     # NextAuth endpoints - handle both with and without trailing slash
     location ~ ^/api/auth/(.*?)/?$ {
+        # Force correct MIME type for NextAuth responses
+        add_header Content-Type application/json;
+        
+        # Disable redirects for session requests
+        if ($args ~* "callback") {
+            proxy_redirect off;
+        }
+        
+        # Handle OAuth callback URLs
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        
+        # Buffer settings to prevent 502 errors
+        proxy_buffers 16 16k;
+        proxy_buffer_size 16k;
+        
         # Remove trailing slash if present and normalize path
         rewrite ^/api/auth/(.*?)/?$ /api/auth/$1 break;
         
-        proxy_pass http://nextjs_frontend;
+        proxy_pass http://$frontend_host:3000;  # Use variable instead of upstream name
         proxy_http_version 1.1;
         proxy_set_header Upgrade ${DOLLAR}http_upgrade;
         proxy_set_header Connection 'upgrade';
@@ -87,10 +116,6 @@ server {
         proxy_set_header X-Real-IP ${DOLLAR}remote_addr;
         proxy_set_header X-Forwarded-For ${DOLLAR}proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto ${DOLLAR}scheme;
-        
-        # Critical: Prevent redirect loops
-        proxy_redirect off;
-        proxy_buffering off;
         
         # CORS headers for NextAuth
         add_header 'Access-Control-Allow-Origin' '*' always;

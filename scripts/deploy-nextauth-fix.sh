@@ -5,9 +5,9 @@ set -e
 
 echo "Starting NextAuth fix deployment..."
 
-# Stop Nginx container
-echo "Stopping Nginx container..."
-docker compose -f docker-compose.prod.yml stop nginx
+# Stop all services to ensure clean state
+echo "Stopping all services..."
+docker compose -f docker-compose.prod.yml down
 
 # Create backup of current Nginx configuration
 echo "Creating backup of current Nginx configuration..."
@@ -15,22 +15,43 @@ BACKUP_DIR="nginx_backup_$(date +%Y%m%d_%H%M%S)"
 mkdir -p "$BACKUP_DIR"
 cp nginx/templates/https.conf.template "$BACKUP_DIR/"
 
-# Remove Nginx container and volumes to ensure clean state
-echo "Removing Nginx container and volumes..."
-docker compose -f docker-compose.prod.yml rm -f nginx
-docker volume rm $(docker volume ls -q | grep nginx) || true
-
 # Ensure Nginx environment variables are set
 echo "Setting up Nginx environment variables..."
 cat > nginx.env << EOL
 VIRTUAL_HOST=brandfocus.ai
 EOL
 
-# Rebuild Nginx from scratch
+# Start services in the correct order
+echo "Starting services in correct order..."
+
+# Start database and Redis first
+echo "Starting database and Redis..."
+docker compose -f docker-compose.prod.yml up -d db redis
+
+# Wait for database to be ready
+echo "Waiting for database to be ready..."
+sleep 10
+
+# Start the backend
+echo "Starting backend service..."
+docker compose -f docker-compose.prod.yml up -d conduit-api
+
+# Wait for backend to be ready
+echo "Waiting for backend to be ready..."
+sleep 5
+
+# Start the frontend
+echo "Starting frontend service..."
+docker compose -f docker-compose.prod.yml up -d conduit-frontend
+
+# Wait for frontend to be ready
+echo "Waiting for frontend to be ready..."
+sleep 5
+
+# Rebuild and start Nginx last
 echo "Rebuilding Nginx..."
 docker compose -f docker-compose.prod.yml build nginx
 
-# Start Nginx with new configuration
 echo "Starting Nginx with new configuration..."
 docker compose -f docker-compose.prod.yml up -d nginx
 
