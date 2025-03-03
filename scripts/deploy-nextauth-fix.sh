@@ -95,6 +95,11 @@ docker ps
 echo "Checking network connections:"
 docker network inspect nginx-proxy
 
+# Verify DNS resolution
+echo "Verifying DNS resolution..."
+docker compose -f docker-compose.prod.yml exec nginx ping -c 1 conduit-frontend || echo "Warning: Cannot ping conduit-frontend"
+docker compose -f docker-compose.prod.yml exec nginx ping -c 1 conduit-api || echo "Warning: Cannot ping conduit-api"
+
 # Rebuild and start Nginx last
 echo "Rebuilding Nginx..."
 docker compose -f docker-compose.prod.yml build nginx

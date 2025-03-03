@@ -2,13 +2,17 @@
 # Use resolver directive outside server blocks
 resolver 127.0.0.11 ipv6=off;
 
+# Define variables for upstream servers
+set $backend_upstream conduit-api:8000;
+set $frontend_upstream conduit-frontend:3000;
+
 upstream django_backend {
-    server conduit-api:8000;
+    server $backend_upstream;
     keepalive 32;  # Keep connections alive for better performance
 }
 
 upstream nextjs_frontend {
-    server conduit-frontend:3000;
+    server $frontend_upstream;
     keepalive 32;  # Keep connections alive for better performance
 }
 
