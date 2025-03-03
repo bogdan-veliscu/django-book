@@ -3,12 +3,12 @@
 resolver 127.0.0.11 ipv6=off;
 
 upstream django_backend {
-    server conduit-api:8000 resolve;
+    server conduit-api:8000;
     keepalive 32;  # Keep connections alive for better performance
 }
 
 upstream nextjs_frontend {
-    server conduit-frontend:3000 resolve;
+    server conduit-frontend:3000;
     keepalive 32;  # Keep connections alive for better performance
 }
 
