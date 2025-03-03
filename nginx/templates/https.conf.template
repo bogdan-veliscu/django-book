@@ -1,14 +1,15 @@
 # Upstream definitions with keepalive for better performance
+# Use resolver directive outside server blocks
+resolver 127.0.0.11 ipv6=off;
+
 upstream django_backend {
-    server conduit-api:8000;
+    server conduit-api:8000 resolve;
     keepalive 32;  # Keep connections alive for better performance
-    resolver 127.0.0.11 valid=30s;  # Docker's internal DNS resolver
 }
 
 upstream nextjs_frontend {
-    server conduit-frontend:3000;
+    server conduit-frontend:3000 resolve;
     keepalive 32;  # Keep connections alive for better performance
-    resolver 127.0.0.11 valid=30s;  # Docker's internal DNS resolver
 }
 
 # HTTP to HTTPS redirect
@@ -24,7 +25,7 @@ server {
     server_name ${VIRTUAL_HOST};
 
     # Add Docker DNS resolver
-    resolver 127.0.0.11 valid=30s;  # Docker's internal DNS resolver
+    resolver 127.0.0.11 ipv6=off valid=30s;  # Docker's internal DNS resolver
     
     # Set variables for backend services
     set $backend_host conduit-api;
