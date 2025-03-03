@@ -1,11 +1,11 @@
 # Upstream definitions with keepalive - fixed format
 upstream django_backend {
-    server app:8000;
+    server conduit-api:8000;
     keepalive 32;
 }
 
 upstream frontend_app {
-    server frontend:3000;
+    server conduit-frontend:3000;
     keepalive 32;
 }
 
@@ -95,6 +95,8 @@ server {
         proxy_set_header X-Forwarded-Proto ${DOLLAR}scheme;
         proxy_set_header X-Forwarded-Host ${DOLLAR}host;
         proxy_set_header X-Forwarded-Ssl on;
+        
+        # Buffer settings for better performance
         proxy_buffer_size 128k;
         proxy_buffers 4 256k;
         proxy_busy_buffers_size 256k;

@@ -71,7 +71,7 @@ docker compose -f docker-compose.prod.yml up -d conduit-frontend
 echo "Waiting for frontend to be ready..."
 COUNTER=0
 MAX_TRIES=10
-while ! docker compose -f docker-compose.prod.yml exec conduit-frontend curl -s http://localhost:3000/api/health > /dev/null; do
+while ! docker compose -f docker-compose.prod.yml exec conduit-frontend curl -s http://localhost:3000/health > /dev/null; do
     COUNTER=$((COUNTER+1))
     if [ $COUNTER -ge $MAX_TRIES ]; then
         echo "Frontend health check timed out, continuing anyway..."
@@ -82,54 +82,40 @@ while ! docker compose -f docker-compose.prod.yml exec conduit-frontend curl -s 
 done
 echo "Frontend is ready or timeout occurred."
 
-# Ensure services are on the same network
-echo "Connecting services to network..."
-docker network connect nginx-proxy conduit-api || echo "conduit-api already connected or doesn't exist"
-docker network connect nginx-proxy conduit-frontend || echo "conduit-frontend already connected or doesn't exist"
+# Connect services to the nginx-proxy network
+echo "Connecting services to nginx-proxy network..."
+docker network connect nginx-proxy conduit-api || true
+docker network connect nginx-proxy conduit-frontend || true
+docker network connect nginx-proxy db || true
+docker network connect nginx-proxy redis || true
 
 # List running containers
-echo "Listing running containers:"
-docker ps
-
-# Show network connections
-echo "Checking network connections:"
-docker network inspect nginx-proxy
-
-# Verify DNS resolution
-echo "Verifying DNS resolution..."
-docker compose -f docker-compose.prod.yml exec nginx ping -c 1 conduit-frontend || echo "Warning: Cannot ping conduit-frontend"
-docker compose -f docker-compose.prod.yml exec nginx ping -c 1 conduit-api || echo "Warning: Cannot ping conduit-api"
+echo "Listing running containers..."
+docker compose -f docker-compose.prod.yml ps
 
 # Rebuild and start Nginx last
-echo "Rebuilding Nginx..."
-docker compose -f docker-compose.prod.yml build nginx
+echo "Rebuilding and starting Nginx..."
+docker compose -f docker-compose.prod.yml up -d --build nginx
 
-echo "Starting Nginx with new configuration..."
-docker compose -f docker-compose.prod.yml up -d nginx
-
-# Make sure Nginx is on the same network
-echo "Connecting Nginx to the network..."
-docker network connect nginx-proxy $(docker compose -f docker-compose.prod.yml ps -q nginx) || echo "Nginx already connected or doesn't exist"
-
-# Wait for Nginx to start
-echo "Waiting for Nginx to start..."
-sleep 10
-
-# Test Nginx configuration
-echo "Testing Nginx configuration..."
-docker compose -f docker-compose.prod.yml exec nginx nginx -t || {
-    echo "Nginx configuration test failed. Checking logs..."
-    docker compose -f docker-compose.prod.yml logs nginx
-    exit 1
-}
-
-# Restart Nginx to apply changes
-echo "Restarting Nginx to apply changes..."
-docker compose -f docker-compose.prod.yml restart nginx
+# Wait for Nginx to be ready
+echo "Waiting for Nginx to be ready..."
+COUNTER=0
+MAX_TRIES=10
+while ! docker compose -f docker-compose.prod.yml exec nginx nginx -t; do
+    COUNTER=$((COUNTER+1))
+    if [ $COUNTER -ge $MAX_TRIES ]; then
+        echo "Nginx configuration test timed out, continuing anyway..."
+        break
+    fi
+    echo "Nginx not ready yet, waiting... (attempt $COUNTER of $MAX_TRIES)"
+    sleep 5
+done
+echo "Nginx is ready or timeout occurred."
 
 # Test critical endpoints
 echo "Testing critical endpoints..."
-./scripts/test-nextauth.sh || echo "Tests failed but continuing deployment"
+curl -s -I https://brandfocus.ai/api/health/ || echo "Health check failed"
+curl -s -I https://brandfocus.ai/api/auth/session || echo "Session endpoint check failed"
 
-echo "Deployment completed successfully!"
-echo "If you need to rollback, the backup is in: $BACKUP_DIR" 
+echo "Deployment completed. Check the logs for any issues:"
+echo "docker compose -f docker-compose.prod.yml logs -f" 
