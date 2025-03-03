@@ -90,6 +90,16 @@ services:
       - AUTH_TRUST_HOST=true
       - NEXT_PUBLIC_TRUSTED_HOSTS=${DOMAIN},www.${DOMAIN}
 
+      # NextAuth Debug Settings
+      - NEXTAUTH_DEBUG=true
+      - NODE_ENV=production
+
+      # Proxy trust settings
+      - DANGEROUSLY_DISABLE_HOST_CHECK=true
+      - NEXT_PUBLIC_SKIP_AUTH_VALIDATION=false
+      - PROXY_HOST_HEADER=true
+      - NEXT_PUBLIC_CSRF_COOKIE_NAME=next-auth.csrf-token
+
       # Server Configuration
       - HOSTNAME=0.0.0.0
       - PORT=3000

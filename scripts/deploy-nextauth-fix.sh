@@ -117,5 +117,27 @@ echo "Testing critical endpoints..."
 curl -s -I https://brandfocus.ai/api/health/ || echo "Health check failed"
 curl -s -I https://brandfocus.ai/api/auth/session || echo "Session endpoint check failed"
 
+# After starting all services, verify NextAuth connectivity
+echo "===== VERIFYING NEXTAUTH CONNECTIVITY ====="
+
+# Wait for a moment to make sure all services are ready
+sleep 10
+
+# Check the session endpoint directly from inside the frontend container
+echo "Testing NextAuth session endpoint from inside frontend container..."
+docker compose -f docker-compose.prod.yml exec frontend curl -v http://localhost:3000/api/auth/session
+
+# Test the session endpoint through Nginx
+echo "Testing NextAuth session endpoint through Nginx..."
+curl -v https://${DOMAIN}/api/auth/session --insecure
+
+# View the frontend logs for any NextAuth errors
+echo "Checking frontend logs for NextAuth errors..."
+docker compose -f docker-compose.prod.yml logs --tail=50 frontend | grep -i "auth\|next"
+
+# View Nginx logs
+echo "Checking Nginx logs for errors..."
+docker compose -f docker-compose.prod.yml exec nginx cat /var/log/nginx/error.log | tail -n 50
+
 echo "Deployment completed. Check the logs for any issues:"
 echo "docker compose -f docker-compose.prod.yml logs -f" 

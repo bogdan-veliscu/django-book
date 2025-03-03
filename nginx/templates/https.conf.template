@@ -95,6 +95,7 @@ server {
         proxy_set_header X-Forwarded-Proto ${DOLLAR}scheme;
         proxy_set_header X-Forwarded-Host ${DOLLAR}host;
         proxy_set_header X-Forwarded-Ssl on;
+        proxy_set_header X-NextAuth-URL "https://${DOLLAR}host";
         
         # Buffer settings for better performance
         proxy_buffer_size 128k;
@@ -103,19 +104,19 @@ server {
         proxy_cache_bypass ${DOLLAR}http_upgrade;
         
         # Extended timeouts for session operations
-        proxy_connect_timeout 60s;
-        proxy_send_timeout 60s;
-        proxy_read_timeout 60s;
+        proxy_connect_timeout 90s;
+        proxy_send_timeout 90s;
+        proxy_read_timeout 90s;
         
-        # CORS headers for NextAuth
-        add_header 'Access-Control-Allow-Origin' '*' always;
+        # CORS headers for NextAuth - properly allow credentials
+        add_header 'Access-Control-Allow-Origin' 'https://${DOLLAR}host' always;
         add_header 'Access-Control-Allow-Credentials' 'true' always;
         add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
         add_header 'Access-Control-Allow-Headers' 'Accept,Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive,Origin,User-Agent,X-Requested-With,X-CSRF-Token' always;
         
         # Handle preflight OPTIONS requests
         if (${DOLLAR}request_method = 'OPTIONS') {
-            add_header 'Access-Control-Allow-Origin' '*' always;
+            add_header 'Access-Control-Allow-Origin' 'https://${DOLLAR}host' always;
             add_header 'Access-Control-Allow-Credentials' 'true' always;
             add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
             add_header 'Access-Control-Allow-Headers' 'Accept,Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive,Origin,User-Agent,X-Requested-With,X-CSRF-Token' always;
@@ -124,6 +125,9 @@ server {
             add_header 'Content-Length' 0 always;
             return 204;
         }
+
+        # Remove content security policy for this endpoint to prevent any interference
+        proxy_hide_header Content-Security-Policy;
     }
 
     # Also add exact matches for other critical NextAuth endpoints
