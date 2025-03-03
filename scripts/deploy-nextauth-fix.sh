@@ -117,6 +117,10 @@ echo "Testing critical endpoints..."
 curl -s -I https://brandfocus.ai/api/health/ || echo "Health check failed"
 curl -s -I https://brandfocus.ai/api/auth/session || echo "Session endpoint check failed"
 
+# Ensure frontend can resolve itself without going through Nginx
+echo "Preventing circular requests by updating hosts file in frontend container..."
+docker compose -f docker-compose.prod.yml exec frontend sh -c "echo '127.0.0.1 brandfocus.ai www.brandfocus.ai' >> /etc/hosts"
+
 # After starting all services, verify NextAuth connectivity
 echo "===== VERIFYING NEXTAUTH CONNECTIVITY ====="
 
@@ -139,5 +143,36 @@ docker compose -f docker-compose.prod.yml logs --tail=50 frontend | grep -i "aut
 echo "Checking Nginx logs for errors..."
 docker compose -f docker-compose.prod.yml exec nginx cat /var/log/nginx/error.log | tail -n 50
 
+# Add header debugging to detect any issues
+echo "===== HEADER SIZE ANALYSIS ====="
+docker compose -f docker-compose.prod.yml exec frontend curl -s -D - http://localhost:3000/api/auth/session -o /dev/null | wc -c
+echo "Header size in bytes (should be less than 8192 for default Node.js)"
+
+echo "Testing with simplified headers..."
+docker compose -f docker-compose.prod.yml exec frontend curl -s -D - -H "Host: localhost" http://localhost:3000/api/auth/session -o /dev/null | wc -c
+
 echo "Deployment completed. Check the logs for any issues:"
-echo "docker compose -f docker-compose.prod.yml logs -f" 
+echo "docker compose -f docker-compose.prod.yml logs -f"
+
+# Add direct NextAuth endpoint testing with minimal headers
+echo "===== DETAILED NEXTAUTH DEBUGGING ====="
+
+# Check the raw session response - no proxy, no complex headers
+echo "Testing raw session endpoint response (should be valid JSON):"
+docker compose -f docker-compose.prod.yml exec frontend curl -s http://localhost:3000/api/auth/session | jq . || echo "Invalid JSON returned"
+
+# Test with explicit Accept header to ensure proper content negotiation
+echo "Testing with explicit Accept header:"
+docker compose -f docker-compose.prod.yml exec frontend curl -s -H "Accept: application/json" http://localhost:3000/api/auth/session | jq . || echo "Invalid JSON returned"
+
+# Try a session POST request (which NextAuth uses internally)
+echo "Testing session endpoint with POST method:"
+docker compose -f docker-compose.prod.yml exec frontend curl -s -X POST -H "Content-Type: application/json" -d '{}' http://localhost:3000/api/auth/session | jq . || echo "Invalid JSON returned"
+
+# Check direct session access from Nginx
+echo "Testing session endpoint through Nginx (direct):"
+docker compose -f docker-compose.prod.yml exec nginx curl -s http://frontend:3000/api/auth/session | jq . || echo "Invalid JSON returned"
+
+# View the frontend logs for any NextAuth errors
+echo "Checking frontend logs for NextAuth errors..."
+docker compose -f docker-compose.prod.yml logs --tail=50 frontend | grep -i "auth\|next" 

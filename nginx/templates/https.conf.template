@@ -76,58 +76,45 @@ server {
         expires 30d;
     }
 
-    # Specific location for NextAuth session endpoint to prevent redirect loops
+    # Special handling for NextAuth session endpoint - minimal interference approach
     location = /api/auth/session {
-        # Prevent redirect loops by disabling all redirects
-        absolute_redirect off;
-        port_in_redirect off;
-        server_name_in_redirect off;
-        proxy_redirect off;
-
-        # Ensure all proxy headers are set correctly and consistently
+        # Basic proxy setup - eliminate complexity
         proxy_pass http://frontend_app/api/auth/session;
         proxy_http_version 1.1;
-        proxy_set_header Upgrade ${DOLLAR}http_upgrade;
-        proxy_set_header Connection 'upgrade';
+        
+        # Only essential headers
         proxy_set_header Host ${DOLLAR}host;
         proxy_set_header X-Real-IP ${DOLLAR}remote_addr;
         proxy_set_header X-Forwarded-For ${DOLLAR}proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto ${DOLLAR}scheme;
-        proxy_set_header X-Forwarded-Host ${DOLLAR}host;
-        proxy_set_header X-Forwarded-Ssl on;
-        proxy_set_header X-NextAuth-URL "https://${DOLLAR}host";
         
-        # Buffer settings for better performance
-        proxy_buffer_size 128k;
-        proxy_buffers 4 256k;
-        proxy_busy_buffers_size 256k;
-        proxy_cache_bypass ${DOLLAR}http_upgrade;
+        # Explicitly allow JSON responses to pass through without modification
+        add_header Content-Type application/json always;
         
-        # Extended timeouts for session operations
-        proxy_connect_timeout 90s;
-        proxy_send_timeout 90s;
-        proxy_read_timeout 90s;
+        # Critical - do not buffer or modify the response
+        proxy_buffering off;
+        proxy_pass_header Content-Type;
+        proxy_pass_header Content-Length;
         
-        # CORS headers for NextAuth - properly allow credentials
-        add_header 'Access-Control-Allow-Origin' 'https://${DOLLAR}host' always;
-        add_header 'Access-Control-Allow-Credentials' 'true' always;
-        add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
-        add_header 'Access-Control-Allow-Headers' 'Accept,Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive,Origin,User-Agent,X-Requested-With,X-CSRF-Token' always;
+        # Disable all unnecessary headers and modifications
+        proxy_hide_header X-Powered-By;
+        proxy_hide_header X-Frame-Options;
+        proxy_hide_header X-Content-Type-Options;
+        proxy_hide_header Content-Security-Policy;
         
-        # Handle preflight OPTIONS requests
+        # CORS essentials only
+        add_header Access-Control-Allow-Origin ${DOLLAR}http_origin always;
+        add_header Access-Control-Allow-Credentials true always;
+        
+        # Fast OPTIONS response
         if (${DOLLAR}request_method = 'OPTIONS') {
-            add_header 'Access-Control-Allow-Origin' 'https://${DOLLAR}host' always;
-            add_header 'Access-Control-Allow-Credentials' 'true' always;
-            add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS' always;
-            add_header 'Access-Control-Allow-Headers' 'Accept,Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive,Origin,User-Agent,X-Requested-With,X-CSRF-Token' always;
-            add_header 'Access-Control-Max-Age' 1728000 always;
-            add_header 'Content-Type' 'text/plain charset=UTF-8' always;
-            add_header 'Content-Length' 0 always;
+            add_header Access-Control-Allow-Origin ${DOLLAR}http_origin always;
+            add_header Access-Control-Allow-Methods "GET, POST, OPTIONS" always;
+            add_header Access-Control-Allow-Headers "Accept,Authorization,Content-Type" always;
+            add_header Access-Control-Allow-Credentials true always;
+            add_header Access-Control-Max-Age 86400 always;
             return 204;
         }
-
-        # Remove content security policy for this endpoint to prevent any interference
-        proxy_hide_header Content-Security-Policy;
     }
 
     # Also add exact matches for other critical NextAuth endpoints

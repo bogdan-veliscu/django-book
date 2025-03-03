@@ -82,23 +82,26 @@ services:
 
       # NextAuth Configuration
       - NEXTAUTH_URL=https://${DOMAIN}
-      - NEXTAUTH_URL_INTERNAL=http://frontend:3000
+      - NEXTAUTH_URL_INTERNAL=http://localhost:3000
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
       - NEXTAUTH_TRUST_HOST=true
-      - NEXTAUTH_TRUST_HOSTS=${DOMAIN},www.${DOMAIN}
-      - NEXTAUTH_ALLOWED_HOSTS=${DOMAIN},www.${DOMAIN}
+      - NEXTAUTH_TRUST_HOSTS=${DOMAIN},www.${DOMAIN},localhost,127.0.0.1
+      - NEXTAUTH_ALLOWED_HOSTS=${DOMAIN},www.${DOMAIN},localhost,127.0.0.1
       - AUTH_TRUST_HOST=true
-      - NEXT_PUBLIC_TRUSTED_HOSTS=${DOMAIN},www.${DOMAIN}
+      - NEXT_PUBLIC_TRUSTED_HOSTS=${DOMAIN},www.${DOMAIN},localhost,127.0.0.1
 
       # NextAuth Debug Settings
       - NEXTAUTH_DEBUG=true
       - NODE_ENV=production
+      - NODE_OPTIONS=--max-http-header-size=32768 --no-warnings
+      - DEBUG=next-auth:*
 
       # Proxy trust settings
       - DANGEROUSLY_DISABLE_HOST_CHECK=true
       - NEXT_PUBLIC_SKIP_AUTH_VALIDATION=false
       - PROXY_HOST_HEADER=true
       - NEXT_PUBLIC_CSRF_COOKIE_NAME=next-auth.csrf-token
+      - NEXT_SHARP_PATH=/tmp/node_modules/sharp
 
       # Server Configuration
       - HOSTNAME=0.0.0.0
