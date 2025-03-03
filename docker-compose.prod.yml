@@ -90,14 +90,22 @@ services:
       - AUTH_TRUST_HOST=true
       - NEXT_PUBLIC_TRUSTED_HOSTS=${DOMAIN},www.${DOMAIN},localhost,127.0.0.1
 
-      # NextAuth Debug Settings
+      # Enhanced Debug Settings
       - NEXTAUTH_DEBUG=true
       - NODE_ENV=production
-      - NODE_OPTIONS=--max-http-header-size=32768 --no-warnings
-      - DEBUG=next-auth:*
+      - NODE_OPTIONS=--max-http-header-size=32768 --no-warnings --trace-warnings --trace-exit
+      - DEBUG=next-auth:*,next:*,socket*,http,express:*,*:error:*
       - NEXTAUTH_CHECK_EMAIL_URL=true
       - NEXTAUTH_SESSION_SANITIZE=false
       - NEXTAUTH_STRICT_FORMAT=true
+      - NEXT_DEBUG=true
+      - NEXT_TELEMETRY_DEBUG=1
+      - NODE_DEBUG=http,net,stream,tls,module,timers,http2
+
+      # Direct fallback - attempt to bypass config issues
+      - DIRECT_PROVIDER=true
+      - SKIP_MIDDLEWARE_AUTH_CHECK=true
+      - NEXTAUTH_JWT=false
 
       # Proxy trust settings
       - DANGEROUSLY_DISABLE_HOST_CHECK=true

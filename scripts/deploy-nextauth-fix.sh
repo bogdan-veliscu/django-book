@@ -228,4 +228,209 @@ docker compose -f docker-compose.prod.yml logs --tail=100 frontend | grep -i "er
 
 # View the frontend logs for any NextAuth errors
 echo "Checking frontend logs for NextAuth errors..."
+docker compose -f docker-compose.prod.yml logs --tail=50 frontend | grep -i "auth\|next"
+
+# Create advanced NextAuth diagnostics tools
+echo "===== CREATING COMPREHENSIVE NEXTAUTH DIAGNOSTICS ====="
+
+# Create a detailed diagnostic script in the frontend container
+echo "Creating advanced NextAuth diagnostic tool..."
+docker compose -f docker-compose.prod.yml exec frontend sh -c "cat > /tmp/nextauth-debug.js << 'EOF'
+const http = require('http');
+const https = require('https');
+const fs = require('fs');
+const process = require('process');
+
+// Configuration
+const endpoints = [
+  { name: 'Direct Session', url: 'http://localhost:3000/api/auth/session' },
+  { name: 'Proxy Session', url: 'https://brandfocus.ai/api/auth/session', ignoreCert: true },
+  { name: 'Direct Signin', url: 'http://localhost:3000/api/auth/signin' },
+  { name: 'Proxy Signin', url: 'https://brandfocus.ai/api/auth/signin', ignoreCert: true },
+  { name: 'Debug Endpoint', url: 'https://brandfocus.ai/api/auth-debug', ignoreCert: true }
+];
+
+// Helper to write results to file
+const outputFile = '/tmp/nextauth-diagnostics.log';
+fs.writeFileSync(outputFile, `NextAuth Diagnostics - ${new Date().toISOString()}\n\n`);
+
+function appendLog(message) {
+  fs.appendFileSync(outputFile, message + '\n');
+  console.log(message);
+}
+
+// Print environment variables related to NextAuth
+appendLog('=== NEXTAUTH ENVIRONMENT VARIABLES ===');
+Object.keys(process.env)
+  .filter(key => key.includes('AUTH') || key.includes('NEXT') || key.includes('NODE'))
+  .forEach(key => {
+    appendLog(`${key}=${process.env[key]}`);
+  });
+appendLog('\n');
+
+// Test each endpoint
+async function testEndpoints() {
+  appendLog('=== ENDPOINT TESTS ===\n');
+  
+  for (const endpoint of endpoints) {
+    appendLog(`Testing ${endpoint.name}: ${endpoint.url}`);
+    
+    const options = {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'User-Agent': 'NextAuth-Debug-Script',
+      },
+      rejectUnauthorized: !endpoint.ignoreCert
+    };
+    
+    const client = endpoint.url.startsWith('https') ? https : http;
+    
+    try {
+      await new Promise((resolve, reject) => {
+        const req = client.request(endpoint.url, options, (res) => {
+          appendLog(`Status: ${res.statusCode}`);
+          appendLog(`Headers: ${JSON.stringify(res.headers, null, 2)}`);
+          
+          let body = '';
+          res.on('data', chunk => { body += chunk; });
+          
+          res.on('end', () => {
+            appendLog('Response Body:');
+            try {
+              const parsedBody = JSON.parse(body);
+              appendLog(JSON.stringify(parsedBody, null, 2));
+              
+              // Validate NextAuth session format
+              if (endpoint.url.includes('session')) {
+                if (parsedBody === null || (typeof parsedBody === 'object' && 'expires' in parsedBody)) {
+                  appendLog('✅ Valid NextAuth session format');
+                } else {
+                  appendLog('❌ Invalid NextAuth session format! Expected null or object with expires property');
+                  appendLog('This is likely the source of the string pattern mismatch error');
+                }
+              }
+            } catch (e) {
+              appendLog(`Failed to parse JSON: ${e.message}`);
+              appendLog('Raw body:');
+              appendLog(body);
+            }
+            appendLog('\n---\n');
+            resolve();
+          });
+        });
+        
+        req.on('error', (error) => {
+          appendLog(`Request error: ${error.message}`);
+          appendLog('\n---\n');
+          resolve(); // Continue with other tests even if this one fails
+        });
+        
+        req.end();
+      });
+    } catch (error) {
+      appendLog(`Test error: ${error.message}`);
+      appendLog('\n---\n');
+    }
+  }
+  
+  appendLog('All tests completed. Full diagnostic log saved to ' + outputFile);
+}
+
+testEndpoints();
+EOF"
+
+# Run the advanced diagnostics
+echo "Running advanced NextAuth diagnostics..."
+docker compose -f docker-compose.prod.yml exec frontend node /tmp/nextauth-debug.js
+
+# Extract the diagnostic logs
+echo "Extracting NextAuth diagnostic logs..."
+docker compose -f docker-compose.prod.yml exec frontend cat /tmp/nextauth-diagnostics.log
+
+# Check Nginx logs specifically for NextAuth errors
+echo "Checking Nginx logs for NextAuth errors..."
+docker compose -f docker-compose.prod.yml exec nginx sh -c "mkdir -p /var/log/nginx && touch /var/log/nginx/session_error.log && cat /var/log/nginx/session_error.log"
+
+# View the frontend logs for any NextAuth errors
+echo "Checking frontend logs for NextAuth errors..."
+docker compose -f docker-compose.prod.yml logs --tail=50 frontend | grep -i "auth\|next"
+
+# Add a command to check NextAuth implementation in the frontend code
+echo "===== EXAMINING FRONTEND AUTH IMPLEMENTATION ====="
+
+# Find the NextAuth configuration files
+echo "Looking for NextAuth configuration files..."
+docker compose -f docker-compose.prod.yml exec frontend find /app -type f -name "*.js" -o -name "*.ts" -o -name "*.jsx" -o -name "*.tsx" | grep -i auth | xargs grep -l "NextAuth\|AuthOptions\|getSession" || echo "No NextAuth files found"
+
+# Check the NextAuth provider configuration
+echo "Examining NextAuth provider configuration..."
+docker compose -f docker-compose.prod.yml exec frontend sh -c "find /app -type f -name '*.js' -o -name '*.ts' -o -name '*.jsx' -o -name '*.tsx' | xargs grep -l 'NextAuth\\|getSession' | xargs cat" | grep -A 20 "NextAuth\|providers\|session"
+
+# Create a temporary direct proxy for authentication
+echo "===== CREATING TEMPORARY AUTH WORKAROUND ====="
+echo "Setting up temporary fix for session endpoint..."
+
+# Create emergency proxy implementation
+docker compose -f docker-compose.prod.yml exec frontend sh -c "cat > /tmp/auth-fix.js << 'EOF'
+// Emergency session fix script
+const http = require('http');
+
+const server = http.createServer((req, res) => {
+  console.log('[Auth Fix] Received request:', req.method, req.url);
+  
+  // CORS headers
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  
+  // Handle OPTIONS preflight
+  if (req.method === 'OPTIONS') {
+    res.writeHead(204);
+    res.end();
+    return;
+  }
+  
+  // Only handle /api/auth/session
+  if (req.url === '/api/auth/session') {
+    console.log('[Auth Fix] Serving emergency session data');
+    
+    // Respond with a valid null session format
+    res.setHeader('Content-Type', 'application/json');
+    res.writeHead(200);
+    res.end(JSON.stringify(null));
+  } 
+  // Alternative: respond with a mock session
+  else if (req.url === '/api/auth/mock-session') {
+    console.log('[Auth Fix] Serving mock session data');
+    
+    const mockSession = {
+      user: { name: 'Emergency User', email: 'emergency@example.com' },
+      expires: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+    };
+    
+    res.setHeader('Content-Type', 'application/json');
+    res.writeHead(200);
+    res.end(JSON.stringify(mockSession));
+  } 
+  else {
+    res.writeHead(404);
+    res.end('Not found');
+  }
+});
+
+server.listen(3333, () => {
+  console.log('[Auth Fix] Emergency auth server running on port 3333');
+});
+EOF"
+
+# Start the emergency auth server
+echo "Starting emergency auth server on port 3333..."
+docker compose -f docker-compose.prod.yml exec -d frontend node /tmp/auth-fix.js
+
+# Continue with the regular diagnostics
+echo "Proceeding with regular diagnostics..."
+
+# View the frontend logs for any NextAuth errors
+echo "Checking frontend logs for NextAuth errors..."
 docker compose -f docker-compose.prod.yml logs --tail=50 frontend | grep -i "auth\|next" 
