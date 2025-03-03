@@ -46,13 +46,13 @@ echo "Database is ready."
 
 # Start the backend
 echo "Starting backend service..."
-docker compose -f docker-compose.prod.yml up -d conduit-api
+docker compose -f docker-compose.prod.yml up -d app
 
 # Wait for backend to be ready
 echo "Waiting for backend to be ready..."
 COUNTER=0
 MAX_TRIES=10
-while ! docker compose -f docker-compose.prod.yml exec conduit-api curl -s http://localhost:8000/api/health/ > /dev/null; do
+while ! docker compose -f docker-compose.prod.yml exec app curl -s http://localhost:8000/api/health/ > /dev/null; do
     COUNTER=$((COUNTER+1))
     if [ $COUNTER -ge $MAX_TRIES ]; then
         echo "Backend health check timed out, continuing anyway..."
@@ -65,13 +65,13 @@ echo "Backend is ready or timeout occurred."
 
 # Start the frontend
 echo "Starting frontend service..."
-docker compose -f docker-compose.prod.yml up -d conduit-frontend
+docker compose -f docker-compose.prod.yml up -d frontend
 
 # Wait for frontend to be ready
 echo "Waiting for frontend to be ready..."
 COUNTER=0
 MAX_TRIES=10
-while ! docker compose -f docker-compose.prod.yml exec conduit-frontend curl -s http://localhost:3000/health > /dev/null; do
+while ! docker compose -f docker-compose.prod.yml exec frontend curl -s http://localhost:3000/health > /dev/null; do
     COUNTER=$((COUNTER+1))
     if [ $COUNTER -ge $MAX_TRIES ]; then
         echo "Frontend health check timed out, continuing anyway..."
@@ -84,8 +84,8 @@ echo "Frontend is ready or timeout occurred."
 
 # Connect services to the nginx-proxy network
 echo "Connecting services to nginx-proxy network..."
-docker network connect nginx-proxy conduit-api || true
-docker network connect nginx-proxy conduit-frontend || true
+docker network connect nginx-proxy app || true
+docker network connect nginx-proxy frontend || true
 docker network connect nginx-proxy db || true
 docker network connect nginx-proxy redis || true
 

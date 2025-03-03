@@ -1,11 +1,11 @@
 # Upstream definitions with keepalive - fixed format
 upstream django_backend {
-    server conduit-api:8000;
+    server app:8000;
     keepalive 32;
 }
 
 upstream frontend_app {
-    server conduit-frontend:3000;
+    server frontend:3000;
     keepalive 32;
 }
 
