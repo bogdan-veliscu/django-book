@@ -95,6 +95,9 @@ services:
       - NODE_ENV=production
       - NODE_OPTIONS=--max-http-header-size=32768 --no-warnings
       - DEBUG=next-auth:*
+      - NEXTAUTH_CHECK_EMAIL_URL=true
+      - NEXTAUTH_SESSION_SANITIZE=false
+      - NEXTAUTH_STRICT_FORMAT=true
 
       # Proxy trust settings
       - DANGEROUSLY_DISABLE_HOST_CHECK=true

@@ -76,35 +76,35 @@ server {
         expires 30d;
     }
 
-    # Special handling for NextAuth session endpoint - minimal interference approach
+    # Special handling for NextAuth session endpoint - strict JSON passthrough
     location = /api/auth/session {
-        # Basic proxy setup - eliminate complexity
+        # Direct passthrough with minimal headers
         proxy_pass http://frontend_app/api/auth/session;
         proxy_http_version 1.1;
         
-        # Only essential headers
+        # Critical - ensure JSON passes through untouched
+        proxy_hide_header Content-Security-Policy;
+        proxy_buffering off;
+        proxy_set_header Accept "application/json";
+        proxy_set_header Content-Type "application/json";
+        
+        # Only essential request headers
         proxy_set_header Host ${DOLLAR}host;
         proxy_set_header X-Real-IP ${DOLLAR}remote_addr;
         proxy_set_header X-Forwarded-For ${DOLLAR}proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto ${DOLLAR}scheme;
         
-        # Explicitly allow JSON responses to pass through without modification
-        add_header Content-Type application/json always;
-        
-        # Critical - do not buffer or modify the response
-        proxy_buffering off;
+        # Pass through content headers without modifying them
         proxy_pass_header Content-Type;
         proxy_pass_header Content-Length;
         
-        # Disable all unnecessary headers and modifications
-        proxy_hide_header X-Powered-By;
-        proxy_hide_header X-Frame-Options;
-        proxy_hide_header X-Content-Type-Options;
-        proxy_hide_header Content-Security-Policy;
-        
-        # CORS essentials only
+        # Essential CORS
         add_header Access-Control-Allow-Origin ${DOLLAR}http_origin always;
         add_header Access-Control-Allow-Credentials true always;
+        add_header Access-Control-Allow-Methods "GET, POST, OPTIONS" always;
+        
+        # Prevent any compression or transformation
+        proxy_set_header Accept-Encoding "";
         
         # Fast OPTIONS response
         if (${DOLLAR}request_method = 'OPTIONS') {

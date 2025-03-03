@@ -175,4 +175,57 @@ docker compose -f docker-compose.prod.yml exec nginx curl -s http://frontend:300
 
 # View the frontend logs for any NextAuth errors
 echo "Checking frontend logs for NextAuth errors..."
+docker compose -f docker-compose.prod.yml logs --tail=50 frontend | grep -i "auth\|next"
+
+# Add specific testing for AuthJS pattern mismatch issue
+echo "===== TESTING FOR STRING PATTERN MISMATCH ====="
+
+# Test session response format with schema validation
+echo "Creating test file to validate session response format..."
+docker compose -f docker-compose.prod.yml exec frontend sh -c "cat > /tmp/validate-session.js << 'EOF'
+const http = require('http');
+
+http.get('http://localhost:3000/api/auth/session', (res) => {
+  let data = '';
+  res.on('data', (chunk) => {
+    data += chunk;
+  });
+  
+  res.on('end', () => {
+    console.log('STATUS CODE:', res.statusCode);
+    console.log('HEADERS:', JSON.stringify(res.headers, null, 2));
+    
+    try {
+      const parsed = JSON.parse(data);
+      console.log('VALID JSON: true');
+      console.log('RESPONSE:', JSON.stringify(parsed, null, 2));
+      
+      // Check for expected session format
+      if (typeof parsed === 'object' && (parsed === null || 'expires' in parsed)) {
+        console.log('EXPECTED FORMAT: true (matches NextAuth session format)');
+      } else {
+        console.log('EXPECTED FORMAT: false (does not match NextAuth session format)');
+        console.log('EXPECTED: A null object or an object with \'expires\' property');
+      }
+    } catch (e) {
+      console.log('VALID JSON: false');
+      console.log('ERROR:', e.message);
+      console.log('RAW RESPONSE:', data);
+    }
+  });
+}).on('error', (e) => {
+  console.error('ERROR:', e.message);
+});
+EOF"
+
+# Run the validation script
+echo "Running session validation test..."
+docker compose -f docker-compose.prod.yml exec frontend node /tmp/validate-session.js
+
+# View NextAuth specific logs
+echo "Checking for NextAuth errors in logs..."
+docker compose -f docker-compose.prod.yml logs --tail=100 frontend | grep -i "error\|warn\|auth"
+
+# View the frontend logs for any NextAuth errors
+echo "Checking frontend logs for NextAuth errors..."
 docker compose -f docker-compose.prod.yml logs --tail=50 frontend | grep -i "auth\|next" 
