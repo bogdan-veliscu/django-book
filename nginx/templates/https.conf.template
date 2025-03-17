@@ -117,11 +117,11 @@ server {
 
     # Emergency route to use the local fix server
     location = /api/auth/local-fix {
-        proxy_pass http://frontend_app:3333/api/auth/session;
+        proxy_pass http://frontend_app/api/auth/session;
         proxy_http_version 1.1;
         proxy_set_header Host ${DOLLAR}host;
         proxy_buffering off;
-        
+j        
         # Allow CORS
         add_header Access-Control-Allow-Origin ${DOLLAR}http_origin always;
         add_header Access-Control-Allow-Credentials true always;
