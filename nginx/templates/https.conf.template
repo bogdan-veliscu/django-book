@@ -13,7 +13,7 @@ upstream frontend_app {
 server {
     listen 80;
     listen [::]:80;
-    server_name brandfocus.ai www.brandfocus.ai;
+    server_name ${DOMAIN} www.${DOMAIN};
     return 301 https://${DOLLAR}host${DOLLAR}request_uri;
 }
 
@@ -22,7 +22,7 @@ server {
     listen 443 ssl;
     listen [::]:443 ssl;
     http2 on;
-    server_name brandfocus.ai www.brandfocus.ai;
+    server_name ${DOMAIN} www.${DOMAIN};
 
     # Disable trailing slash redirects globally
     absolute_redirect off;
@@ -30,9 +30,9 @@ server {
     port_in_redirect off;
 
     # SSL configuration
-    ssl_certificate /etc/letsencrypt/live/brandfocus.ai/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/brandfocus.ai/privkey.pem;
-    ssl_trusted_certificate /etc/letsencrypt/live/brandfocus.ai/chain.pem;
+    ssl_certificate /etc/letsencrypt/live/${DOMAIN}/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/${DOMAIN}/privkey.pem;
+    ssl_trusted_certificate /etc/letsencrypt/live/${DOMAIN}/chain.pem;
 
     # SSL optimization
     ssl_session_timeout 1d;
@@ -54,7 +54,7 @@ server {
     add_header X-Content-Type-Options nosniff always;
     add_header X-XSS-Protection "1; mode=block" always;
     add_header Referrer-Policy "no-referrer-when-downgrade" always;
-    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https://brandfocus.ai wss://brandfocus.ai https://api.dicebear.com http://localhost:* http://127.0.0.1:* http://*.local:* https://brandfocus.ai/api https://brandfocus.ai/api/auth/*; font-src 'self' data:; img-src 'self' data: https://api.dicebear.com https://brandfocus.ai; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'; form-action 'self';" always;
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; connect-src 'self' https://${DOMAIN} wss://${DOMAIN} https://api.dicebear.com http://localhost:* http://127.0.0.1:* http://*.local:* https://${DOMAIN}/api https://${DOMAIN}/api/auth/*; font-src 'self' data:; img-src 'self' data: https://api.dicebear.com https://${DOMAIN}; style-src 'self' 'unsafe-inline'; frame-ancestors 'none'; form-action 'self';" always;
 
     # Handle Next.js static files with high priority - must come before the main location block
     location /_next/static/ {
@@ -334,4 +334,4 @@ server {
         proxy_buffer_size 8k;
         proxy_buffers 8 8k;
     }
-} 
+}
