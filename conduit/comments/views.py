@@ -1,9 +1,6 @@
 import json
 import logging
 
-from articles.models import Article
-from asgiref.sync import async_to_sync
-from channels.layers import get_channel_layer
 from django.contrib.auth.decorators import (
     login_required,
 )
@@ -14,126 +11,46 @@ from django.template.response import TemplateResponse
 from django.views.decorators.http import (
     require_http_methods,
 )
-from rest_framework import generics, status
-from rest_framework.permissions import (
-    IsAuthenticated,
-    IsAuthenticatedOrReadOnly,
-)
+from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 
-from .forms import CommentForm
-from .models import Comment
-from .serializers import CommentSerializer
+from conduit.articles.models import Article
+from conduit.comments.models import Comment
+from conduit.comments.serializers import CommentSerializer
+from conduit.comments.forms import CommentForm
 
 logger = logging.getLogger(__name__)
 
 
-class CommentView(generics.ListCreateAPIView):
-    queryset = Comment.objects.prefetch_related("author").all()
+class CommentListCreateAPIView(generics.ListCreateAPIView):
     serializer_class = CommentSerializer
-    permission_classes = [
-        IsAuthenticated,
-    ]
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
 
-    def get_permissions(self):
-        if self.request.method == "GET":
-            return [IsAuthenticatedOrReadOnly()]
-        return super().get_permissions()
+    def get_queryset(self):
+        article_slug = self.kwargs['article_slug']
+        return Comment.objects.filter(article__slug=article_slug)
 
-    def post(self, request, slug, *args, **kwargs):
-        try:
-            logger.debug(f"Create comment for article with slug: {slug}")
-            article = Article.objects.get(slug=slug)
-            comment_data = request.data.get("comment", {})
-            logger.debug(
-                f"Create comment with data: {comment_data} on article {article}"
-            )
+    def create(self, request, article_slug=None, *args, **kwargs):
+        article = get_object_or_404(Article, slug=article_slug)
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save(author=request.user, article=article)
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
-            serializer_context = self.get_serializer_context()
-            serializer_context["article"] = article
 
-            serializer = self.get_serializer(
-                data=comment_data, context=serializer_context
-            )
-            logger.debug(f"Serializer: {serializer}")
-            serializer.is_valid(raise_exception=True)
-            logger.debug("Serializer is valid")
-            self.perform_create(serializer)
-            logger.debug(f"Serializer data: {serializer.data}")
+class CommentDestroyAPIView(generics.DestroyAPIView):
+    permission_classes = (permissions.IsAuthenticatedOrReadOnly,)
+    queryset = Comment.objects.all()
 
+    def destroy(self, request, article_slug=None, pk=None, *args, **kwargs):
+        comment = get_object_or_404(Comment, pk=pk, article__slug=article_slug)
+        if comment.author != request.user:
             return Response(
-                {"comment": serializer.data}, status=status.HTTP_201_CREATED
+                {'errors': {'message': ['Not authorized']}},
+                status=status.HTTP_403_FORBIDDEN
             )
-        except Article.DoesNotExist:
-            return Response(
-                {
-                    "errors": {
-                        "body": ["Article does not exist"],
-                    }
-                },
-                status=status.HTTP_404_NOT_FOUND,
-            )
-        except Exception:
-            return Response(
-                {
-                    "errors": {
-                        "body": ["Bad request: unable to create comment"],
-                    }
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
-
-    def list(self, request, slug, *args, **kwargs):
-        try:
-            article = Article.objects.get(slug=slug)
-            comments = Comment.objects.filter(article=article)
-            serializer = self.get_serializer(comments, many=True)
-            return Response({"comments": serializer.data})
-        except Article.DoesNotExist:
-            return Response(
-                {
-                    "errors": {
-                        "body": ["Article does not exist"],
-                    }
-                },
-                status=status.HTTP_404_NOT_FOUND,
-            )
-
-
-class DeleteCommentView(generics.DestroyAPIView):
-    def destroy(self, request, slug, id, *args, **kwargs):
-        try:
-            article = Article.objects.get(slug=slug)
-            comment = Comment.objects.get(id=id, article=article)
-            self.perform_destroy(comment)
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        except Article.DoesNotExist:
-            return Response(
-                {
-                    "errors": {
-                        "body": ["Article does not exist"],
-                    }
-                },
-                status=status.HTTP_404_NOT_FOUND,
-            )
-        except Comment.DoesNotExist:
-            return Response(
-                {
-                    "errors": {
-                        "body": ["Comment does not exist"],
-                    }
-                },
-                status=status.HTTP_404_NOT_FOUND,
-            )
-        except Exception:
-            return Response(
-                {
-                    "errors": {
-                        "body": ["Bad request: unable to delete comment"],
-                    }
-                },
-                status=status.HTTP_400_BAD_REQUEST,
-            )
+        comment.delete()
+        return Response(None, status=status.HTTP_204_NO_CONTENT)
 
 
 @require_http_methods(["POST"])

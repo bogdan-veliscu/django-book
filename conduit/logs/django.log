@@ -1,0 +1,357 @@
+DEBUG 2025-02-25 11:07:09,801 models 20 281473465466912 Loading Comment model module
+DEBUG 2025-02-25 11:07:09,802 models 20 281473465466912 Registering Comment model with app_label: conduit_comments
+DEBUG 2025-02-25 11:07:09,802 models 20 281473465466912 Comment model class defined
+DEBUG 2025-02-25 11:07:09,802 models 20 281473465466912 Loading Article model module
+DEBUG 2025-02-25 11:07:09,802 models 20 281473465466912 Registering Article model with app_label: conduit_articles
+DEBUG 2025-02-25 11:07:09,802 models 20 281473465466912 Module path: conduit.articles.models
+DEBUG 2025-02-25 11:07:09,802 models 20 281473465466912 Article model class defined
+DEBUG 2025-02-25 11:07:09,802 models 19 281473373167648 Loading Comment model module
+DEBUG 2025-02-25 11:07:09,802 models 19 281473373167648 Registering Comment model with app_label: conduit_comments
+DEBUG 2025-02-25 11:07:09,803 models 19 281473373167648 Comment model class defined
+DEBUG 2025-02-25 11:07:09,803 models 21 281473601273888 Loading Comment model module
+DEBUG 2025-02-25 11:07:09,803 models 21 281473601273888 Registering Comment model with app_label: conduit_comments
+DEBUG 2025-02-25 11:07:09,803 models 21 281473601273888 Comment model class defined
+DEBUG 2025-02-25 11:07:09,803 models 19 281473373167648 Loading Article model module
+DEBUG 2025-02-25 11:07:09,803 models 19 281473373167648 Registering Article model with app_label: conduit_articles
+DEBUG 2025-02-25 11:07:09,803 models 19 281473373167648 Module path: conduit.articles.models
+DEBUG 2025-02-25 11:07:09,803 models 19 281473373167648 Article model class defined
+DEBUG 2025-02-25 11:07:09,803 models 21 281473601273888 Loading Article model module
+DEBUG 2025-02-25 11:07:09,803 models 21 281473601273888 Registering Article model with app_label: conduit_articles
+DEBUG 2025-02-25 11:07:09,803 models 21 281473601273888 Module path: conduit.articles.models
+DEBUG 2025-02-25 11:07:09,803 models 21 281473601273888 Article model class defined
+DEBUG 2025-02-25 11:07:09,804 models 18 281473462218784 Loading Comment model module
+DEBUG 2025-02-25 11:07:09,804 models 18 281473462218784 Registering Comment model with app_label: conduit_comments
+DEBUG 2025-02-25 11:07:09,804 models 18 281473462218784 Comment model class defined
+DEBUG 2025-02-25 11:07:09,805 models 18 281473462218784 Loading Article model module
+DEBUG 2025-02-25 11:07:09,805 models 18 281473462218784 Registering Article model with app_label: conduit_articles
+DEBUG 2025-02-25 11:07:09,805 models 18 281473462218784 Module path: conduit.articles.models
+DEBUG 2025-02-25 11:07:09,805 models 18 281473462218784 Article model class defined
+DEBUG 2025-02-25 11:10:16,375 models 19 281473628020768 Loading Comment model module
+DEBUG 2025-02-25 11:10:16,375 models 21 281473587888160 Loading Comment model module
+DEBUG 2025-02-25 11:10:16,375 models 18 281473165680672 Loading Comment model module
+DEBUG 2025-02-25 11:10:16,375 models 20 281473450315808 Loading Comment model module
+DEBUG 2025-02-25 11:10:16,376 models 19 281473628020768 Registering Comment model with app_label: conduit_comments
+DEBUG 2025-02-25 11:10:16,376 models 21 281473587888160 Registering Comment model with app_label: conduit_comments
+DEBUG 2025-02-25 11:10:16,376 models 18 281473165680672 Registering Comment model with app_label: conduit_comments
+DEBUG 2025-02-25 11:10:16,376 models 20 281473450315808 Registering Comment model with app_label: conduit_comments
+DEBUG 2025-02-25 11:10:16,376 models 19 281473628020768 Comment model class defined
+DEBUG 2025-02-25 11:10:16,376 models 21 281473587888160 Comment model class defined
+DEBUG 2025-02-25 11:10:16,376 models 18 281473165680672 Comment model class defined
+DEBUG 2025-02-25 11:10:16,376 models 20 281473450315808 Comment model class defined
+DEBUG 2025-02-25 11:10:16,376 models 19 281473628020768 Loading Article model module
+DEBUG 2025-02-25 11:10:16,376 models 21 281473587888160 Loading Article model module
+DEBUG 2025-02-25 11:10:16,376 models 18 281473165680672 Loading Article model module
+DEBUG 2025-02-25 11:10:16,376 models 20 281473450315808 Loading Article model module
+DEBUG 2025-02-25 11:10:16,376 models 19 281473628020768 Registering Article model with app_label: conduit_articles
+DEBUG 2025-02-25 11:10:16,376 models 21 281473587888160 Registering Article model with app_label: conduit_articles
+DEBUG 2025-02-25 11:10:16,376 models 18 281473165680672 Registering Article model with app_label: conduit_articles
+DEBUG 2025-02-25 11:10:16,376 models 19 281473628020768 Module path: conduit.articles.models
+DEBUG 2025-02-25 11:10:16,376 models 21 281473587888160 Module path: conduit.articles.models
+DEBUG 2025-02-25 11:10:16,376 models 18 281473165680672 Module path: conduit.articles.models
+DEBUG 2025-02-25 11:10:16,376 models 20 281473450315808 Registering Article model with app_label: conduit_articles
+DEBUG 2025-02-25 11:10:16,376 models 20 281473450315808 Module path: conduit.articles.models
+DEBUG 2025-02-25 11:10:16,376 models 19 281473628020768 Article model class defined
+DEBUG 2025-02-25 11:10:16,376 models 21 281473587888160 Article model class defined
+DEBUG 2025-02-25 11:10:16,376 models 18 281473165680672 Article model class defined
+DEBUG 2025-02-25 11:10:16,376 models 20 281473450315808 Article model class defined
+DEBUG 2025-02-25 11:27:04,913 models 19 281472937988128 Loading Comment model module
+DEBUG 2025-02-25 11:27:04,913 models 18 281473280077856 Loading Comment model module
+DEBUG 2025-02-25 11:27:04,914 models 18 281473280077856 Registering Comment model with app_label: conduit_comments
+DEBUG 2025-02-25 11:27:04,914 models 19 281472937988128 Registering Comment model with app_label: conduit_comments
+DEBUG 2025-02-25 11:27:04,914 models 18 281473280077856 Comment model class defined
+DEBUG 2025-02-25 11:27:04,914 models 19 281472937988128 Comment model class defined
+DEBUG 2025-02-25 11:27:04,914 models 18 281473280077856 Loading Article model module
+DEBUG 2025-02-25 11:27:04,914 models 18 281473280077856 Registering Article model with app_label: conduit_articles
+DEBUG 2025-02-25 11:27:04,914 models 19 281472937988128 Loading Article model module
+DEBUG 2025-02-25 11:27:04,914 models 18 281473280077856 Module path: conduit.articles.models
+DEBUG 2025-02-25 11:27:04,914 models 19 281472937988128 Registering Article model with app_label: conduit_articles
+DEBUG 2025-02-25 11:27:04,915 models 19 281472937988128 Module path: conduit.articles.models
+DEBUG 2025-02-25 11:27:04,915 models 18 281473280077856 Article model class defined
+DEBUG 2025-02-25 11:27:04,915 models 19 281472937988128 Article model class defined
+DEBUG 2025-02-25 11:27:04,922 models 21 281473332215840 Loading Comment model module
+DEBUG 2025-02-25 11:27:04,923 models 21 281473332215840 Registering Comment model with app_label: conduit_comments
+DEBUG 2025-02-25 11:27:04,923 models 21 281473332215840 Comment model class defined
+DEBUG 2025-02-25 11:27:04,923 models 21 281473332215840 Loading Article model module
+DEBUG 2025-02-25 11:27:04,923 models 21 281473332215840 Registering Article model with app_label: conduit_articles
+DEBUG 2025-02-25 11:27:04,923 models 21 281473332215840 Module path: conduit.articles.models
+DEBUG 2025-02-25 11:27:04,923 models 21 281473332215840 Article model class defined
+DEBUG 2025-02-25 11:27:04,944 models 20 281472997867552 Loading Comment model module
+DEBUG 2025-02-25 11:27:04,944 models 20 281472997867552 Registering Comment model with app_label: conduit_comments
+DEBUG 2025-02-25 11:27:04,944 models 20 281472997867552 Comment model class defined
+DEBUG 2025-02-25 11:27:04,944 models 20 281472997867552 Loading Article model module
+DEBUG 2025-02-25 11:27:04,944 models 20 281472997867552 Registering Article model with app_label: conduit_articles
+DEBUG 2025-02-25 11:27:04,944 models 20 281472997867552 Module path: conduit.articles.models
+DEBUG 2025-02-25 11:27:04,945 models 20 281472997867552 Article model class defined
+WARNING 2025-02-25 11:27:17,628 log 20 281472826077568 Not Found: /health
+ERROR 2025-02-25 11:27:29,832 log 20 281472826077568 Internal Server Error: /api/articles
+Traceback (most recent call last):
+  File "/code/.venv/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+psycopg2.errors.UndefinedColumn: column conduit_profiles_user.is_superuser does not exist
+LINE 1: ..."password", "conduit_profiles_user"."last_login", "conduit_p...
+                                                             ^
+
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "/code/.venv/lib/python3.12/site-packages/asgiref/sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "/code/.venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 42, in inner
+    response = await get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/code/.venv/lib/python3.12/site-packages/asgiref/sync.py", line 518, in thread_handler
+    raise exc_info[1]
+  File "/code/.venv/lib/python3.12/site-packages/django/core/handlers/base.py", line 253, in _get_response_async
+    response = await wrapped_callback(
+               ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/code/.venv/lib/python3.12/site-packages/asgiref/sync.py", line 468, in __call__
+    ret = await asyncio.shield(exec_coro)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/code/.venv/lib/python3.12/site-packages/asgiref/current_thread_executor.py", line 40, in run
+    result = self.fn(*self.args, **self.kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/code/.venv/lib/python3.12/site-packages/asgiref/sync.py", line 522, in thread_handler
+    return func(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^
+  File "/code/.venv/lib/python3.12/site-packages/django/views/decorators/csrf.py", line 65, in _view_wrapper
+    return view_func(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/code/.venv/lib/python3.12/site-packages/rest_framework/viewsets.py", line 124, in view
+    return self.dispatch(request, *args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/code/.venv/lib/python3.12/site-packages/rest_framework/views.py", line 509, in dispatch
+    response = self.handle_exception(exc)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/code/.venv/lib/python3.12/site-packages/rest_framework/views.py", line 469, in handle_exception
+    self.raise_uncaught_exception(exc)
+  File "/code/.venv/lib/python3.12/site-packages/rest_framework/views.py", line 480, in raise_uncaught_exception
+    raise exc
+  File "/code/.venv/lib/python3.12/site-packages/rest_framework/views.py", line 506, in dispatch
+    response = handler(request, *args, **kwargs)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/code/.venv/lib/python3.12/site-packages/rest_framework/mixins.py", line 46, in list
+    return Response(serializer.data)
+                    ^^^^^^^^^^^^^^^
+  File "/code/.venv/lib/python3.12/site-packages/rest_framework/serializers.py", line 795, in data
+    ret = super().data
+          ^^^^^^^^^^^^
+  File "/code/.venv/lib/python3.12/site-packages/rest_framework/serializers.py", line 249, in data
+    self._data = self.to_representation(self.instance)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/code/.venv/lib/python3.12/site-packages/rest_framework/serializers.py", line 714, in to_representation
+    self.child.to_representation(item) for item in iterable
+                                                   ^^^^^^^^
+  File "/code/.venv/lib/python3.12/site-packages/django/db/models/query.py", line 400, in __iter__
+    self._fetch_all()
+  File "/code/.venv/lib/python3.12/site-packages/django/db/models/query.py", line 1928, in _fetch_all
+    self._result_cache = list(self._iterable_class(self))
+                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/code/.venv/lib/python3.12/site-packages/django/db/models/query.py", line 91, in __iter__
+    results = compiler.execute_sql(
+              ^^^^^^^^^^^^^^^^^^^^^
+  File "/code/.venv/lib/python3.12/site-packages/django/db/models/sql/compiler.py", line 1574, in execute_sql
+    cursor.execute(sql, params)
+  File "/code/.venv/lib/python3.12/site-packages/django/db/backends/utils.py", line 79, in execute
+    return self._execute_with_wrappers(
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/code/.venv/lib/python3.12/site-packages/django/db/backends/utils.py", line 92, in _execute_with_wrappers
+    return executor(sql, params, many, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/code/.venv/lib/python3.12/site-packages/django/db/backends/utils.py", line 100, in _execute
+    with self.db.wrap_database_errors:
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/code/.venv/lib/python3.12/site-packages/django/db/utils.py", line 91, in __exit__
+    raise dj_exc_value.with_traceback(traceback) from exc_value
+  File "/code/.venv/lib/python3.12/site-packages/django/db/backends/utils.py", line 105, in _execute
+    return self.cursor.execute(sql, params)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+django.db.utils.ProgrammingError: column conduit_profiles_user.is_superuser does not exist
+LINE 1: ..."password", "conduit_profiles_user"."last_login", "conduit_p...
+                                                             ^
+
+DEBUG 2025-02-25 11:28:59,291 models 1 281473436930080 Loading Comment model module
+DEBUG 2025-02-25 11:28:59,292 models 1 281473436930080 Registering Comment model with app_label: conduit_comments
+DEBUG 2025-02-25 11:28:59,292 models 1 281473436930080 Comment model class defined
+DEBUG 2025-02-25 11:28:59,292 models 1 281473436930080 Loading Article model module
+DEBUG 2025-02-25 11:28:59,292 models 1 281473436930080 Registering Article model with app_label: conduit_articles
+DEBUG 2025-02-25 11:28:59,292 models 1 281473436930080 Module path: conduit.articles.models
+DEBUG 2025-02-25 11:28:59,292 models 1 281473436930080 Article model class defined
+WARNING 2025-02-25 11:29:15,667 log 1 281473231876480 Not Found: /health
+WARNING 2025-02-25 11:51:36,017 log 1 281473231876480 Not Found: /health/
+WARNING 2025-02-25 11:52:41,858 log 1 281473231876480 Not Found: /api/health
+DEBUG 2025-02-26 11:06:04,678 models 1 281473019088928 Loading Comment model module
+DEBUG 2025-02-26 11:06:04,678 models 1 281473019088928 Registering Comment model with app_label: conduit_comments
+DEBUG 2025-02-26 11:06:04,679 models 1 281473019088928 Comment model class defined
+DEBUG 2025-02-26 11:06:04,679 models 1 281473019088928 Loading Article model module
+DEBUG 2025-02-26 11:06:04,679 models 1 281473019088928 Registering Article model with app_label: conduit_articles
+DEBUG 2025-02-26 11:06:04,679 models 1 281473019088928 Module path: conduit.articles.models
+DEBUG 2025-02-26 11:06:04,679 models 1 281473019088928 Article model class defined
+DEBUG 2025-02-26 11:27:03,934 models 1 281473466261536 Loading Comment model module
+DEBUG 2025-02-26 11:27:03,934 models 1 281473466261536 Registering Comment model with app_label: conduit_comments
+DEBUG 2025-02-26 11:27:03,934 models 1 281473466261536 Comment model class defined
+DEBUG 2025-02-26 11:27:03,934 models 1 281473466261536 Loading Article model module
+DEBUG 2025-02-26 11:27:03,934 models 1 281473466261536 Registering Article model with app_label: conduit_articles
+DEBUG 2025-02-26 11:27:03,934 models 1 281473466261536 Module path: conduit.articles.models
+DEBUG 2025-02-26 11:27:03,935 models 1 281473466261536 Article model class defined
+WARNING 2025-02-26 12:33:28,479 log 1 281473339421056 Unauthorized: /api/articles
+WARNING 2025-02-26 12:33:57,450 log 1 281473339421056 Unauthorized: /api/articles
+INFO 2025-02-26 12:59:39,107 signals 1 281473355346304 pre_save called on Test Article
+INFO 2025-02-26 12:59:39,145 serializers 1 281473355346304  get_favorited user: <User: test@example.com>, obj: Test Article
+WARNING 2025-02-26 15:17:56,900 log 1 281473339421056 Bad Request: /api/users/login
+WARNING 2025-02-26 15:18:04,304 log 1 281473339421056 Bad Request: /api/users/login
+WARNING 2025-02-26 15:18:20,830 log 1 281473339421056 Bad Request: /api/users/login
+WARNING 2025-02-26 15:18:26,318 log 1 281473339421056 Bad Request: /api/users/login
+WARNING 2025-02-26 15:18:41,258 log 1 281473339421056 Bad Request: /api/users/login
+WARNING 2025-02-26 15:18:52,099 log 1 281473339421056 Bad Request: /api/users/login
+WARNING 2025-02-26 15:18:59,293 log 1 281473339421056 Bad Request: /api/users
+WARNING 2025-02-26 15:19:18,194 log 1 281473339421056 Unauthorized: /api/articles
+WARNING 2025-02-26 15:19:50,801 log 1 281473339421056 Unauthorized: /api/articles
+INFO 2025-02-26 15:20:12,001 signals 1 281473355346304 pre_save called on Just do it again2
+INFO 2025-02-26 15:20:12,037 serializers 1 281473355346304  get_favorited user: <User: test@example.com>, obj: Just do it again2
+ERROR 2025-02-26 15:57:13,118 log 1 281473466261536 Internal Server Error: /api/articles/just-do-it-again2
+Traceback (most recent call last):
+  File "/code/.venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/code/conduit/middleware.py", line 107, in __call__
+    # Generate cache key
+        ^^^^^^^^^^^^^^^^^
+  File "/code/.venv/lib/python3.12/site-packages/django/core/cache/backends/redis.py", line 191, in set
+    self._cache.set(key, value, self.get_backend_timeout(timeout))
+  File "/code/.venv/lib/python3.12/site-packages/django/core/cache/backends/redis.py", line 104, in set
+    value = self._serializer.dumps(value)
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/code/.venv/lib/python3.12/site-packages/django/core/cache/backends/redis.py", line 21, in dumps
+    return pickle.dumps(obj, self.protocol)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: cannot pickle 'coroutine' object
+ERROR 2025-02-26 15:57:13,120 log 1 281473355346304 Internal Server Error: /api/articles/just-do-it-again2
+Traceback (most recent call last):
+  File "/code/.venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/code/conduit/middleware.py", line 29, in __call__
+    response = self.get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/code/.venv/lib/python3.12/site-packages/asgiref/sync.py", line 254, in __call__
+    return call_result.result()
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/code/.venv/lib/python3.12/site-packages/asgiref/sync.py", line 331, in main_wrap
+    result = await self.awaitable(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: object HttpResponseServerError can't be used in 'await' expression
+DEBUG 2025-02-26 15:58:05,482 models 1 281473211723808 Loading Comment model module
+DEBUG 2025-02-26 15:58:05,482 models 1 281473211723808 Registering Comment model with app_label: conduit_comments
+DEBUG 2025-02-26 15:58:05,482 models 1 281473211723808 Comment model class defined
+DEBUG 2025-02-26 15:58:05,482 models 1 281473211723808 Loading Article model module
+DEBUG 2025-02-26 15:58:05,482 models 1 281473211723808 Registering Article model with app_label: conduit_articles
+DEBUG 2025-02-26 15:58:05,482 models 1 281473211723808 Module path: conduit.articles.models
+DEBUG 2025-02-26 15:58:05,483 models 1 281473211723808 Article model class defined
+ERROR 2025-02-26 15:58:23,051 log 1 281473211723808 Internal Server Error: /api/articles/just-do-it-again2
+Traceback (most recent call last):
+  File "/code/.venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/code/.venv/lib/python3.12/site-packages/django/utils/deprecation.py", line 131, in __call__
+    response = self.process_response(request, response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/code/.venv/lib/python3.12/site-packages/django/contrib/sessions/middleware.py", line 46, in process_response
+    patch_vary_headers(response, ("Cookie",))
+  File "/code/.venv/lib/python3.12/site-packages/django/utils/cache.py", line 309, in patch_vary_headers
+    if response.has_header("Vary"):
+       ^^^^^^^^^^^^^^^^^^^
+AttributeError: 'coroutine' object has no attribute 'has_header'
+ERROR 2025-02-26 15:58:23,052 log 1 281473030549888 Internal Server Error: /api/articles/just-do-it-again2
+Traceback (most recent call last):
+  File "/code/.venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/code/conduit/middleware.py", line 29, in __call__
+    response = self.get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/code/.venv/lib/python3.12/site-packages/asgiref/sync.py", line 254, in __call__
+    return call_result.result()
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/code/.venv/lib/python3.12/site-packages/asgiref/sync.py", line 331, in main_wrap
+    result = await self.awaitable(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: object HttpResponseServerError can't be used in 'await' expression
+DEBUG 2025-02-26 16:25:00,029 models 1 281473256681504 Loading Comment model module
+DEBUG 2025-02-26 16:25:00,029 models 1 281473256681504 Registering Comment model with app_label: conduit_comments
+DEBUG 2025-02-26 16:25:00,029 models 1 281473256681504 Comment model class defined
+DEBUG 2025-02-26 16:25:00,029 models 1 281473256681504 Loading Article model module
+DEBUG 2025-02-26 16:25:00,029 models 1 281473256681504 Registering Article model with app_label: conduit_articles
+DEBUG 2025-02-26 16:25:00,029 models 1 281473256681504 Module path: conduit.articles.models
+DEBUG 2025-02-26 16:25:00,030 models 1 281473256681504 Article model class defined
+ERROR 2025-02-26 16:27:34,002 log 1 281473256681504 Internal Server Error: /api/articles/just-do-it-again2
+Traceback (most recent call last):
+  File "/code/.venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/code/.venv/lib/python3.12/site-packages/django/utils/deprecation.py", line 131, in __call__
+    response = self.process_response(request, response)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/code/.venv/lib/python3.12/site-packages/django/contrib/sessions/middleware.py", line 46, in process_response
+    patch_vary_headers(response, ("Cookie",))
+  File "/code/.venv/lib/python3.12/site-packages/django/utils/cache.py", line 309, in patch_vary_headers
+    if response.has_header("Vary"):
+       ^^^^^^^^^^^^^^^^^^^
+AttributeError: 'coroutine' object has no attribute 'has_header'
+ERROR 2025-02-26 16:27:34,004 log 1 281473145762176 Internal Server Error: /api/articles/just-do-it-again2
+Traceback (most recent call last):
+  File "/code/.venv/lib/python3.12/site-packages/django/core/handlers/exception.py", line 55, in inner
+    response = get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^
+  File "/code/conduit/middleware.py", line 30, in __call__
+    response = self.get_response(request)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/code/.venv/lib/python3.12/site-packages/asgiref/sync.py", line 254, in __call__
+    return call_result.result()
+           ^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 449, in result
+    return self.__get_result()
+           ^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/concurrent/futures/_base.py", line 401, in __get_result
+    raise self._exception
+  File "/code/.venv/lib/python3.12/site-packages/asgiref/sync.py", line 331, in main_wrap
+    result = await self.awaitable(*args, **kwargs)
+             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: object HttpResponseServerError can't be used in 'await' expression
+DEBUG 2025-02-26 16:29:14,919 models 1 281473051357216 Loading Comment model module
+DEBUG 2025-02-26 16:29:14,920 models 1 281473051357216 Registering Comment model with app_label: conduit_comments
+DEBUG 2025-02-26 16:29:14,920 models 1 281473051357216 Comment model class defined
+DEBUG 2025-02-26 16:29:14,920 models 1 281473051357216 Loading Article model module
+DEBUG 2025-02-26 16:29:14,920 models 1 281473051357216 Registering Article model with app_label: conduit_articles
+DEBUG 2025-02-26 16:29:14,920 models 1 281473051357216 Module path: conduit.articles.models
+DEBUG 2025-02-26 16:29:14,921 models 1 281473051357216 Article model class defined
+WARNING 2025-02-26 16:29:47,942 log 1 281472924512640 Unauthorized: /api/articles
+WARNING 2025-02-26 16:29:55,358 log 1 281472924512640 Bad Request: /api/users/login
+WARNING 2025-02-26 16:30:02,212 log 1 281472924512640 Bad Request: /api/users/login
+INFO 2025-02-26 16:30:56,209 signals 1 281472940437888 pre_save called on Just do it again3
+INFO 2025-02-26 16:30:56,247 serializers 1 281472940437888  get_favorited user: <User: admin@example.com>, obj: Just do it again3
+DEBUG 2025-02-26 16:56:18,438 models 1 281473714221088 Loading Comment model module
+DEBUG 2025-02-26 16:56:18,438 models 1 281473714221088 Registering Comment model with app_label: conduit_comments
+DEBUG 2025-02-26 16:56:18,438 models 1 281473714221088 Comment model class defined
+DEBUG 2025-02-26 16:56:18,438 models 1 281473714221088 Loading Article model module
+DEBUG 2025-02-26 16:56:18,438 models 1 281473714221088 Registering Article model with app_label: conduit_articles
+DEBUG 2025-02-26 16:56:18,438 models 1 281473714221088 Module path: conduit.articles.models
+DEBUG 2025-02-26 16:56:18,438 models 1 281473714221088 Article model class defined
+WARNING 2025-02-26 16:56:20,186 log 1 281473500311936 Unauthorized: /api/articles/just-do-it-again3
+INFO 2025-02-26 16:56:45,301 serializers 1 281473603268992  get_favorited user: <User: admin@example.com>, obj: Just do it again3
+ERROR 2025-02-26 16:57:05,841 views 1 281473603268992 {'title': [ErrorDetail(string='This field is required.', code='required')], 'description': [ErrorDetail(string='This field is required.', code='required')], 'body': [ErrorDetail(string='This field is required.', code='required')]}
+WARNING 2025-02-26 16:57:05,843 log 1 281473500311936 Bad Request: /api/articles
+INFO 2025-02-26 16:57:15,930 signals 1 281473603268992 pre_save called on Testing async middleware
+INFO 2025-02-26 16:57:15,983 serializers 1 281473603268992  get_favorited user: <User: admin@example.com>, obj: Testing async middleware
+INFO 2025-02-26 16:57:26,348 serializers 1 281473603268992  get_favorited user: <User: admin@example.com>, obj: Testing async middleware

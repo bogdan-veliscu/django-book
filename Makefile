@@ -4,7 +4,7 @@ ifneq (,$(wildcard ./.env))
 endif
 
 IMAGE_NAME = $(shell basename "`pwd`")
-IMAGE_TAG = $(shell poetry version -s)
+IMAGE_TAG = $(shell grep '^version = ' pyproject.toml | cut -d'"' -f2)
 REGISTRY = $(shell echo $(REGISTRY_HOST))
 IMAGE = $(REGISTRY)/$(IMAGE_NAME):$(IMAGE_TAG)
 
@@ -29,6 +29,23 @@ dev:
 prod:
 	docker compose -f docker-compose.prod.yml up --build -d
 
+prod-local: ## Run production setup locally for testing
+	@if [ ! -f .env.prod ]; then \
+		cp example.env .env.prod; \
+		echo "Created .env.prod file. Please update it with your production settings."; \
+		exit 1; \
+	fi
+	docker compose -f docker-compose.prod.yml up --build -d
+	@echo "Production environment is running locally"
+	@echo "Access the application at http://localhost"
+	@echo "Run 'make logs' to view logs"
+
+logs: ## View logs from all containers
+	docker compose -f docker-compose.prod.yml logs -f
+
+prod-down: ## Stop production environment
+	docker compose -f docker-compose.prod.yml down -v
+
 build: ## Build the Docker image
 	docker buildx build --platform linux/amd64 -t $(IMAGE) --load .
 
@@ -48,15 +65,12 @@ migrate: ## apply migrations in a clean container
 collectstatic: ## collect static files
 	docker compose run --rm app ./manage.py collectstatic --noinput
 
-
-
 ## [UTILS]
 install_local: ## Install the package locally
-	poetry install --with dev
+	uv pip install -e .[dev]
 
 test_local: ## Run the tests locally
-	poetry run pytest
-
+	python -m pytest
 
 shell:  ## start a django shell
 	docker compose run --rm app ./manage.py shell
@@ -68,15 +82,12 @@ isort:  ## run isort
 black:  ## run black
 	docker compose run --rm app black .
 
-
-
 ## [TEST]
 test:  ## run all tests
 	docker compose run --rm app pytest
 
 test-lf:  ## rerun tests that failed last time
 	docker compose run --rm app pytest --lf --pdb
-
 
 ## [CLEAN]
 clean: clean/docker clean/py ## remove all build, test, coverage and Python artifacts
@@ -96,3 +107,47 @@ clean/py: ## remove Python test, coverage, file artifacts, and compiled message 
 
 start:
 	uvicorn conduit.config.asgi:application --host 0.0.0.0 --port 8000
+
+## [MONITORING]
+monitoring-up: ## Start monitoring services
+	docker compose -f docker-compose.monitoring.yml up -d
+
+monitoring-down: ## Stop monitoring services
+	docker compose -f docker-compose.monitoring.yml down
+
+## [BACKUP]
+backup-up: ## Start backup service
+	docker compose -f docker-compose.backup.yml up -d
+
+backup-down: ## Stop backup service
+	docker compose -f docker-compose.backup.yml down
+
+backup-now: ## Trigger an immediate backup
+	docker compose -f docker-compose.backup.yml exec backup /app/backup.sh
+
+backup-list: ## List available backups
+	docker compose -f docker-compose.backup.yml exec backup ls -la /backups
+
+backup-restore: ## Restore from backup (requires BACKUP_FILE env var)
+	@if [ -z "$(BACKUP_FILE)" ]; then \
+		echo "Error: BACKUP_FILE environment variable not set"; \
+		echo "Usage: make backup-restore BACKUP_FILE=db_20240219_120000.sql.gz"; \
+		exit 1; \
+	fi
+	docker compose -f docker-compose.backup.yml exec backup /app/restore.sh $(BACKUP_FILE)
+
+create-db:
+	docker-compose exec db psql -U postgres -c "CREATE DATABASE conduit_user;"
+
+# Initialize the database and apply migrations
+setup-db: create-db migrate
+
+# Run migrations
+migrate:
+	docker-compose exec app python manage.py migrate
+
+# Reset database (be careful with this in production!)
+reset-db:
+	docker-compose exec db psql -U postgres -c "DROP DATABASE IF EXISTS conduit_user;"
+	make create-db
+	make migrate

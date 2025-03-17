@@ -1,0 +1,85 @@
+# NEO Rules for Conduit API Performance Optimization
+
+## Project Patterns
+
+1. **Performance Bottlenecks**
+   - The application is experiencing worker timeouts and SIGKILL errors due to memory issues
+   - Database queries, especially in ArticleViewSet, are inefficient
+   - Image processing in the Article model consumes excessive memory
+   - Worker configuration (4 workers by default) may be too high for available resources
+   - Middleware async/sync context issues can cause critical functionality to break
+   - Model and serializer field mismatches can cause unexpected errors
+
+2. **Optimization Strategies**
+   - Reduce database queries through better use of select_related, prefetch_related, only(), and defer()
+   - Implement pagination for all list endpoints
+   - Limit image sizes and memory usage during processing
+   - Adjust worker count to match available resources
+   - Enhance caching strategy to include authenticated users where appropriate
+   - Properly handle async/sync contexts in middleware
+   - Ensure model and serializer fields are compatible and properly defined
+
+3. **Implementation Paths**
+   - Focus on quick wins first (configuration changes, simple code optimizations)
+   - Test changes in a staging environment before deploying to production
+   - Monitor performance metrics after each change
+   - Document the impact of each optimization
+
+## User Preferences
+
+1. **Prioritization**
+   - Focus on the most critical performance issues first
+   - Prioritize changes that can be implemented quickly with significant impact
+   - Document all changes and their expected impact
+
+2. **Communication**
+   - Provide clear explanations of the issues and proposed solutions
+   - Include code examples and configuration changes
+   - Explain the expected impact of each change
+
+## Known Challenges
+
+1. **Memory Management**
+   - Django applications can consume significant memory, especially with multiple workers
+   - Image processing is particularly memory-intensive
+   - Worker processes need appropriate memory limits
+
+2. **Database Optimization**
+   - Many-to-many relationships (favorites, tags) can lead to complex queries
+   - Inefficient queries can cause database bottlenecks
+   - Proper indexing and query optimization are essential
+
+3. **Caching Strategy**
+   - Balancing cache freshness with performance
+   - Determining what to cache and for how long
+   - Implementing cache invalidation strategies
+
+4. **Async/Sync Context Handling**
+   - Django's async support requires careful handling of database operations
+   - Middleware that accesses request.user must handle both sync and async contexts
+   - SynchronousOnlyOperation errors occur when database operations are performed in async context
+   - Always use sync_to_async for database operations in async context
+
+5. **Model and Serializer Compatibility**
+   - Ensure all fields in serializers have corresponding fields in models
+   - Make non-essential fields optional with default values
+   - Check for migration issues when model fields are added or changed
+   - Be aware of field name differences between serializers and models
+
+## Tool Usage Patterns
+
+1. **Docker Configuration**
+   - Adjust worker count in entrypoint.sh
+   - Consider adding memory limits to container configuration
+
+2. **Django Settings**
+   - Review and optimize middleware
+   - Configure database connection pooling
+   - Set appropriate cache timeouts
+
+3. **Code Optimization**
+   - Add pagination to ViewSets
+   - Optimize database queries
+   - Limit memory usage in image processing
+   - Properly handle async/sync contexts in middleware
+   - Ensure model and serializer compatibility 

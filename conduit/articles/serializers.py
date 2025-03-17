@@ -48,7 +48,7 @@ class ArticleSerializer(TaggitSerializer, serializers.ModelSerializer):
     favorited = serializers.SerializerMethodField()
     favoritesCount = serializers.SerializerMethodField()
 
-    metadata = serializers.JSONField()  # Add this line
+    metadata = serializers.JSONField(required=False, default=dict)
 
     class Meta:
         model = Article

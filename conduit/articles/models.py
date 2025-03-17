@@ -1,4 +1,6 @@
 import io
+import logging
+import tempfile
 
 import markdown
 from core.models import SoftDeletableModel
@@ -8,12 +10,21 @@ from django.contrib.auth.models import AnonymousUser
 from django.core.files.uploadedfile import (
     InMemoryUploadedFile,
 )
+from django.core.files import File
 from django.db import models
 from django.db.models import Count
 from django.urls import reverse
 from django.utils.text import slugify
 from PIL import Image
 from taggit.managers import TaggableManager
+
+from conduit.profiles.models import User
+from conduit.comments.models import Comment
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
+logger.debug("Loading Article model module")
 
 User = get_user_model()
 
@@ -52,73 +63,81 @@ class ArticleManager(models.Manager):
 
 
 class Article(SoftDeletableModel):
-    author = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
-    title = models.CharField(max_length=150, unique=True)
+    class Meta:
+        app_label = 'conduit_articles'
+        
+    logger.debug(f"Registering Article model with app_label: {Meta.app_label}")
+    logger.debug(f"Module path: {__name__}")
+
+    author = models.ForeignKey(User, on_delete=models.CASCADE, related_name='articles')
+    title = models.CharField(max_length=255)
+    slug = models.SlugField(max_length=255, unique=True, blank=True)
     summary = models.TextField(blank=True)
-    content = models.TextField(blank=True)
-    image = models.ImageField(upload_to="article_images/", blank=True, null=True)
-
-    created = models.DateTimeField(auto_now_add=True, db_index=True)
-    updated = models.DateTimeField(auto_now_add=True)
-
+    content = models.TextField()
+    image = models.ImageField(upload_to='articles/', null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     status = models.CharField(
         max_length=10,
         choices=[("draft", "Draft"), ("published", "Published")],
         default="draft",
     )
     comments = models.ManyToManyField(
-        settings.AUTH_USER_MODEL, through="comments.Comment", related_name="comments"
+        User,
+        through='conduit_comments.Comment',
+        related_name='commented_articles'
     )
     tags = TaggableManager(blank=True)
-    favorites = models.ManyToManyField(
-        settings.AUTH_USER_MODEL, blank=True, related_name="favorites"
-    )
-    slug = models.SlugField(unique=True, max_length=250, db_index=True)
-
+    favorites = models.ManyToManyField(User, related_name='favorite_articles', blank=True)
     metadata = models.JSONField(default=dict)
 
-    objects = ArticleManager()
-
-    @property
-    def cache_key(self):
-        return f"article_{self.slug}"
+    logger.debug("Article model class defined")
 
     def __str__(self):
-        return f"<Article: {self.title}>"
-
-    class Meta:
-        ordering = ["-created"]
-        indexes = [
-            models.Index(fields=["-updated", "slug"], name="article_index"),
-            models.Index(
-                fields=["author", "-created"],
-                condition=models.Q(status="published"),
-                name="author_published_articles",
-            ),
-        ]
+        return self.title
 
     def save(self, *args, **kwargs):
-        self.slug = slugify(self.title)
+        if not self.slug:
+            self.slug = slugify(self.title)
+        
         if self.image:
-            pil_image = Image.open(self.image)
-            if pil_image.mode in ("RGBA", "P"):
-                pil_image = pil_image.convert("RGB")
-
-            pil_image = pil_image.resize((800, 800), Image.Resampling.LANCZOS)
-
-            new_image = io.BytesIO()
-            pil_image.save(new_image, format="JPEG", quality=75)
-
-            temp_name = self.image.name
-            self.image = InMemoryUploadedFile(
-                new_image,
-                "ImageField",
-                "%s.jpg" % temp_name.split(".")[0],
-                "image/jpeg",
-                new_image.tell,
-                None,
-            )
-
+            try:
+                # Open the image
+                pil_image = Image.open(self.image)
+                
+                # Check image size and limit if too large (5MB)
+                if self.image.size > 5 * 1024 * 1024:  # 5MB limit
+                    logger.warning(f"Image too large ({self.image.size} bytes), resizing")
+                
+                # Convert to RGB if needed
+                if pil_image.mode in ("RGBA", "P"):
+                    pil_image = pil_image.convert("RGB")
+                
+                # Calculate new dimensions while maintaining aspect ratio
+                max_size = (400, 400)
+                pil_image.thumbnail(max_size, Image.Resampling.LANCZOS)
+                
+                # Create a temporary file instead of using BytesIO
+                temp_file = tempfile.NamedTemporaryFile(suffix='.jpg', delete=False)
+                
+                # Save the image to the temporary file with compression
+                pil_image.save(temp_file.name, format="JPEG", quality=75, optimize=True)
+                
+                # Get the original filename
+                temp_name = self.image.name
+                filename = f"{temp_name.split('.')[0]}.jpg"
+                
+                # Reopen the temporary file and assign it to the image field
+                self.image = File(open(temp_file.name, 'rb'), name=filename)
+                
+                # Close the temporary file
+                temp_file.close()
+                
+                logger.debug(f"Image processed and resized to max dimensions {max_size}")
+            except Exception as e:
+                logger.error(f"Error processing image: {str(e)}")
+                # Continue saving even if image processing fails
+        
         super().save(*args, **kwargs)
 
     def get_absolute_url(self):
@@ -128,6 +147,28 @@ class Article(SoftDeletableModel):
 
     def as_markdown(self):
         return markdown.markdown(self.content, safe_mode="escape")
+
+    @property
+    def favorites_count(self):
+        return self.favorites.count()
+
+    @property
+    def comments_count(self):
+        return self.comments.count()
+
+    def is_favorited_by(self, user):
+        return self.favorites.filter(id=user.id).exists()
+
+    def add_favorite(self, user):
+        if not self.is_favorited_by(user):
+            self.favorites.add(user)
+
+    def remove_favorite(self, user):
+        if self.is_favorited_by(user):
+            self.favorites.remove(user)
+
+    def is_published(self):
+        return self.status == "published"
 
 
 def create_model(

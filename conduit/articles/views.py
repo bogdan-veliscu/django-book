@@ -1,45 +1,30 @@
 import logging
 
-from articles.filters import ArticleFilter
-from articles.models import Article
-from articles.serializers import (
-    ArticleSerializer,
-    TagSerializer,
-)
-from comments.forms import CommentForm
-from comments.models import Comment
-from core.mixins import CachePageMixin
-from django.contrib.auth.decorators import (
-    login_required,
-)
+from django.contrib.auth.decorators import login_required
 from django.contrib.postgres.search import SearchVector
 from django.core.cache import cache
+from django.db.models import Q
 from django.shortcuts import get_object_or_404, render
 from django.template.response import TemplateResponse
 from django.urls import reverse_lazy
-from django.views.decorators.http import (
-    require_http_methods,
-)
+from django.views.decorators.http import require_http_methods
 from django.views.generic import DetailView, ListView
 from django.views.generic.edit import CreateView
-from profiles.models import User
-from rest_framework import (
-    mixins,
-    status,
-    viewsets,
-)
+from rest_framework import generics, mixins, permissions, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.parsers import (
-    FormParser,
-    JSONParser,
-    MultiPartParser,
-)
-from rest_framework.permissions import (
-    IsAuthenticated,
-    IsAuthenticatedOrReadOnly,
-)
+from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
+from rest_framework.permissions import IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
+from rest_framework.views import APIView
 from taggit.models import Tag
+
+from conduit.articles.filters import ArticleFilter
+from conduit.articles.models import Article
+from conduit.articles.serializers import ArticleSerializer, TagSerializer
+from conduit.comments.forms import CommentForm
+from conduit.comments.models import Comment
+from conduit.core.mixins import CachePageMixin
+from conduit.profiles.models import User
 
 logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
@@ -135,70 +120,120 @@ class ArticleViewSet(viewsets.ModelViewSet):
 
     @action(detail=False)
     def feed(self, request, *args, **kwargs):
-        # print(f"Feed request: {dir(request.version)}.user: {request.user}")
         try:
-            logger.info(
-                f"Feed request: {request}\nuser: {request.user}\nversion:{request.version}"
+            logger.info(f"Feed request: {request}\nuser: {request.user}")
+            
+            # Get pagination parameters
+            page = self.paginate_queryset(None)  # Initialize pagination
+            
+            # Get followed authors more efficiently
+            followed_authors = User.objects.filter(followers=request.user).values_list('id', flat=True)
+            
+            if not followed_authors:
+                return Response(
+                    {"articles": [], "articlesCount": 0},
+                    status=status.HTTP_200_OK,
+                )
+            
+            # Optimize query with select_related, prefetch_related, and only
+            queryset = (
+                Article.objects
+                .select_related('author')
+                .prefetch_related('favorites', 'tags')
+                .filter(author__in=followed_authors)
+                .order_by("-created")
+                .only(
+                    'title', 'slug', 'summary', 'created', 'author__name', 
+                    'author__bio', 'author__image'
+                )
             )
-            followed_authors = User.objects.filter(followers=request.user)
-            queryset = self.get_queryset()
-            logger.debug(f"Feed followed authors: {followed_authors}")
-            articles = queryset.filter(author__in=followed_authors).order_by("-created")
-            logger.info(f"Feed articles: {articles}")
-            queryset = self.filter_queryset(articles)
-            logger.debug(f"Feed Queryset: {queryset}")
+            
+            # Apply pagination
+            page = self.paginate_queryset(queryset)
+            if page is not None:
+                serializer = self.get_serializer(page, many=True)
+                return self.get_paginated_response({
+                    "articles": serializer.data,
+                    "articlesCount": queryset.count(),
+                })
+            
+            # If pagination is not configured
             serializer = self.get_serializer(queryset, many=True)
-            response = {
-                "articles": serializer.data,
-                "articlesCount": queryset.count(),
-            }
-            return Response(response, status=status.HTTP_200_OK)
-        except Exception:
             return Response(
-                {"errors": {"body": ["Bad request: unable to retrieve feed articles"]}},
+                {
+                    "articles": serializer.data,
+                    "articlesCount": queryset.count(),
+                },
+                status=status.HTTP_200_OK,
+            )
+        except Exception as e:
+            logger.error(f"Error retrieving feed: {str(e)}")
+            return Response(
+                {"errors": {"body": ["Unable to retrieve feed articles"]}},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
     @action(detail=False)
     def recent(self, request, *args, **kwargs):
         try:
-            if "recent_articles" not in cache:
-                queryset = self.get_queryset()
-                articles = queryset.order_by("-created")[:5]
-                serializer = self.get_serializer(articles, many=True)
+            cache_key = "recent_articles"
+            articles = cache.get(cache_key)
+            
+            if articles is None:
+                # Optimize query with select_related, prefetch_related, and only
+                queryset = (
+                    Article.objects
+                    .select_related('author')
+                    .prefetch_related('favorites', 'tags')
+                    .order_by("-created")
+                    .only(
+                        'title', 'slug', 'summary', 'created', 'author__name', 
+                        'author__bio', 'author__image'
+                    )[:5]
+                )
+                serializer = self.get_serializer(queryset, many=True)
                 articles = serializer.data
-                cache.set("recent_articles", articles, 60 * 60)
-            else:
-                articles = cache.get("recent_articles")
-
+                # Cache for 15 minutes instead of 1 hour
+                cache.set(cache_key, articles, 60 * 15)
+            
             return Response(
                 {"articles": articles},
                 status=status.HTTP_200_OK,
             )
-        except Exception:
+        except Exception as e:
+            logger.error(f"Error retrieving recent articles: {str(e)}")
             return Response(
-                {
-                    "errors": {
-                        "body": ["Bad request: unable to retrieve recent articles"]
-                    }
-                },
+                {"errors": {"body": ["Unable to retrieve recent articles"]}},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
     def retrieve(self, request, slug, *args, **kwargs):
         try:
-            queryset = self.get_queryset()
-            article = queryset.get(slug=slug)
+            # Optimize query with select_related, prefetch_related, and only
+            article = (
+                Article.objects
+                .select_related('author')
+                .prefetch_related('favorites', 'tags')
+                .filter(slug=slug)
+                .first()
+            )
+            
+            if not article:
+                return Response(
+                    {"errors": {"body": ["Article not found"]}},
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+                
             serializer = self.get_serializer(article)
-
             return Response(
                 {"article": serializer.data},
                 status=status.HTTP_200_OK,
             )
-        except Article.DoesNotExist:
+        except Exception as e:
+            logger.error(f"Error retrieving article: {str(e)}")
             return Response(
-                {"errors": {"body": ["Article not found"]}},
-                status=status.HTTP_404_NOT_FOUND,
+                {"errors": {"body": ["Unable to retrieve article"]}},
+                status=status.HTTP_400_BAD_REQUEST,
             )
 
     def update(self, request, slug, *args, **kwargs):

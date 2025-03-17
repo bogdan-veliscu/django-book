@@ -1,30 +1,20 @@
-import django_filters
-from articles.models import Article
+from django_filters import rest_framework as filters
+from conduit.articles.models import Article
 
 
-class ArticleFilter(django_filters.FilterSet):
-    tag = django_filters.CharFilter(method="tag_filter")
-    author = django_filters.CharFilter(method="author_filter")
-    favorited = django_filters.CharFilter(
-        field_name="favorites",
-        method="favorited_filter",
-        label="Are the articles favorited",
-    )
-    limit = django_filters.NumberFilter(method="limit_filter")
-    offset = django_filters.NumberFilter(method="offset_filter")
+class ArticleFilter(filters.FilterSet):
+    tag = filters.CharFilter(field_name='tags__name')
+    author = filters.CharFilter(field_name='author__email')
+    favorited = filters.CharFilter(method='filter_favorited')
+    limit = filters.NumberFilter(method="limit_filter")
+    offset = filters.NumberFilter(method="offset_filter")
 
     class Meta:
         model = Article
-        fields = ["tag", "author", "favorited", "limit", "offset"]
+        fields = ['tag', 'author', 'favorited', 'limit', 'offset']
 
-    def tag_filter(self, queryset, name, value):
-        return queryset.filter(tags__name__in=[value])
-
-    def author_filter(self, queryset, name, value):
-        return queryset.filter(author__name__icontains=value)
-
-    def favorited_filter(self, queryset, name, value):
-        return queryset.filter(favorites__name__icontains=value)
+    def filter_favorited(self, queryset, name, value):
+        return queryset.filter(favorites__email=value)
 
     def limit_filter(self, queryset, name, value):
         return queryset[:value]

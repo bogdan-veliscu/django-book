@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
     initial = True
 
     dependencies = [
-        ("articles", "0003_alter_article_favorites"),
+        ("conduit_articles", "0003_alter_article_favorites"),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 
@@ -27,23 +27,38 @@ class Migration(migrations.Migration):
                         verbose_name="ID",
                     ),
                 ),
-                ("content", models.TextField()),
-                ("created", models.DateTimeField(auto_now_add=True)),
-                ("updated", models.DateTimeField(auto_now=True)),
+                ("body", models.TextField()),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
                 (
                     "article",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
-                        to="articles.article",
+                        related_name="article_comments",
+                        to="conduit_articles.article",
                     ),
                 ),
                 (
                     "author",
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
+                        related_name="authored_comments",
                         to=settings.AUTH_USER_MODEL,
                     ),
                 ),
+                (
+                    "parent",
+                    models.ForeignKey(
+                        blank=True,
+                        null=True,
+                        on_delete=django.db.models.deletion.CASCADE,
+                        related_name="replies",
+                        to="conduit_comments.comment",
+                    ),
+                ),
             ],
+            options={
+                "app_label": "conduit_comments",
+            },
         ),
     ]

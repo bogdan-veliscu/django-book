@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("articles", "0003_alter_article_favorites"),
+        ("conduit_articles", "0003_alter_article_favorites"),
     ]
 
     operations = [

@@ -1,7 +1,8 @@
 import logging
 
-from articles.serializers import AuthorSerializer
-from comments.models import Comment
+from conduit.articles.serializers import AuthorSerializer
+from django.contrib.auth import get_user_model
+from conduit.comments.models import Comment
 from rest_framework import serializers
 
 logger = logging.getLogger(__name__)

@@ -2,3 +2,4 @@ postgres/
 .pgdata/
 pgdata/
 .postgres
+!requirements.txt
