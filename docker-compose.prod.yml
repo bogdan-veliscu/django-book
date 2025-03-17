@@ -59,12 +59,8 @@ services:
       "
 
   frontend:
-    build:
-      context: ../frontend
-      dockerfile: Dockerfile
-      args:
-        - NODE_ENV=production
-        - NEXT_PUBLIC_API_URL=https://${DOMAIN}/api
+    image: ghcr.io/bogdan-veliscu/conduit-frontend:latest
+    platform: linux/amd64
     restart: unless-stopped
     deploy:
       resources:
