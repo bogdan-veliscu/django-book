@@ -79,13 +79,13 @@ def create_app() -> FastAPI:
 
     # Register routers
     from src.modules.auth.presentation.routes import router as auth_router
+    from src.modules.profiles.presentation.routes import router as profiles_router
 
     app.include_router(auth_router, prefix="/api", tags=["auth"])
-    # from src.modules.profiles.presentation.routes import router as profiles_router
+    app.include_router(profiles_router, prefix="/api", tags=["profiles"])
     # from src.modules.articles.presentation.routes import router as articles_router
     # from src.modules.comments.presentation.routes import router as comments_router
     #
-    # app.include_router(profiles_router, prefix="/api", tags=["profiles"])
     # app.include_router(articles_router, prefix="/api", tags=["articles"])
     # app.include_router(comments_router, prefix="/api", tags=["comments"])
 
