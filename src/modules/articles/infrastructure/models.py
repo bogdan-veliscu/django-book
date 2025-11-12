@@ -80,3 +80,6 @@ class ArticleModel(Base):
         secondary=article_favorite_association,
         back_populates="favorited_articles",
     )
+    comments: Mapped[list["CommentModel"]] = relationship(  # type: ignore
+        "CommentModel", back_populates="article", cascade="all, delete-orphan"
+    )

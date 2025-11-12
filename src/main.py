@@ -84,13 +84,13 @@ def create_app() -> FastAPI:
         router as articles_router,
         tags_router,
     )
+    from src.modules.comments.presentation.routes import router as comments_router
 
     app.include_router(auth_router, prefix="/api", tags=["auth"])
     app.include_router(profiles_router, prefix="/api", tags=["profiles"])
     app.include_router(articles_router, prefix="/api", tags=["articles"])
     app.include_router(tags_router, prefix="/api", tags=["tags"])
-    # from src.modules.comments.presentation.routes import router as comments_router
-    # app.include_router(comments_router, prefix="/api", tags=["comments"])
+    app.include_router(comments_router, prefix="/api", tags=["comments"])
 
     @app.get("/health")
     async def health_check() -> dict[str, str]:
