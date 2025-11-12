@@ -10,6 +10,9 @@ from alembic import context
 # Import all models here for autogenerate
 from src.core.infrastructure.database import Base
 from src.modules.auth.infrastructure.models import UserModel  # noqa: F401
+from src.modules.articles.infrastructure.models import ArticleModel, TagModel  # noqa: F401
+from src.modules.comments.infrastructure.models import CommentModel  # noqa: F401
+from src.modules.profiles.infrastructure.models import follow_association  # noqa: F401
 
 # this is the Alembic Config object, which provides
 # access to the values within the .ini file in use.

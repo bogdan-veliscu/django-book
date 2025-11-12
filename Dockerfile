@@ -1,5 +1,5 @@
 # Build stage for dependencies
-FROM python:3.12-slim-bookworm AS builder
+FROM python:3.13-slim-bookworm AS builder
 
 # Install uv
 COPY --from=ghcr.io/astral-sh/uv:0.4.15 /uv /bin/uv
@@ -32,7 +32,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
 
-FROM python:3.12-slim-bookworm AS app
+FROM python:3.13-slim-bookworm AS app
 
 # Ensure UV is available
 COPY --from=builder /bin/uv /bin/uv
@@ -50,19 +50,18 @@ EXPOSE 8000
 
 # Default environment variables
 ENV HOST=0.0.0.0 \
-    PORT=8000 \
-    DJANGO_SETTINGS_MODULE="config.settings.production"
+    PORT=8000
 
 # Healthcheck endpoint
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD curl -f http://localhost:8000/health/ || exit 1
+    CMD curl -f http://localhost:8000/health || exit 1
 
 WORKDIR /code
 
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["uvicorn", "config.asgi:application", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uvicorn", "src.main:app", "--host", "0.0.0.0", "--port", "8000"]
 
 # Metadata
 LABEL maintainer="Bogdan Veliscu" \
-    version="1.0" \
-    description="Production-ready Django application with uv and optimized Docker image"
+    version="2.0" \
+    description="Production-ready FastAPI application with DDD architecture, uv and optimized Docker image"
