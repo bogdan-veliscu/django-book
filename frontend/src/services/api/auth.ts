@@ -2,12 +2,12 @@ import { apiClient } from './client';
 import type {
   UserResponse,
   ApiError,
-} from '@types/api';
+} from '@/types/api';
 import type {
   LoginCredentials,
   RegisterCredentials,
   UpdateUser,
-} from '@types/models';
+} from '@/types/models';
 
 export const authApi = {
   async login(credentials: LoginCredentials): Promise<UserResponse> {

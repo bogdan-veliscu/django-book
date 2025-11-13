@@ -1,5 +1,5 @@
 import { authApi } from './api/auth';
-import type { User, LoginCredentials, RegisterCredentials, UpdateUser } from '@types/models';
+import type { User, LoginCredentials, RegisterCredentials, UpdateUser } from '@/types/models';
 
 class AuthService {
   private currentUser: User | null = null;

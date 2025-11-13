@@ -1,5 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import { customElement } from 'lit/decorators.js';
+import '../components/auth/login-form';
+import '../components/auth/register-form';
 
 @customElement('auth-view')
 export class AuthView extends LitElement {
@@ -41,7 +43,7 @@ export class AuthView extends LitElement {
           ${isLogin ? 'Need an account?' : 'Have an account?'}
         </a>
       </div>
-      <p>Authentication form will be implemented here.</p>
+      ${isLogin ? html`<login-form></login-form>` : html`<register-form></register-form>`}
     `;
   }
 }
