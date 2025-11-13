@@ -329,6 +329,30 @@ class ArticleRepository(IArticleRepository):
 
         return [self._model_to_entity(model) for model in models]
 
+    async def list_all(
+        self, limit: int = 20, offset: int = 0
+    ) -> list[Article]:
+        """List all articles.
+
+        Args:
+            limit: Maximum number of articles to return.
+            offset: Number of articles to skip.
+
+        Returns:
+            List of articles.
+        """
+        stmt = (
+            select(ArticleModel)
+            .options(selectinload(ArticleModel.tags), selectinload(ArticleModel.favorited_by))
+            .order_by(ArticleModel.created_at.desc())
+            .limit(limit)
+            .offset(offset)
+        )
+        result = await self._session.execute(stmt)
+        models = result.scalars().all()
+
+        return [self._model_to_entity(model) for model in models]
+
     async def get_all_tags(self) -> list[str]:
         """Get all unique tags used in articles.
 

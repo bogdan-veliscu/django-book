@@ -2,7 +2,7 @@
 
 from functools import lru_cache
 
-from pydantic import Field, PostgresDsn, RedisDsn
+from pydantic import Field, PostgresDsn, RedisDsn, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -63,6 +63,46 @@ class Settings(BaseSettings):
     cache_ttl_articles: int = 60 * 5  # 5 minutes
     cache_ttl_profiles: int = 60 * 10  # 10 minutes
     cache_ttl_tags: int = 60 * 30  # 30 minutes
+
+    @field_validator("secret_key")
+    @classmethod
+    def validate_secret_key(cls, v: str, info) -> str:
+        """Validate secret key strength and security.
+
+        Args:
+            v: The secret key value.
+            info: Validation info context.
+
+        Returns:
+            The validated secret key.
+
+        Raises:
+            ValueError: If secret key is insecure.
+        """
+        # Minimum length requirement
+        if len(v) < 32:
+            raise ValueError("SECRET_KEY must be at least 32 characters long")
+
+        # Default value check - never use default in production or staging
+        default_key = "your-secret-key-change-this-in-production-at-least-32-characters-long"
+        environment = info.data.get("environment", "development")
+
+        if v == default_key and environment in ("production", "staging"):
+            raise ValueError(
+                f"Cannot use default SECRET_KEY in {environment} environment. "
+                "Please set a secure random key via environment variable."
+            )
+
+        # Warn about weak keys even in development
+        if v == default_key:
+            import warnings
+            warnings.warn(
+                "Using default SECRET_KEY. This is insecure and should only be used for local development.",
+                UserWarning,
+                stacklevel=2,
+            )
+
+        return v
 
 
 @lru_cache

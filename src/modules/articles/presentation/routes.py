@@ -343,7 +343,7 @@ async def list_articles(
         article_entities = await article_repo.list_by_tag(tag, limit, offset)
     elif author:
         # Get author by username
-        author_user = await user_repo.get_by_email(author)  # This needs fixing - should be by username
+        author_user = await user_repo.get_by_name(author)
         if author_user:
             article_entities = await article_repo.list_by_author(
                 author_user.id, limit, offset  # type: ignore
@@ -352,7 +352,7 @@ async def list_articles(
             article_entities = []
     elif favorited:
         # Get user by username
-        favorited_user = await user_repo.get_by_email(favorited)  # This needs fixing
+        favorited_user = await user_repo.get_by_name(favorited)
         if favorited_user:
             article_entities = await article_repo.list_favorited_by(
                 favorited_user.id, limit, offset  # type: ignore
@@ -360,16 +360,39 @@ async def list_articles(
         else:
             article_entities = []
     else:
-        # Get all articles (we'll need to add this method)
-        article_entities = []
+        # Get all articles
+        article_entities = await article_repo.list_all(limit, offset)
 
     # Convert to DTOs
     current_user_id = current_user["id"] if current_user else None
 
+    # Batch fetch all authors to avoid N+1 queries
+    author_ids = list({article.author_id for article in article_entities})
+    authors_map = {}
+    if author_ids:
+        # Fetch all authors in a single query
+        from sqlalchemy import select as sql_select
+        from src.modules.auth.infrastructure.models import UserModel
+
+        stmt = sql_select(UserModel).where(UserModel.id.in_(author_ids))
+        result = await session.execute(stmt)
+        authors = result.scalars().all()
+        authors_map = {author.id: author for author in authors}
+
+    # Batch fetch all profiles to avoid N+1 queries
+    profiles_map = {}
+    if current_user_id and author_ids:
+        from src.modules.profiles.infrastructure.models import ProfileModel
+
+        stmt = sql_select(ProfileModel).where(ProfileModel.user_id.in_(author_ids))
+        result = await session.execute(stmt)
+        profiles = result.scalars().all()
+        profiles_map = {profile.user_id: profile for profile in profiles}
+
     for article_entity in article_entities:
-        # Get author
-        author_user = await user_repo.get(article_entity.author_id)
-        if not author_user:
+        # Get author from pre-fetched map
+        author_model = authors_map.get(article_entity.author_id)
+        if not author_model:
             continue
 
         # Check if favorited
@@ -377,12 +400,13 @@ async def list_articles(
         if current_user_id:
             favorited_by_current = article_entity.is_favorited_by(current_user_id)
 
-        # Check if following
+        # Check if following from pre-fetched map
         following = False
         if current_user_id:
-            profile = await profile_repo.get_by_user_id(author_user.id)  # type: ignore
+            profile = profiles_map.get(author_model.id)
             if profile:
-                following = profile.is_following(current_user_id)
+                # Check if current user is in the profile's followers
+                following = any(f.id == current_user_id for f in profile.followers)
 
         article_dto = ArticleDTO(
             id=article_entity.id,  # type: ignore
@@ -396,9 +420,9 @@ async def list_articles(
             favorited=favorited_by_current,
             favorites_count=article_entity.favorites_count(),
             author=ProfileSchema(
-                username=author_user.name,
-                bio=author_user.bio,
-                image=author_user.image,
+                username=author_model.name,
+                bio=author_model.bio,
+                image=author_model.image,
                 following=following,
             ),
         )

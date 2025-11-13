@@ -63,6 +63,20 @@ class UserRepository(IUserRepository):
         model = result.scalar_one_or_none()
         return self._to_entity(model) if model else None
 
+    async def get_by_name(self, name: str) -> User | None:
+        """Get a user by username.
+
+        Args:
+            name: The user's username.
+
+        Returns:
+            The user if found, None otherwise.
+        """
+        stmt = select(UserModel).where(UserModel.name == name)
+        result = await self._session.execute(stmt)
+        model = result.scalar_one_or_none()
+        return self._to_entity(model) if model else None
+
     async def exists_by_email(self, email: Email) -> bool:
         """Check if a user exists by email.
 
