@@ -1,746 +1,1339 @@
-# Frontend Migration Plan: Django/HTMX → Lit PWA
-
-## Executive Summary
-
-This document outlines the comprehensive plan to migrate the RealWorld Conduit frontend from a Django server-side rendered application with HTMX to a modern Progressive Web App (PWA) using Lit web components, Vite build tool, and Bun runtime.
-
-## Current State Analysis
-
-### Technology Stack (Before)
-- **Framework**: Django 5.0.4 server-side rendering
-- **Enhancement**: HTMX 2.0.1 for progressive enhancement
-- **Styling**: Bootstrap 4 ProductionReady theme
-- **Real-time**: Django Channels + WebSocket
-- **State**: Django sessions + Redis cache
-- **Build**: None (pure Django)
-
-### Views & Templates
-- 16 Django templates (~600 lines)
-- 3 main view modules (articles, profiles, comments)
-- HTMX infinite scroll pagination
-- Real-time comments via WebSocket
-
-## Target State Architecture
-
-### Technology Stack (After)
-- **Framework**: Lit 3.x (web components)
-- **Build Tool**: Vite 5.x (fast dev server, optimized builds)
-- **Runtime**: Bun 1.x (fast package manager & runtime)
-- **Router**: @vaadin/router (web component routing)
-- **State**: Lit Context API + local storage
-- **Styling**: CSS Modules + Tailwind CSS
-- **PWA**: Workbox for service worker
-- **API Client**: fetch API with interceptors
-- **Real-time**: WebSocket with auto-reconnect
-
-## Project Structure
-
-```
-frontend/
-├── src/
-│   ├── components/              # Lit web components
-│   │   ├── common/              # Shared components
-│   │   │   ├── app-header.ts    # Navigation header
-│   │   │   ├── app-footer.ts    # Footer
-│   │   │   ├── loading-spinner.ts
-│   │   │   ├── error-message.ts
-│   │   │   └── pagination.ts
-│   │   ├── auth/                # Authentication components
-│   │   │   ├── login-form.ts
-│   │   │   ├── register-form.ts
-│   │   │   └── user-settings.ts
-│   │   ├── articles/            # Article components
-│   │   │   ├── article-list.ts
-│   │   │   ├── article-preview.ts
-│   │   │   ├── article-detail.ts
-│   │   │   ├── article-editor.ts
-│   │   │   ├── article-meta.ts
-│   │   │   └── tag-list.ts
-│   │   ├── profiles/            # Profile components
-│   │   │   ├── profile-page.ts
-│   │   │   ├── profile-articles.ts
-│   │   │   └── follow-button.ts
-│   │   └── comments/            # Comment components
-│   │       ├── comment-list.ts
-│   │       ├── comment-form.ts
-│   │       └── comment-item.ts
-│   ├── views/                   # Page-level components
-│   │   ├── home-view.ts         # Landing page
-│   │   ├── article-view.ts      # Article detail page
-│   │   ├── editor-view.ts       # Article editor
-│   │   ├── profile-view.ts      # User profile
-│   │   ├── settings-view.ts     # User settings
-│   │   └── auth-view.ts         # Login/register
-│   ├── services/                # Business logic & API
-│   │   ├── api/                 # API client
-│   │   │   ├── client.ts        # Base fetch client
-│   │   │   ├── articles.ts      # Article API
-│   │   │   ├── auth.ts          # Auth API
-│   │   │   ├── profiles.ts      # Profile API
-│   │   │   ├── comments.ts      # Comment API
-│   │   │   └── tags.ts          # Tags API
-│   │   ├── websocket.ts         # WebSocket service
-│   │   ├── storage.ts           # LocalStorage wrapper
-│   │   └── auth-service.ts      # Auth state management
-│   ├── contexts/                # Lit Context providers
-│   │   ├── auth-context.ts      # User auth state
-│   │   └── theme-context.ts     # Theme state
-│   ├── router/                  # Routing configuration
-│   │   ├── index.ts             # Router setup
-│   │   ├── routes.ts            # Route definitions
-│   │   └── guards.ts            # Auth guards
-│   ├── styles/                  # Global styles
-│   │   ├── global.css           # Global CSS
-│   │   ├── variables.css        # CSS variables
-│   │   └── tailwind.css         # Tailwind imports
-│   ├── utils/                   # Utility functions
-│   │   ├── validators.ts        # Form validation
-│   │   ├── formatters.ts        # Date/text formatting
-│   │   └── slugify.ts           # Slug generation
-│   ├── types/                   # TypeScript types
-│   │   ├── api.ts               # API response types
-│   │   ├── models.ts            # Domain models
-│   │   └── router.ts            # Router types
-│   ├── app.ts                   # Root app component
-│   ├── main.ts                  # Application entry point
-│   └── vite-env.d.ts            # Vite type declarations
-├── public/                      # Static assets
-│   ├── manifest.json            # PWA manifest
-│   ├── icons/                   # PWA icons
-│   ├── favicon.ico
-│   └── robots.txt
-├── index.html                   # HTML entry point
-├── vite.config.ts               # Vite configuration
-├── tailwind.config.js           # Tailwind configuration
-├── tsconfig.json                # TypeScript configuration
-├── bunfig.toml                  # Bun configuration
-└── package.json                 # Dependencies
-```
-
-## Migration Phases
-
-### Phase 1: Project Setup & Infrastructure ✅ (Target)
-**Goal**: Bootstrap Lit PWA project with Vite and Bun
-
-**Tasks**:
-1. Initialize Bun project with Lit template
-2. Configure Vite for optimal development and production builds
-3. Set up TypeScript with strict mode
-4. Configure Tailwind CSS with custom theme
-5. Set up ESLint + Prettier for code quality
-6. Create base HTML template with PWA meta tags
-7. Set up development environment
-
-**Deliverables**:
-- Working Vite dev server
-- TypeScript compilation
-- Tailwind CSS processing
-- Hot module replacement (HMR)
-- Basic project structure
-
-**Configuration Files**:
-- `package.json` - Dependencies and scripts
-- `vite.config.ts` - Build configuration
-- `tsconfig.json` - TypeScript settings
-- `tailwind.config.js` - Tailwind theme
-- `bunfig.toml` - Bun settings
-
-### Phase 2: Core Architecture & Routing ✅ (Target)
-**Goal**: Establish application foundation with routing and state
-
-**Tasks**:
-1. Create root app component (`app.ts`)
-2. Set up @vaadin/router with route definitions
-3. Implement auth guards for protected routes
-4. Create Lit Context for auth state
-5. Build API client with interceptors
-6. Set up localStorage service for persistence
-7. Create base page components (views)
-
-**Deliverables**:
-- Working client-side routing
-- Auth state management
-- API client foundation
-- Navigation between views
-- Protected routes
-
-**Key Components**:
-- `src/app.ts` - Root component
-- `src/router/index.ts` - Router setup
-- `src/contexts/auth-context.ts` - Auth state
-- `src/services/api/client.ts` - API client
-
-### Phase 3: Authentication Module ✅ (Target)
-**Goal**: Implement user authentication and registration
-
-**Tasks**:
-1. Build login form component
-2. Build register form component
-3. Build user settings component
-4. Implement JWT token management
-5. Create auth service with login/logout
-6. Add form validation
-7. Handle auth errors and feedback
-8. Persist user state
-
-**Deliverables**:
-- Login page functional
-- Register page functional
-- Settings page functional
-- Token refresh logic
-- Form validation
-- Error handling
-
-**Components**:
-- `auth/login-form.ts`
-- `auth/register-form.ts`
-- `auth/user-settings.ts`
-- `services/auth-service.ts`
-
-### Phase 4: Article Components ✅ (Target)
-**Goal**: Build article listing and viewing functionality
-
-**Tasks**:
-1. Create article preview component
-2. Build article list with pagination
-3. Implement article detail view
-4. Add favorite/unfavorite button
-5. Build tag filtering
-6. Create article meta component (author, date, actions)
-7. Implement infinite scroll or pagination
-8. Add feed/global toggle
-
-**Deliverables**:
-- Home page with article feed
-- Article detail page
-- Tag filtering working
-- Favorite functionality
-- Pagination/infinite scroll
-
-**Components**:
-- `articles/article-list.ts`
-- `articles/article-preview.ts`
-- `articles/article-detail.ts`
-- `articles/article-meta.ts`
-- `articles/tag-list.ts`
-- `views/home-view.ts`
-- `views/article-view.ts`
-
-### Phase 5: Article Editor ✅ (Target)
-**Goal**: Enable article creation and editing
-
-**Tasks**:
-1. Build article editor component
-2. Implement markdown editor (or rich text)
-3. Add tag input with autocomplete
-4. Form validation for article fields
-5. Create article API integration
-6. Update article API integration
-7. Handle image uploads (if applicable)
-8. Preview functionality
-
-**Deliverables**:
-- Article creation working
-- Article editing working
-- Tag management
-- Form validation
-- Draft saving (optional)
-
-**Components**:
-- `articles/article-editor.ts`
-- `views/editor-view.ts`
-- `services/api/articles.ts`
-
-### Phase 6: Profile Module ✅ (Target)
-**Goal**: Implement user profiles and following
-
-**Tasks**:
-1. Build profile page component
-2. Create follow/unfollow button
-3. Display user's articles
-4. Display favorited articles
-5. Show follower/following counts
-6. Implement profile API integration
-7. Add profile image display
-
-**Deliverables**:
-- Profile pages functional
-- Follow/unfollow working
-- User articles displayed
-- Favorited articles shown
-
-**Components**:
-- `profiles/profile-page.ts`
-- `profiles/profile-articles.ts`
-- `profiles/follow-button.ts`
-- `views/profile-view.ts`
-- `services/api/profiles.ts`
-
-### Phase 7: Comments Module ✅ (Target)
-**Goal**: Add commenting functionality
-
-**Tasks**:
-1. Build comment list component
-2. Create comment form
-3. Build individual comment item
-4. Implement comment API integration
-5. Add delete comment (with auth check)
-6. Real-time updates via WebSocket
-7. Optimistic UI updates
-
-**Deliverables**:
-- Comment display working
-- Comment creation working
-- Comment deletion working
-- Real-time updates (if WebSocket ready)
-
-**Components**:
-- `comments/comment-list.ts`
-- `comments/comment-form.ts`
-- `comments/comment-item.ts`
-- `services/api/comments.ts`
-- `services/websocket.ts`
-
-### Phase 8: Shared Components & UX ✅ (Target)
-**Goal**: Polish UI and add common components
-
-**Tasks**:
-1. Build app header with navigation
-2. Create app footer
-3. Add loading spinner component
-4. Build error message component
-5. Create pagination component
-6. Add toast notifications
-7. Implement modal dialogs
-8. Add empty states
-
-**Deliverables**:
-- Consistent navigation
-- Loading states
-- Error handling UI
-- Notifications
-- Better UX overall
-
-**Components**:
-- `common/app-header.ts`
-- `common/app-footer.ts`
-- `common/loading-spinner.ts`
-- `common/error-message.ts`
-- `common/pagination.ts`
-- `common/toast.ts`
-- `common/modal.ts`
-
-### Phase 9: PWA Features ✅ (Target)
-**Goal**: Transform into a Progressive Web App
-
-**Tasks**:
-1. Create PWA manifest.json
-2. Generate PWA icons (multiple sizes)
-3. Set up Workbox service worker
-4. Implement offline caching strategy
-5. Add offline page
-6. Implement background sync
-7. Add install prompt
-8. Test PWA features
-
-**Deliverables**:
-- PWA manifest configured
-- Service worker functional
-- Offline support
-- Installable app
-- Passes Lighthouse PWA audit
-
-**Files**:
-- `public/manifest.json`
-- `public/icons/` (multiple sizes)
-- `src/sw.ts` - Service worker
-- Vite PWA plugin config
-
-### Phase 10: Testing & Optimization ✅ (Target)
-**Goal**: Ensure quality and performance
-
-**Tasks**:
-1. Set up Vitest for unit tests
-2. Add Web Test Runner for component tests
-3. Test critical user flows
-4. Run Lighthouse audits
-5. Optimize bundle size
-6. Implement code splitting
-7. Add lazy loading for routes
-8. Optimize images
-9. Performance monitoring
-
-**Deliverables**:
-- Unit tests for services
-- Component tests for key components
-- Lighthouse score > 90
-- Optimized bundle sizes
-- Fast page loads
-
-**Testing Tools**:
-- Vitest for unit tests
-- @web/test-runner for component tests
-- Lighthouse CI
-
-### Phase 11: Deployment & Documentation ✅ (Target)
-**Goal**: Deploy and document the application
-
-**Tasks**:
-1. Build production bundle
-2. Configure Docker for frontend
-3. Update docker-compose.yml
-4. Set up environment variables
-5. Configure CORS for API
-6. Write user documentation
-7. Write developer documentation
-8. Create README with setup instructions
-
-**Deliverables**:
-- Production-ready build
-- Docker configuration
-- Updated docker-compose
-- Complete documentation
-- Deployment guide
-
-**Documentation**:
-- `frontend/README.md`
-- `frontend/DEVELOPER.md`
-- Updated root `README.md`
-
-## Technology Decisions
-
-### Why Lit?
-1. **Web Standards**: Built on Web Components standard
-2. **Performance**: Lightweight (~5KB), fast rendering
-3. **Simplicity**: Easy to learn, minimal API surface
-4. **Interoperability**: Works with any framework or vanilla JS
-5. **Future-proof**: Based on web standards, not framework-specific
-6. **TypeScript**: First-class TypeScript support
-7. **No Virtual DOM**: Direct DOM manipulation is faster
-
-### Why Vite?
-1. **Speed**: Lightning-fast dev server with HMR
-2. **Modern**: ESM-first, optimized for modern browsers
-3. **Plugin Ecosystem**: Rich plugin ecosystem
-4. **Build Optimization**: Rollup-based production builds
-5. **TypeScript**: Built-in TypeScript support
-6. **Developer Experience**: Great DX with instant server start
-
-### Why Bun?
-1. **Performance**: 3x faster than npm, 25x faster than yarn
-2. **All-in-one**: Runtime, package manager, bundler, test runner
-3. **TypeScript**: Native TypeScript execution
-4. **Compatibility**: Drop-in replacement for Node.js
-5. **Modern**: Built for modern JavaScript
-6. **Developer Experience**: Fast installs, hot reloading
-
-### Why @vaadin/router?
-1. **Web Components**: Designed for web components
-2. **Lightweight**: Small footprint
-3. **Features**: Lazy loading, guards, nested routes
-4. **TypeScript**: Good TypeScript support
-5. **Mature**: Battle-tested in production
-
-### Why Tailwind CSS?
-1. **Utility-first**: Rapid development
-2. **Customization**: Fully customizable
-3. **Consistency**: Design system built-in
-4. **Performance**: Purged CSS in production
-5. **Developer Experience**: Great DX with IntelliSense
-
-## API Integration Strategy
-
-### REST API Client
-- Base client with interceptors for:
-  - JWT token injection
-  - Error handling
-  - Loading state management
-  - Request/response transformation
-- Type-safe API calls with TypeScript
-- Automatic token refresh
-- Request cancellation for component unmount
-
-### WebSocket Integration
-- Auto-reconnecting WebSocket client
-- Event-based message handling
-- Connection state management
-- Heartbeat/ping-pong for keep-alive
-- Message queue for offline messages
-- Integration with Lit components via events
-
-### State Management
-- Lit Context API for global state (auth, theme)
-- Component local state for UI state
-- LocalStorage for persistence
-- No heavy state management library needed
-
-## Styling Strategy
-
-### Approach
-1. **Tailwind CSS**: Primary styling method
-2. **CSS Modules**: Component-scoped styles when needed
-3. **CSS Custom Properties**: Theme variables
-4. **Shadow DOM**: Encapsulated component styles
-
-### Theme System
-- Light/dark mode support
-- CSS custom properties for theming
-- Tailwind theme configuration
-- Smooth theme transitions
-
-### Responsive Design
-- Mobile-first approach
-- Tailwind breakpoints (sm, md, lg, xl, 2xl)
-- Fluid typography
-- Responsive images
-
-## PWA Features
-
-### Manifest
-- App name, description, icons
-- Start URL and scope
-- Display mode (standalone)
-- Theme and background colors
-- Orientation preferences
-
-### Service Worker (Workbox)
-- **Caching Strategy**:
-  - App shell: Cache-first
-  - API calls: Network-first with fallback
-  - Images: Cache-first with expiration
-  - Static assets: Precache
-- **Offline Support**:
-  - Offline page for navigation
-  - Cached API responses
-  - Queue failed requests
-- **Background Sync**:
-  - Retry failed requests when online
-  - Update articles in background
-
-### Install Experience
-- Install prompt component
-- Dismiss and remember choice
-- iOS Safari install instructions
-
-## Performance Targets
-
-### Metrics
-- **Lighthouse Score**: > 90 in all categories
-- **First Contentful Paint (FCP)**: < 1.5s
-- **Time to Interactive (TTI)**: < 3.5s
-- **Total Bundle Size**: < 150KB (gzipped)
-- **Code Coverage**: > 70%
-
-### Optimizations
-1. **Code Splitting**: Lazy load routes
-2. **Tree Shaking**: Remove unused code
-3. **Minification**: Terser for JS, cssnano for CSS
-4. **Compression**: Brotli/Gzip
-5. **Image Optimization**: WebP format, lazy loading
-6. **Font Optimization**: Font subsetting, font-display: swap
-7. **Caching**: Service worker + HTTP caching
-8. **Preloading**: Critical resources
-
-## Development Workflow
-
-### Commands
-```bash
-# Install dependencies
-bun install
-
-# Start dev server
-bun run dev
-
-# Build for production
-bun run build
-
-# Preview production build
-bun run preview
-
-# Run tests
-bun run test
-
-# Run linter
-bun run lint
-
-# Format code
-bun run format
-
-# Type check
-bun run type-check
-```
-
-### Git Workflow
-1. Create feature branch from main
-2. Develop with commits per logical change
-3. Run tests and lint before commit
-4. Push to remote branch
-5. Create pull request
-6. Review and merge
-
-## Testing Strategy
-
-### Unit Tests (Vitest)
-- Services (API clients, utilities)
-- Business logic functions
-- Validation functions
-- Helper functions
-- Target: > 80% coverage
-
-### Component Tests (@web/test-runner)
-- Render tests
-- User interaction tests
-- State changes
-- Event handling
-- Accessibility tests
-- Target: Critical components tested
-
-### E2E Tests (Optional - Playwright)
-- User flows (login, create article, comment)
-- Cross-browser testing
-- Mobile testing
-- Target: Happy paths covered
-
-## Migration Risks & Mitigation
-
-### Risks
-1. **WebSocket Compatibility**: Django Channels → Native WebSocket
-   - Mitigation: Test early, create adapter layer
-2. **API Response Format**: Django Rest Framework → FastAPI
-   - Mitigation: Update API client types, add transformation layer
-3. **Authentication**: Session-based → JWT-only
-   - Mitigation: Implement token refresh, handle edge cases
-4. **SEO**: SSR → SPA
-   - Mitigation: Use meta tags, consider prerendering
-5. **Browser Support**: Web Components compatibility
-   - Mitigation: Polyfills for older browsers, graceful degradation
-
-### Backward Compatibility
-- Keep Django frontend running during migration
-- Use feature flags for gradual rollout
-- A/B test new frontend
-- Monitor errors and user feedback
-
-## Environment Variables
-
-```env
-# API Configuration
-VITE_API_BASE_URL=http://localhost:8000/api
-VITE_WS_URL=ws://localhost:8000/ws
-
-# Feature Flags
-VITE_ENABLE_WEBSOCKET=true
-VITE_ENABLE_PWA=true
-VITE_ENABLE_ANALYTICS=false
-
-# Environment
-VITE_ENV=development
-```
-
-## Browser Support
-
-### Target Browsers
-- Chrome/Edge: last 2 versions
-- Firefox: last 2 versions
-- Safari: last 2 versions
-- Mobile Safari: iOS 14+
-- Chrome Android: last 2 versions
-
-### Polyfills (if needed)
-- Web Components polyfills for Safari < 14
-- IntersectionObserver for lazy loading
-- ResizeObserver for responsive components
-
-## Success Criteria
-
-### Functional
-- ✅ All features from Django frontend implemented
-- ✅ User can perform all CRUD operations
-- ✅ Real-time comments working
-- ✅ Authentication and authorization working
-- ✅ Profile management working
-- ✅ Article favorites and tags working
-
-### Non-Functional
-- ✅ Lighthouse score > 90
-- ✅ Bundle size < 150KB gzipped
-- ✅ Page load < 2s on 3G
-- ✅ Works offline (basic functionality)
-- ✅ Installable as PWA
-- ✅ Accessible (WCAG 2.1 AA)
-- ✅ Cross-browser compatible
-- ✅ Mobile responsive
-
-### Developer Experience
-- ✅ Fast dev server (< 1s cold start)
-- ✅ Hot module replacement working
-- ✅ Type-safe codebase
-- ✅ Well-documented code
-- ✅ Easy to onboard new developers
-
-## Timeline Estimate
-
-**Total Duration**: 2-3 days of development
-
-- **Phase 1**: Setup & Infrastructure - 2 hours
-- **Phase 2**: Core Architecture - 2 hours
-- **Phase 3**: Authentication - 3 hours
-- **Phase 4**: Article Components - 4 hours
-- **Phase 5**: Article Editor - 2 hours
-- **Phase 6**: Profile Module - 2 hours
-- **Phase 7**: Comments Module - 2 hours
-- **Phase 8**: Shared Components - 2 hours
-- **Phase 9**: PWA Features - 2 hours
-- **Phase 10**: Testing & Optimization - 3 hours
-- **Phase 11**: Deployment & Documentation - 2 hours
-
-## Next Steps
-
-1. **Review and Approve Plan**: Stakeholder sign-off
-2. **Set Up Project**: Initialize Lit PWA with Vite and Bun
-3. **Phase 1-2**: Build foundation (routing, API client, auth)
-4. **Phase 3-7**: Implement features module by module
-5. **Phase 8-9**: Polish and add PWA features
-6. **Phase 10-11**: Test, optimize, document, deploy
-
-## Appendix
-
-### Key Dependencies
-
-```json
-{
-  "dependencies": {
-    "lit": "^3.1.0",
-    "@vaadin/router": "^1.7.5",
-    "@lit/context": "^1.1.0",
-    "@lit/task": "^1.0.0"
-  },
-  "devDependencies": {
-    "vite": "^5.0.0",
-    "typescript": "^5.3.0",
-    "tailwindcss": "^3.4.0",
-    "@types/node": "^20.10.0",
-    "vite-plugin-pwa": "^0.17.0",
-    "workbox-window": "^7.0.0",
-    "vitest": "^1.0.0",
-    "@web/test-runner": "^0.18.0",
-    "eslint": "^8.55.0",
-    "prettier": "^3.1.0"
-  }
-}
-```
-
-### Useful Resources
-- **Lit Documentation**: https://lit.dev/
-- **Vite Guide**: https://vitejs.dev/guide/
-- **Bun Documentation**: https://bun.sh/docs
-- **Vaadin Router**: https://github.com/vaadin/router
-- **Workbox**: https://developer.chrome.com/docs/workbox/
-- **Web Components**: https://developer.mozilla.org/en-US/docs/Web/Web_Components
+# Technical Debt & Implementation Plan
+
+**Document Version**: 2.0
+**Last Updated**: 2025-01-12
+**Status**: Comprehensive Technical Review Complete
 
 ---
 
-**Document Version**: 1.0
-**Last Updated**: 2025-01-12
-**Author**: Claude AI Assistant
-**Status**: Ready for Implementation
+## Executive Summary
+
+This document provides a complete technical debt review of the RealWorld Conduit migration project (both FastAPI backend and Lit PWA frontend), identifies critical issues, and provides a detailed remediation plan.
+
+### Current State
+- **Backend**: 5 phases complete, 82 tests passing, but **significant technical debt**
+- **Frontend**: Only phases 1-2 complete (setup), **requires full implementation**
+
+### Priority Summary
+- **🔴 Critical (Fix Immediately)**: 6 backend issues + complete frontend
+- **🟡 High Priority (Fix Soon)**: 12 issues
+- **🟢 Medium Priority (Technical Debt)**: 20+ issues
+
+### Estimated Timeline
+- **Backend Fixes**: 3 weeks
+- **Frontend Implementation**: 7 weeks
+- **Total**: 10-12 weeks for production-ready application
+
+---
+
+## Table of Contents
+
+1. [Backend Technical Debt](#backend-technical-debt)
+2. [Frontend Technical Debt](#frontend-technical-debt)
+3. [Infrastructure Issues](#infrastructure-issues)
+4. [Security Concerns](#security-concerns)
+5. [Remediation Plan](#remediation-plan)
+6. [Implementation Checklist](#implementation-checklist)
+
+---
+
+## Backend Technical Debt
+
+### 🔴 CRITICAL ISSUES (Fix Immediately)
+
+#### 1. Missing Authentication Dependencies File ⚠️
+**Severity**: Critical - Application won't start
+**Files Affected**:
+- `src/modules/articles/presentation/routes.py:31`
+- `src/modules/comments/presentation/routes.py:13`
+
+**Problem**:
+```python
+from src.modules.auth.presentation.dependencies import get_current_user, get_optional_user
+# ❌ This file doesn't exist!
+```
+
+**Impact**: Import errors prevent application startup
+
+**Fix Required**:
+Create `src/modules/auth/presentation/dependencies.py`:
+```python
+from fastapi import Depends, HTTPException, status
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from src.core.infrastructure.database import get_db_session
+from src.modules.auth.domain.entities import User
+from src.modules.auth.infrastructure.jwt import JWTService
+from src.modules.auth.infrastructure.repositories import UserRepository
+
+security = HTTPBearer()
+jwt_service = JWTService()
+
+async def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    session: AsyncSession = Depends(get_db_session),
+) -> dict:
+    """Extract and verify JWT token, return user dict."""
+    try:
+        payload = jwt_service.decode_token(credentials.credentials)
+        user_repo = UserRepository(session)
+        user = await user_repo.get_by_email(payload.get("sub"))
+
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="User not found"
+            )
+
+        return {
+            "id": user.id,
+            "email": user.email,
+            "name": user.name,
+        }
+    except Exception:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid authentication credentials"
+        )
+
+async def get_optional_user(
+    credentials: HTTPAuthorizationCredentials | None = Depends(HTTPBearer(auto_error=False)),
+    session: AsyncSession = Depends(get_db_session),
+) -> dict | None:
+    """Return user if authenticated, None otherwise."""
+    if not credentials:
+        return None
+    try:
+        return await get_current_user(credentials, session)
+    except HTTPException:
+        return None
+```
+
+---
+
+#### 2. Broken Article List Endpoint ⚠️
+**Severity**: Critical - Core feature broken
+**File**: `src/modules/articles/presentation/routes.py:363-364`
+
+**Problem**:
+```python
+else:
+    # Get all articles (we'll need to add this method)
+    article_entities = []  # ❌ Returns empty array!
+```
+
+**Impact**: Users can't browse all articles
+
+**Fix Required**:
+1. Add method to `ArticleRepository`:
+```python
+async def list_all(
+    self, limit: int = 20, offset: int = 0
+) -> list[Article]:
+    """List all articles."""
+    stmt = (
+        select(ArticleModel)
+        .options(
+            selectinload(ArticleModel.tags),
+            selectinload(ArticleModel.favorited_by)
+        )
+        .order_by(ArticleModel.created_at.desc())
+        .limit(limit)
+        .offset(offset)
+    )
+    result = await self._session.execute(stmt)
+    models = result.scalars().all()
+    return [self._model_to_entity(model) for model in models]
+```
+
+2. Call it in route:
+```python
+else:
+    article_entities = await article_repo.list_all(limit, offset)
+```
+
+---
+
+#### 3. N+1 Query Performance Issues 🐌
+**Severity**: Critical - Severe performance degradation
+**Files**:
+- `src/modules/articles/presentation/routes.py:369-405, 439-469`
+- `src/modules/profiles/infrastructure/repositories.py:114-118`
+
+**Problem**:
+```python
+for article_entity in article_entities:
+    author_user = await user_repo.get(article_entity.author_id)  # ❌ N+1!
+    ...
+    profile = await profile_repo.get_by_user_id(author_user.id)  # ❌ N+1!
+```
+
+**Impact**:
+- 100 articles = 200 extra database queries
+- Severe performance degradation
+- API timeouts under load
+
+**Fix Required**:
+Implement eager loading in `ArticleRepository`:
+```python
+async def list_with_authors_and_profiles(
+    self,
+    filters: ArticleFilters
+) -> list[tuple[Article, User, Profile | None]]:
+    """List articles with authors and profiles in single query."""
+    stmt = (
+        select(ArticleModel, UserModel, ProfileModel)
+        .join(UserModel, ArticleModel.author_id == UserModel.id)
+        .outerjoin(ProfileModel, ProfileModel.user_id == UserModel.id)
+        .options(
+            selectinload(ArticleModel.tags),
+            selectinload(ArticleModel.favorited_by)
+        )
+    )
+
+    # Apply filters...
+    if filters.tag:
+        stmt = stmt.join(ArticleModel.tags).where(TagModel.name == filters.tag.lower())
+    if filters.author_id:
+        stmt = stmt.where(ArticleModel.author_id == filters.author_id)
+
+    stmt = stmt.order_by(ArticleModel.created_at.desc())
+    stmt = stmt.limit(filters.limit).offset(filters.offset)
+
+    result = await self._session.execute(stmt)
+    return result.all()
+```
+
+---
+
+#### 4. Insecure Default Secret Key 🔐
+**Severity**: Critical - Security vulnerability
+**File**: `src/config.py:36`
+
+**Problem**:
+```python
+secret_key: str = Field(default="your-secret-key-change-this-in-production...")
+# ❌ Weak default, could be left in production
+```
+
+**Impact**: JWT tokens can be forged if default key used
+
+**Fix Required**:
+```python
+from pydantic import field_validator
+
+class Settings(BaseSettings):
+    secret_key: str = Field(
+        ...,  # No default - required
+        min_length=32,
+        description="Secret key for JWT signing (min 32 chars)"
+    )
+
+    @field_validator('secret_key')
+    @classmethod
+    def validate_secret_key(cls, v: str) -> str:
+        if v == "your-secret-key-change-this-in-production":
+            raise ValueError("Must change default secret key")
+        if len(v) < 32:
+            raise ValueError("Secret key must be at least 32 characters")
+        return v
+```
+
+---
+
+#### 5. Docker Healthcheck Fails 🐳
+**Severity**: Critical - Containers unhealthy
+**File**: `Dockerfile:57`
+
+**Problem**:
+```dockerfile
+CMD curl -f http://localhost:8000/health || exit 1
+# ❌ curl not installed
+```
+
+**Impact**: Docker reports container as unhealthy
+
+**Fix Required**:
+```dockerfile
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health').read()" || exit 1
+```
+
+---
+
+#### 6. Wrong Parameter Types 💥
+**Severity**: Critical - Runtime errors
+**Files**: `src/modules/articles/presentation/routes.py:145, 262, 300`
+
+**Problem**:
+```python
+profile = await profile_repo.get_by_user_id(article_dto.author.name)
+# ❌ expects int, gets str
+```
+
+**Impact**: TypeError crashes requests
+
+**Fix Required**:
+```python
+# Need to track author_id properly in DTO
+profile = await profile_repo.get_by_user_id(author.id)  # Use author.id, not author.name
+```
+
+Also need to add `author_id` field to `ArticleDTO`.
+
+---
+
+### 🟡 HIGH PRIORITY ISSUES (Fix Soon)
+
+#### 7. No Test Coverage for FastAPI Backend
+**Impact**: Can't safely refactor, bugs slip through
+
+**Missing**:
+- ❌ No integration tests for API endpoints
+- ❌ No repository tests with real database
+- ❌ No E2E API tests
+- ❌ No authentication flow tests
+- ❌ No authorization tests
+
+**Fix Required**: Create comprehensive test suite
+```
+tests/
+├── integration/
+│   ├── conftest.py          # Shared fixtures
+│   ├── test_api_auth.py     # /api/users/* endpoints
+│   ├── test_api_articles.py # /api/articles/* endpoints
+│   ├── test_api_profiles.py # /api/profiles/* endpoints
+│   └── test_api_comments.py # /api/comments/* endpoints
+├── unit/ (existing)
+└── e2e/
+    └── test_user_flows.py   # Complete workflows
+```
+
+**Example Test**:
+```python
+# tests/integration/conftest.py
+import pytest
+from httpx import AsyncClient
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.orm import sessionmaker
+
+@pytest.fixture
+async def test_db():
+    """Create test database."""
+    engine = create_async_engine("postgresql+asyncpg://test:test@localhost/test_conduit")
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+    yield engine
+
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.drop_all)
+    await engine.dispose()
+
+@pytest.fixture
+async def client(test_db):
+    """Create test client."""
+    async with AsyncClient(app=app, base_url="http://test") as ac:
+        yield ac
+
+@pytest.fixture
+async def auth_token(client):
+    """Create user and return auth token."""
+    response = await client.post("/api/users", json={
+        "user": {
+            "email": "test@example.com",
+            "username": "testuser",
+            "password": "password123"
+        }
+    })
+    return response.json()["user"]["token"]
+
+# tests/integration/test_api_articles.py
+@pytest.mark.asyncio
+async def test_create_article(client, auth_token):
+    """Test creating an article."""
+    response = await client.post(
+        "/api/articles",
+        json={
+            "article": {
+                "title": "Test Article",
+                "description": "Test Description",
+                "body": "Test Body",
+                "tagList": ["test"]
+            }
+        },
+        headers={"Authorization": f"Bearer {auth_token}"}
+    )
+
+    assert response.status_code == 201
+    data = response.json()
+    assert data["article"]["title"] == "Test Article"
+    assert "test" in data["article"]["tagList"]
+```
+
+---
+
+#### 8. Missing Update User Endpoint
+**Impact**: Users can't update their profile
+
+**Problem**: Schema exists but no route handler
+
+**Fix Required**:
+```python
+# src/modules/auth/presentation/routes.py
+@router.put("/user", response_model=UserResponseWrapper)
+async def update_current_user(
+    request: UpdateUserRequest,
+    current_user: dict = Depends(get_current_user),
+    session: AsyncSession = Depends(get_db_session),
+):
+    """Update current user profile."""
+    user_repo = UserRepository(session)
+
+    # Get current user entity
+    user = await user_repo.get(current_user["id"])
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    # Update fields
+    if request.user.email:
+        user._email = Email(request.user.email)
+    if request.user.username:
+        user._name = request.user.username
+    if request.user.password:
+        user.update_password(Password.from_raw(request.user.password))
+    if request.user.bio is not None:
+        user._bio = request.user.bio
+    if request.user.image is not None:
+        user._image = request.user.image
+
+    # Save
+    updated_user = await user_repo.update(user)
+
+    # Generate new token
+    jwt_service = JWTService()
+    token = jwt_service.create_token({"sub": updated_user.email.value})
+
+    return UserResponseWrapper(
+        user=UserResponse(
+            email=updated_user.email.value,
+            token=token,
+            username=updated_user.name,
+            bio=updated_user.bio,
+            image=updated_user.image,
+        )
+    )
+```
+
+---
+
+#### 9. No Authorization Checks
+**Impact**: Security vulnerability - users can modify others' data
+
+**Problem**: Missing ownership verification
+
+**Fix Required**: Add authorization checks to all protected operations
+```python
+# src/core/application/authorization.py
+from src.core.domain.exceptions import AuthorizationException
+
+class AuthorizationService:
+    """Service for authorization checks."""
+
+    @staticmethod
+    def require_ownership(
+        resource_owner_id: int,
+        current_user_id: int,
+        resource_type: str = "resource"
+    ) -> None:
+        """Verify user owns the resource."""
+        if resource_owner_id != current_user_id:
+            raise AuthorizationException(
+                f"Not authorized to modify this {resource_type}"
+            )
+
+# Usage in use case:
+class UpdateArticle(IUseCase[UpdateArticleRequest, ArticleDTO]):
+    def __init__(
+        self,
+        article_repository: IArticleRepository,
+        auth_service: AuthorizationService,
+    ):
+        self._article_repository = article_repository
+        self._auth_service = auth_service
+
+    async def execute(
+        self,
+        slug: str,
+        current_user_id: int,
+        request: UpdateArticleRequest,
+    ) -> ArticleDTO:
+        article = await self._article_repository.get_by_slug(slug)
+        if not article:
+            raise EntityNotFoundException("Article", slug)
+
+        # ✅ Authorization check
+        self._auth_service.require_ownership(
+            article.author_id,
+            current_user_id,
+            "article"
+        )
+
+        # Update article...
+```
+
+---
+
+#### 10. Inefficient Count Queries
+**Impact**: Performance - loads all records into memory
+
+**Files**:
+- `src/modules/auth/infrastructure/repositories.py:136-138`
+- `src/modules/profiles/infrastructure/repositories.py:127-129`
+
+**Problem**:
+```python
+stmt = select(UserModel)
+result = await self._session.execute(stmt)
+return len(result.scalars().all())  # ❌ Loads everything!
+```
+
+**Fix Required**:
+```python
+from sqlalchemy import func
+
+stmt = select(func.count()).select_from(UserModel)
+result = await self._session.execute(stmt)
+return result.scalar_one()
+```
+
+---
+
+#### 11. Missing Database Indexes
+**Impact**: Slow queries as data grows
+
+**Missing Indexes**:
+- `articles.author_id` (FK queries)
+- `articles.created_at` (ordering)
+- `comments.article_id` (FK queries)
+- `comments.author_id` (FK queries)
+- Compound index on `follows(follower_id, followee_id)`
+- Compound index on `article_tags(article_id, tag_name)`
+
+**Fix Required**: Create migration `002_add_indexes.py`
+```python
+"""Add performance indexes
+
+Revision ID: 002_add_indexes
+Revises: 001_initial
+"""
+
+def upgrade() -> None:
+    # Article indexes
+    op.create_index('ix_articles_author_id', 'articles', ['author_id'])
+    op.create_index('ix_articles_created_at', 'articles', ['created_at'])
+
+    # Comment indexes
+    op.create_index('ix_comments_article_id', 'comments', ['article_id'])
+    op.create_index('ix_comments_author_id', 'comments', ['author_id'])
+
+    # Association table compound indexes
+    op.create_index(
+        'ix_follows_compound',
+        'follows',
+        ['follower_id', 'followee_id']
+    )
+    op.create_index(
+        'ix_article_tags_compound',
+        'article_tags',
+        ['article_id', 'tag_name']
+    )
+
+def downgrade() -> None:
+    op.drop_index('ix_articles_author_id', table_name='articles')
+    op.drop_index('ix_articles_created_at', table_name='articles')
+    op.drop_index('ix_comments_article_id', table_name='comments')
+    op.drop_index('ix_comments_author_id', table_name='comments')
+    op.drop_index('ix_follows_compound', table_name='follows')
+    op.drop_index('ix_article_tags_compound', table_name='article_tags')
+```
+
+---
+
+#### 12. Broad Exception Handling
+**Impact**: Hides bugs, makes debugging difficult
+
+**Problem**: Catches all exceptions
+```python
+except Exception as e:
+    raise HTTPException(status_code=400, detail=str(e))  # ❌ Too broad
+```
+
+**Fix Required**: Specific exception handlers
+```python
+from src.core.domain.exceptions import (
+    EntityNotFoundException,
+    ValidationException,
+    AuthorizationException,
+)
+import logging
+
+logger = logging.getLogger(__name__)
+
+try:
+    # Operation...
+except EntityNotFoundException as e:
+    raise HTTPException(status_code=404, detail=str(e))
+except ValidationException as e:
+    raise HTTPException(status_code=422, detail=str(e))
+except AuthorizationException as e:
+    raise HTTPException(status_code=403, detail=str(e))
+except IntegrityError as e:
+    logger.error(f"Database integrity error: {e}")
+    raise HTTPException(status_code=409, detail="Resource conflict")
+except Exception as e:
+    logger.exception(f"Unexpected error: {e}")
+    raise HTTPException(status_code=500, detail="Internal server error")
+```
+
+---
+
+### 🟢 MEDIUM PRIORITY (Technical Debt)
+
+#### 13. Code Duplication - Repository Instantiation
+**Impact**: Maintenance burden
+
+**Problem**: Repeated in every route handler
+```python
+article_repo = ArticleRepository(session)
+user_repo = UserRepository(session)
+profile_repo = ProfileRepository(session)
+```
+
+**Fix**: Use FastAPI dependencies
+```python
+# src/core/presentation/dependencies.py
+def get_article_repository(
+    session: AsyncSession = Depends(get_db_session)
+) -> ArticleRepository:
+    return ArticleRepository(session)
+
+# In route:
+@router.get("/articles")
+async def list_articles(
+    article_repo: ArticleRepository = Depends(get_article_repository),
+):
+    ...
+```
+
+---
+
+#### 14. No Caching Utilized
+**Impact**: Missing performance optimization
+
+**Problem**: CacheManager initialized but never used
+
+**Fix**: Implement caching layer
+```python
+# src/services/cache_service.py
+from typing import Any
+import json
+from src.core.infrastructure.cache import cache_manager
+
+class CacheService:
+    """Service for caching frequently accessed data."""
+
+    @staticmethod
+    async def get_or_set(
+        key: str,
+        fetch_func: callable,
+        ttl: int = 300
+    ) -> Any:
+        """Get from cache or fetch and cache."""
+        cached = await cache_manager.get(key)
+        if cached:
+            return json.loads(cached)
+
+        data = await fetch_func()
+        await cache_manager.set(key, json.dumps(data), ttl)
+        return data
+
+# Usage:
+async def get_popular_articles() -> list[Article]:
+    return await cache_service.get_or_set(
+        "popular_articles",
+        lambda: article_repo.get_popular(limit=10),
+        ttl=600  # 10 minutes
+    )
+```
+
+---
+
+#### 15-25. Additional Technical Debt Items
+
+See full details in [Backend Technical Debt Backlog](#backend-technical-debt-backlog) section.
+
+---
+
+## Frontend Technical Debt
+
+### 🔴 CRITICAL - Complete Frontend Implementation Required
+
+#### Current State: Only 18% Complete
+- ✅ Phase 1: Project Setup
+- ✅ Phase 2: Core Architecture
+- ❌ Phase 3-11: **All features missing**
+
+### Missing Implementation (Phases 3-11)
+
+#### Phase 3: Authentication Module ❌
+**Missing Components**:
+```
+src/components/auth/
+  ├── login-form.ts          # Login form with validation
+  ├── register-form.ts       # Registration form
+  └── user-settings-form.ts  # Settings form
+```
+
+**Required Implementation**:
+- Login form with email/password validation
+- Registration form with username/email/password
+- Settings form for profile updates
+- Form error handling and display
+- Loading states
+- Success/error messages
+
+---
+
+#### Phase 4: Article Components ❌
+**Missing Components**:
+```
+src/components/articles/
+  ├── article-list.ts        # List of article previews
+  ├── article-preview.ts     # Individual preview card
+  ├── article-detail.ts      # Full article view
+  ├── article-meta.ts        # Author/date/actions
+  └── tag-list.ts            # Tag display/filtering
+```
+
+**Required API Clients**:
+```typescript
+// src/services/api/articles.ts
+export const articlesApi = {
+  async list(filters?: ArticleFilters): Promise<MultipleArticlesResponse> { },
+  async get(slug: string): Promise<ArticleResponse> { },
+  async create(article: NewArticle): Promise<ArticleResponse> { },
+  async update(slug: string, article: UpdateArticle): Promise<ArticleResponse> { },
+  async delete(slug: string): Promise<void> { },
+  async favorite(slug: string): Promise<ArticleResponse> { },
+  async unfavorite(slug: string): Promise<ArticleResponse> { },
+  async getFeed(limit?: number, offset?: number): Promise<MultipleArticlesResponse> { },
+};
+
+// src/services/api/tags.ts
+export const tagsApi = {
+  async list(): Promise<TagsResponse> { },
+};
+```
+
+---
+
+#### Phase 5: Article Editor ❌
+**Missing**:
+```
+src/components/articles/
+  └── article-editor.ts      # Rich text editor
+```
+
+**Features Needed**:
+- Title input
+- Description textarea
+- Body textarea (markdown support optional)
+- Tag input with add/remove
+- Form validation
+- Save/publish button
+- Draft autosave (optional)
+
+---
+
+#### Phase 6: Profile Module ❌
+**Missing Components**:
+```
+src/components/profiles/
+  ├── profile-page.ts        # User profile display
+  ├── profile-articles.ts    # User's articles tab
+  ├── profile-favorited.ts   # Favorited articles tab
+  └── follow-button.ts       # Follow/unfollow button
+```
+
+**Missing API Client**:
+```typescript
+// src/services/api/profiles.ts
+export const profilesApi = {
+  async get(username: string): Promise<ProfileResponse> { },
+  async follow(username: string): Promise<ProfileResponse> { },
+  async unfollow(username: string): Promise<ProfileResponse> { },
+};
+```
+
+---
+
+#### Phase 7: Comments Module ❌
+**Missing Components**:
+```
+src/components/comments/
+  ├── comment-list.ts        # List of comments
+  ├── comment-item.ts        # Individual comment
+  └── comment-form.ts        # Add comment form
+```
+
+**Missing API Client**:
+```typescript
+// src/services/api/comments.ts
+export const commentsApi = {
+  async list(slug: string): Promise<MultipleCommentsResponse> { },
+  async create(slug: string, comment: NewComment): Promise<CommentResponse> { },
+  async delete(slug: string, id: number): Promise<void> { },
+};
+```
+
+**Missing WebSocket**:
+```typescript
+// src/services/websocket.ts
+export class WebSocketService {
+  private ws: WebSocket | null = null;
+
+  connect(articleSlug: string): void { }
+  disconnect(): void { }
+  onCommentAdded(callback: (comment: Comment) => void): void { }
+  onCommentDeleted(callback: (commentId: number) => void): void { }
+}
+```
+
+---
+
+#### Phase 8: Shared Components ❌
+**Missing Components**:
+```
+src/components/common/
+  ├── app-header.ts          # Navigation header
+  ├── app-footer.ts          # Footer
+  ├── loading-spinner.ts     # Loading indicator
+  ├── error-message.ts       # Error display
+  ├── toast.ts               # Toast notifications
+  ├── modal.ts               # Modal dialog
+  ├── pagination.ts          # Pagination controls
+  └── empty-state.ts         # Empty state display
+```
+
+---
+
+#### Phase 9: PWA Features ❌
+**Missing Files**:
+```
+public/
+  ├── manifest.json          # App manifest (incomplete)
+  ├── icons/                 # PWA icons (missing)
+  │   ├── icon-72x72.png
+  │   ├── icon-96x96.png
+  │   ├── icon-128x128.png
+  │   ├── icon-144x144.png
+  │   ├── icon-152x152.png
+  │   ├── icon-192x192.png
+  │   ├── icon-384x384.png
+  │   └── icon-512x512.png
+  └── offline.html           # Offline fallback page
+```
+
+**Service Worker**: Configured in Vite but not tested
+
+---
+
+#### Phase 10: Testing ❌
+**Missing Test Files**:
+```
+tests/
+  ├── unit/
+  │   ├── services/
+  │   │   ├── api-client.test.ts
+  │   │   └── auth-service.test.ts
+  │   └── utils/
+  │       └── validators.test.ts
+  └── component/
+      ├── auth/
+      │   ├── login-form.test.ts
+      │   └── register-form.test.ts
+      └── articles/
+          ├── article-list.test.ts
+          └── article-preview.test.ts
+```
+
+**Missing Test Infrastructure**:
+- No vitest.config.ts
+- No test setup files
+- No component test utilities
+- No mock data factories
+
+---
+
+#### Phase 11: Optimization ❌
+**Missing**:
+- Bundle size analysis
+- Code splitting implementation
+- Lazy loading for routes
+- Image optimization
+- Performance monitoring
+- Lighthouse audits
+
+---
+
+## Infrastructure Issues
+
+### 🔴 CRITICAL
+
+#### No Frontend Docker Configuration
+**Missing Files**:
+- `frontend/Dockerfile`
+- Frontend service in `docker-compose.yml`
+
+**Required**:
+```dockerfile
+# frontend/Dockerfile
+FROM oven/bun:1 AS builder
+WORKDIR /app
+COPY package.json bun.lockb* ./
+RUN bun install --frozen-lockfile
+COPY . .
+RUN bun run build
+
+FROM nginx:alpine
+COPY --from=builder /app/dist /usr/share/nginx/html
+COPY nginx.conf /etc/nginx/nginx.conf
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+```yaml
+# docker-compose.yml - add service
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    environment:
+      - VITE_API_BASE_URL=http://app:8000/api
+    depends_on:
+      - app
+```
+
+---
+
+### 🟡 HIGH PRIORITY
+
+#### No CI/CD Pipeline
+**Missing**: Automated testing and deployment
+
+**Required**: Create `.github/workflows/ci.yml`
+```yaml
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  backend-tests:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: test
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.13'
+      - name: Install dependencies
+        run: |
+          pip install uv
+          uv sync
+      - name: Run tests
+        run: uv run pytest tests/ -v
+      - name: Upload coverage
+        uses: codecov/codecov-action@v3
+
+  frontend-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: oven-sh/setup-bun@v1
+      - name: Install dependencies
+        run: cd frontend && bun install
+      - name: Run tests
+        run: cd frontend && bun test
+      - name: Build
+        run: cd frontend && bun run build
+```
+
+---
+
+## Security Concerns
+
+### 🔴 CRITICAL
+
+#### CORS Configuration Too Permissive
+**File**: `src/config.py:50-53`
+
+**Problem**:
+```python
+cors_allow_credentials: bool = True
+cors_allow_methods: list[str] = ["*"]  # ❌ Too permissive
+cors_allow_headers: list[str] = ["*"]  # ❌ Too permissive
+```
+
+**Fix**:
+```python
+cors_allow_credentials: bool = True
+cors_allow_methods: list[str] = ["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+cors_allow_headers: list[str] = ["Content-Type", "Authorization", "Accept"]
+cors_origins: list[str] = Field(
+    default=["http://localhost:3000"],
+    env="CORS_ORIGINS"
+)
+```
+
+---
+
+#### No HTTPS Enforcement
+**Missing**: SSL/TLS configuration
+
+**Fix**: Add to nginx/load balancer:
+```nginx
+# Force HTTPS redirect
+server {
+    listen 80;
+    server_name conduit.example.com;
+    return 301 https://$server_name$request_uri;
+}
+
+server {
+    listen 443 ssl http2;
+    server_name conduit.example.com;
+
+    ssl_certificate /etc/ssl/certs/conduit.crt;
+    ssl_certificate_key /etc/ssl/private/conduit.key;
+
+    # Security headers
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+    add_header X-Frame-Options "SAMEORIGIN" always;
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Content-Security-Policy "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline';" always;
+
+    # Proxy to backend
+    location /api {
+        proxy_pass http://app:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Serve frontend
+    location / {
+        root /usr/share/nginx/html;
+        try_files $uri $uri/ /index.html;
+    }
+}
+```
+
+---
+
+#### No Rate Limiting
+**Missing**: Protection against abuse
+
+**Fix**: Add rate limiting middleware
+```python
+# src/main.py
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
+
+limiter = Limiter(key_func=get_remote_address, default_limits=["100/minute"])
+
+app = FastAPI()
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+# In routes:
+@router.post("/users/login")
+@limiter.limit("5/minute")
+async def login(...):
+    pass
+```
+
+---
+
+## Remediation Plan
+
+### Timeline: 10 Weeks to Production
+
+### Week 1-2: Critical Backend Fixes
+**Goal**: Stable, functional backend
+
+**Tasks**:
+- [ ] Create auth dependencies file
+- [ ] Fix broken article list endpoint
+- [ ] Fix N+1 queries with eager loading
+- [ ] Update Docker healthcheck
+- [ ] Enforce secure secret key
+- [ ] Add database indexes migration
+- [ ] Fix profile lookup type errors
+- [ ] Set up integration test infrastructure
+- [ ] Write tests for critical paths
+
+**Deliverable**: Backend fully functional, tested
+
+---
+
+### Week 3: Backend Quality & Security
+**Goal**: Production-ready backend
+
+**Tasks**:
+- [ ] Implement authorization checks
+- [ ] Add rate limiting
+- [ ] Restrict CORS configuration
+- [ ] Implement caching for common queries
+- [ ] Add comprehensive logging
+- [ ] Create update user endpoint
+- [ ] Write remaining tests
+- [ ] Fix exception handling
+
+**Deliverable**: Secure, performant backend with 80%+ test coverage
+
+---
+
+### Week 4-5: Frontend Authentication & Articles
+**Goal**: Core frontend functionality
+
+**Tasks**:
+- [ ] Implement login form component
+- [ ] Implement register form component
+- [ ] Implement settings form component
+- [ ] Create article list component
+- [ ] Create article preview component
+- [ ] Create article detail component
+- [ ] Create article meta component
+- [ ] Implement articles API client
+- [ ] Add tag filtering
+- [ ] Implement favorite/unfavorite
+
+**Deliverable**: Users can auth, browse, and favorite articles
+
+---
+
+### Week 6: Article Editor & Profiles
+**Goal**: Content creation and social features
+
+**Tasks**:
+- [ ] Implement article editor component
+- [ ] Add markdown support (optional)
+- [ ] Create profile page component
+- [ ] Create profile articles tab
+- [ ] Create follow button component
+- [ ] Implement profiles API client
+- [ ] Add article creation
+- [ ] Add article editing
+- [ ] Add profile viewing
+- [ ] Implement follow/unfollow
+
+**Deliverable**: Users can create, edit articles and follow others
+
+---
+
+### Week 7: Comments & Shared Components
+**Goal**: Complete feature set
+
+**Tasks**:
+- [ ] Implement comment list component
+- [ ] Implement comment form component
+- [ ] Implement comment item component
+- [ ] Create comments API client
+- [ ] Implement WebSocket service
+- [ ] Create app header component
+- [ ] Create app footer component
+- [ ] Create loading spinner
+- [ ] Create error message component
+- [ ] Create toast notifications
+
+**Deliverable**: Full-featured social blogging platform
+
+---
+
+### Week 8: PWA & Polish
+**Goal**: Progressive Web App features
+
+**Tasks**:
+- [ ] Configure service worker properly
+- [ ] Create offline page
+- [ ] Generate all PWA icons
+- [ ] Test install prompt
+- [ ] Test offline functionality
+- [ ] Add empty states
+- [ ] Polish UI/UX
+- [ ] Add loading skeletons
+- [ ] Implement dark mode
+- [ ] Add accessibility features
+
+**Deliverable**: Installable PWA with offline support
+
+---
+
+### Week 9: Testing & Optimization
+**Goal**: Quality and performance
+
+**Tasks**:
+- [ ] Write unit tests for services
+- [ ] Write component tests
+- [ ] Write E2E tests
+- [ ] Run Lighthouse audits
+- [ ] Optimize bundle size
+- [ ] Implement code splitting
+- [ ] Add lazy loading
+- [ ] Optimize images
+- [ ] Fix performance issues
+- [ ] Achieve Lighthouse > 90
+
+**Deliverable**: High-quality, performant application
+
+---
+
+### Week 10: Deployment & Documentation
+**Goal**: Production deployment
+
+**Tasks**:
+- [ ] Create frontend Dockerfile
+- [ ] Update docker-compose
+- [ ] Set up CI/CD pipeline
+- [ ] Configure production environment
+- [ ] Set up monitoring (Prometheus/Grafana)
+- [ ] Set up error tracking (Sentry)
+- [ ] Implement backup strategy
+- [ ] Update all documentation
+- [ ] Create deployment guide
+- [ ] Deploy to production
+
+**Deliverable**: Deployed, monitored production application
+
+---
+
+## Implementation Checklist
+
+### Backend Critical Fixes
+- [ ] Create `src/modules/auth/presentation/dependencies.py`
+- [ ] Add `list_all()` method to ArticleRepository
+- [ ] Fix N+1 queries with eager loading
+- [ ] Update Dockerfile healthcheck
+- [ ] Add secret key validation
+- [ ] Create indexes migration
+- [ ] Fix profile lookup type errors
+
+### Backend Testing
+- [ ] Create integration test fixtures
+- [ ] Test all API endpoints
+- [ ] Test authentication flows
+- [ ] Test authorization
+- [ ] Test error handling
+- [ ] Achieve 80%+ coverage
+
+### Backend Security
+- [ ] Add authorization checks
+- [ ] Implement rate limiting
+- [ ] Restrict CORS
+- [ ] Add HTTPS enforcement
+- [ ] Implement audit logging
+
+### Frontend Implementation
+- [ ] Phase 3: Auth components (3 components)
+- [ ] Phase 4: Article components (5 components + API)
+- [ ] Phase 5: Editor component
+- [ ] Phase 6: Profile components (4 components + API)
+- [ ] Phase 7: Comments (3 components + API + WebSocket)
+- [ ] Phase 8: Shared components (8 components)
+- [ ] Phase 9: PWA (service worker, icons, offline)
+- [ ] Phase 10: Testing (unit + component + E2E)
+- [ ] Phase 11: Optimization
+
+### Infrastructure
+- [ ] Create frontend Dockerfile
+- [ ] Update docker-compose.yml
+- [ ] Create CI/CD pipeline
+- [ ] Set up monitoring
+- [ ] Configure production environment
+- [ ] Implement backups
+
+### Documentation
+- [ ] Update API documentation
+- [ ] Create deployment guide
+- [ ] Write development guide
+- [ ] Document architecture
+- [ ] Create troubleshooting guide
+
+---
+
+## Success Criteria
+
+### Backend
+- ✅ All critical issues resolved
+- ✅ 80%+ test coverage
+- ✅ All endpoints functional
+- ✅ < 100ms average response time
+- ✅ No N+1 queries
+- ✅ Zero security vulnerabilities
+- ✅ Authorization on all protected routes
+
+### Frontend
+- ✅ All 11 phases complete
+- ✅ Lighthouse score > 90
+- ✅ < 2s first contentful paint
+- ✅ Works offline (basic features)
+- ✅ Installable as PWA
+- ✅ WCAG 2.1 AA compliant
+- ✅ < 150KB gzipped bundle
+
+### Infrastructure
+- ✅ Automated deployments
+- ✅ Monitoring operational
+- ✅ Backups automated
+- ✅ CI/CD pipeline working
+- ✅ Zero downtime deployments
+
+---
+
+## Conclusion
+
+This plan provides a complete roadmap to transform the Conduit application from its current state (backend functional but with debt, frontend incomplete) to a production-ready, high-quality application.
+
+**Total Effort**: 10 weeks
+**Priority**: Backend fixes first, then frontend implementation
+**Risk**: Manageable with phased approach
+
+**Next Immediate Action**: Start with Week 1 backend critical fixes.
+
+---
+
+**Document Version**: 2.0
+**Maintained By**: Development Team
+**Review Frequency**: Weekly
+**Last Review**: 2025-01-12
+
+**See Also**:
+- [Original Frontend Migration Plan](./Frontend-Plan-Original.md)
+- [Backend Migration Guide](../MIGRATION_GUIDE.md)
+- [Frontend README](../frontend/README.md)
