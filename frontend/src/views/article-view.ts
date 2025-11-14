@@ -5,6 +5,7 @@ import type { Article } from '@/types/models';
 import { articlesApi } from '@services/api/articles';
 import { profilesApi } from '@services/api/profiles';
 import '@components/articles/article-detail';
+import '@components/comments/comment-list';
 
 @customElement('article-view')
 export class ArticleView extends LitElement {
@@ -55,15 +56,6 @@ export class ArticleView extends LitElement {
       text-decoration: underline;
     }
 
-    .comments-placeholder {
-      max-width: 1140px;
-      margin: 0 auto 2rem;
-      padding: 2rem 1rem;
-      background: #f9f9f9;
-      border-radius: 0.25rem;
-      text-align: center;
-      color: #999;
-    }
   `;
 
   onBeforeEnter(location: any): void {
@@ -154,9 +146,7 @@ export class ArticleView extends LitElement {
         @article-deleted=${this.handleArticleDeleted}
       ></article-detail>
 
-      <div class="comments-placeholder">
-        <p>Comments section coming soon...</p>
-      </div>
+      <comment-list .slug=${this.article.slug}></comment-list>
     `;
   }
 }
