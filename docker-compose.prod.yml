@@ -1,72 +1,165 @@
-version: "3.8"
+version: '3.8'
+
+# Production Docker Compose Configuration
+# This configuration is optimized for production deployments with FastAPI backend and Lit frontend
+# For development, use docker-compose.yml instead
 
 services:
-  app:
-    image: ghcr.io/bogdan-veliscu/conduit-backend:latest
-    environment:
-      - DJANGO_SETTINGS_MODULE=config.settings.production
-      - DATABASE_URL=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
-      - SECRET_KEY=${DJANGO_SECRET_KEY}
-      - DEBUG=0
-    volumes:
-      - static_volume:/app/static
-      - media_volume:/app/media
-    depends_on:
-      db:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health/"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
-  frontend:
-    image: ghcr.io/bogdan-veliscu/conduit-frontend:latest
-    environment:
-      - NEXT_PUBLIC_API_URL=https://${DOMAIN}/api
-      - NEXTAUTH_URL=https://${DOMAIN}
-      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
-    depends_on:
-      app:
-        condition: service_healthy
-
+  # PostgreSQL Database
   db:
-    image: postgres:15
+    image: postgres:15-alpine
+    container_name: conduit-db-prod
+    restart: unless-stopped
     volumes:
-      - pg_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     environment:
-      - POSTGRES_USER=${POSTGRES_USER}
+      - PGDATA=/var/lib/postgresql/data/pgdata
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_DB=${POSTGRES_DB}
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER}"]
-      interval: 5s
+      interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
+    networks:
+      - conduit-network
+    # Only expose to host if needed for debugging
+    # ports:
+    #   - "5432:5432"
 
-  nginx:
-    image: nginx:1.25-alpine
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: conduit-redis-prod
+    restart: unless-stopped
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    networks:
+      - conduit-network
+    # Only expose to host if needed for debugging
+    # ports:
+    #   - "6379:6379"
+
+  # FastAPI Backend
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        INSTALL_DEV: false
+    container_name: conduit-backend-prod
+    restart: unless-stopped
+    environment:
+      # Application
+      - ENVIRONMENT=production
+      - APP_NAME=Conduit API
+      - DEBUG=false
+
+      # Database
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - DATABASE_ECHO=false
+
+      # Redis
+      - REDIS_URL=redis://redis:6379/0
+
+      # Authentication
+      - SECRET_KEY=${SECRET_KEY}
+      - ALGORITHM=HS256
+      - ACCESS_TOKEN_EXPIRE_MINUTES=10080
+
+      # CORS
+      - CORS_ORIGINS=${CORS_ORIGINS}
+      - CORS_ALLOW_CREDENTIALS=true
+
+      # AWS S3 (optional)
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID:-}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY:-}
+      - AWS_S3_BUCKET_NAME=${AWS_S3_BUCKET_NAME:-}
+      - AWS_S3_REGION=${AWS_S3_REGION:-us-east-1}
+
+      # Cache TTL
+      - CACHE_TTL_ARTICLES=300
+      - CACHE_TTL_PROFILES=600
+      - CACHE_TTL_TAGS=1800
+
+      # Pagination
+      - DEFAULT_PAGE_SIZE=20
+      - MAX_PAGE_SIZE=100
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - conduit-network
+    # Internal port, accessed via nginx
+    expose:
+      - "8000"
+    # For debugging, you can expose the port directly:
+    # ports:
+    #   - "8000:8000"
+
+  # Nginx + Frontend (Lit PWA)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL=${VITE_API_URL:-http://localhost:8000}
+    container_name: conduit-frontend-prod
+    restart: unless-stopped
     ports:
       - "80:80"
       - "443:443"
-    volumes:
-      - ./nginx:/etc/nginx/conf.d
-      - static_volume:/app/static
-      - media_volume:/app/media
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
     depends_on:
-      - app
-      - frontend
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    networks:
+      - conduit-network
+    # Mount SSL certificates if using HTTPS
+    # volumes:
+    #   - ./certs:/etc/nginx/certs:ro
+    #   - ./certbot/conf:/etc/letsencrypt:ro
+    #   - ./certbot/www:/var/www/certbot
 
-  certbot:
-    image: certbot/certbot:latest
-    volumes:
-      - ./certbot/conf:/etc/letsencrypt
-      - ./certbot/www:/var/www/certbot
-    command: certonly --webroot -w /var/www/certbot --keep-until-expiring --agree-tos --email ${CERTBOT_EMAIL} -d ${DOMAIN} --non-interactive
+  # Certbot for SSL certificates (optional)
+  # Uncomment to enable automatic SSL certificate generation
+  # certbot:
+  #   image: certbot/certbot:latest
+  #   container_name: conduit-certbot
+  #   volumes:
+  #     - ./certbot/conf:/etc/letsencrypt
+  #     - ./certbot/www:/var/www/certbot
+  #   entrypoint: "/bin/sh -c 'trap exit TERM; while :; do certbot renew; sleep 12h & wait $${!}; done;'"
+
+networks:
+  conduit-network:
+    driver: bridge
+    name: conduit-prod-network
 
 volumes:
-  pg_data:
-  static_volume:
-  media_volume:
+  postgres_data:
+    name: conduit-postgres-data-prod
+  redis_data:
+    name: conduit-redis-data-prod

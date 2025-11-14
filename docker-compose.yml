@@ -1,3 +1,15 @@
+# ============================================
+# DEVELOPMENT DOCKER COMPOSE CONFIGURATION
+# ============================================
+# This configuration is optimized for local development
+# For production deployment, use docker-compose.prod.yml instead
+#
+# Features:
+# - Hot reloading with volume mounts
+# - Development dependencies installed
+# - Exposed ports for direct access
+# - Interactive terminal support
+
 services:
   app:
     build:
