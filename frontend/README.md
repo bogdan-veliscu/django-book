@@ -143,6 +143,25 @@ The frontend communicates with the FastAPI backend through a type-safe API clien
 - **Service Worker**: Automatic caching and background sync
 - **App Manifest**: Configurable app metadata and icons
 
+### Generating PWA Icons
+
+Before deploying, you need to generate the PWA icons:
+
+```bash
+cd public/icons
+
+# Option 1: Using ImageMagick
+./generate-icons.sh
+
+# Option 2: Using Node.js sharp
+npm install sharp
+./generate-icons.js
+
+# Option 3: Use online tools (see public/icons/README.md)
+```
+
+The icon generation process creates PNG files in all required sizes (72x72 to 512x512) from the source SVG file. See `public/icons/README.md` for detailed instructions.
+
 ## Browser Support
 
 - Chrome/Edge: last 2 versions

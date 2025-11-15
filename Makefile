@@ -3,96 +3,150 @@ ifneq (,$(wildcard ./.env))
 	export
 endif
 
-IMAGE_NAME = $(shell basename "`pwd`")
-IMAGE_TAG = $(shell poetry version -s)
-REGISTRY = $(shell echo $(REGISTRY_HOST))
-IMAGE = $(REGISTRY)/$(IMAGE_NAME):$(IMAGE_TAG)
-
 .PHONY: help
 
 help: ## Show this help message
-	@awk 'BEGIN {FS = ":.*##"; printf "\nUsage:\n  make \033[36m<target>\033[0m\n"} /^[a-zA-Z_-]+:.*?##/ \
-	{ printf "  \033[36m%-15s\033[0m %s\n", $$1, $$2 } /^##@/ \
-	{ printf "\n\033[1m%s\033[0m\n", substr($$0, 5) } ' $(MAKEFILE_LIST)
+	@echo "Conduit - FastAPI + Lit"
+	@echo ""
+	@echo "Development:"
+	@echo "  make dev              Start development environment"
+	@echo "  make dev-down         Stop development environment"
+	@echo "  make dev-logs         View development logs"
+	@echo "  make shell            Access backend shell"
+	@echo ""
+	@echo "Testing:"
+	@echo "  make test             Run all tests"
+	@echo "  make test-unit        Run unit tests only"
+	@echo "  make test-integration Run integration tests"
+	@echo "  make test-cov         Run tests with coverage"
+	@echo ""
+	@echo "Code Quality:"
+	@echo "  make lint             Run linter (ruff)"
+	@echo "  make format           Format code"
+	@echo "  make type-check       Run type checker"
+	@echo ""
+	@echo "Database:"
+	@echo "  make migrate          Apply database migrations"
+	@echo "  make migration MSG=   Create new migration"
+	@echo "  make db-shell         Access database shell"
+	@echo ""
+	@echo "Frontend:"
+	@echo "  make frontend-dev     Start frontend dev server"
+	@echo "  make frontend-build   Build frontend"
+	@echo "  make frontend-lint    Lint frontend"
+	@echo ""
+	@echo "Production:"
+	@echo "  make deploy           Full production deployment"
+	@echo "  make prod-up          Start production"
+	@echo "  make prod-down        Stop production"
+	@echo "  make backup           Backup database"
+	@echo ""
+	@echo "Cleanup:"
+	@echo "  make clean            Remove temp files"
+	@echo "  make clean-all        Remove containers and volumes"
 
-## [ENV SETUP]
-install:init-env ## builds and start the dev container
-	docker compose build --pull --no-cache
-	docker compose up -d
+## Development
+dev: ## Start development environment
+	docker-compose up -d
+	@echo "✓ Development environment started"
+	@echo "  Frontend: http://localhost:3000"
+	@echo "  Backend:  http://localhost:8000"
+	@echo "  API Docs: http://localhost:8000/docs"
 
-run: ## Run the application
-	docker compose up -d --build
+dev-down: ## Stop development environment
+	docker-compose down
 
-dev:
-	docker compose up --build
+dev-logs: ## View development logs
+	docker-compose logs -f --tail=100
 
-prod:
-	docker compose -f docker-compose.prod.yml up --build -d
+shell: ## Access backend shell
+	docker-compose exec backend /bin/bash
 
-build: ## Build the Docker image
-	docker buildx build --platform linux/amd64 -t $(IMAGE) --load .
+## Testing
+test: ## Run all tests
+	uv run pytest tests/ -v
 
-init-env:
-	@test -f .env || (cp example.env .env && echo .env file initialized)
+test-unit: ## Run unit tests
+	uv run pytest tests/unit -v
 
-## [DATABASE]
-superuser: ## creates a superuser for the API
-	docker compose run --rm app ./manage.py createsuperuser
+test-integration: ## Run integration tests
+	docker-compose up -d db redis
+	uv run pytest tests/integration -v
+	docker-compose stop db redis
 
-migrations: ## generate migrations in a clean container
-	docker compose run --rm app ./manage.py makemigrations
+test-cov: ## Run tests with coverage
+	uv run pytest tests/ -v --cov=src --cov-report=html --cov-report=term
+	@echo "✓ Coverage report: htmlcov/index.html"
 
-migrate: ## apply migrations in a clean container
-	docker compose run --rm app ./manage.py migrate
+## Code Quality
+lint: ## Run linter
+	uv run ruff check .
 
-collectstatic: ## collect static files
-	docker compose run --rm app ./manage.py collectstatic --noinput
+format: ## Format code
+	uv run ruff check --fix .
+	uv run ruff format .
 
+type-check: ## Run type checker
+	uv run mypy src --ignore-missing-imports
 
+## Database
+migrate: ## Apply migrations
+	docker-compose exec backend alembic upgrade head
 
-## [UTILS]
-install_local: ## Install the package locally
-	poetry install --with dev
+migration: ## Create new migration (usage: make migration MSG="description")
+	@if [ -z "$(MSG)" ]; then \
+		echo "Error: Please provide MSG=..."; \
+		echo "Example: make migration MSG='add user field'"; \
+		exit 1; \
+	fi
+	docker-compose exec backend alembic revision --autogenerate -m "$(MSG)"
 
-test_local: ## Run the tests locally
-	poetry run pytest
+db-shell: ## Access database shell
+	docker-compose exec db psql -U postgres conduit
 
+## Frontend
+frontend-dev: ## Start frontend dev server
+	cd frontend && npm run dev
 
-shell:  ## start a django shell
-	docker compose run --rm app ./manage.py shell
+frontend-build: ## Build frontend for production
+	cd frontend && npm run build
 
-lint:  ## run linter
-	docker compose run --rm app ruff .
-isort:  ## run isort
-	docker compose run --rm app isort .
-black:  ## run black
-	docker compose run --rm app black .
+frontend-lint: ## Lint frontend code
+	cd frontend && npm run lint
 
+frontend-type-check: ## Type check frontend
+	cd frontend && npx tsc --noEmit
 
+## Production
+deploy: ## Full production deployment
+	./deploy.sh deploy
 
-## [TEST]
-test:  ## run all tests
-	docker compose run --rm app pytest
+prod-up: ## Start production
+	./deploy.sh start
 
-test-lf:  ## rerun tests that failed last time
-	docker compose run --rm app pytest --lf --pdb
+prod-down: ## Stop production
+	./deploy.sh stop
 
+prod-logs: ## View production logs
+	./deploy.sh logs
 
-## [CLEAN]
-clean: clean/docker clean/py ## remove all build, test, coverage and Python artifacts
+prod-status: ## Check production status
+	./deploy.sh status
 
-clean/docker: ## stop docker containers and remove orphaned images and volumes
-	docker compose down -t 60
-	docker system prune -f
+backup: ## Backup production database
+	./deploy.sh backup
 
-clean/py: ## remove Python test, coverage, file artifacts, and compiled message files
-	find . -name '.coverage' -delete
-	find . -name '.pytest_cache' -delete
-	find . -name '__pycache__' -delete
-	find . -name 'htmlcov' -delete
-	find . -name '*.pyc' -delete
-	find . -name '*.pyo' -delete
-	find . -name '*.mo' -delete
+## Cleanup
+clean: ## Remove temporary files
+	find . -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || true
+	find . -type d -name "*.egg-info" -exec rm -rf {} + 2>/dev/null || true
+	find . -type d -name ".pytest_cache" -exec rm -rf {} + 2>/dev/null || true
+	find . -type d -name ".ruff_cache" -exec rm -rf {} + 2>/dev/null || true
+	find . -type d -name ".mypy_cache" -exec rm -rf {} + 2>/dev/null || true
+	find . -type f -name "*.pyc" -delete 2>/dev/null || true
+	rm -rf htmlcov .coverage 2>/dev/null || true
+	@echo "✓ Temporary files cleaned"
 
-start:
-	uvicorn conduit.config.asgi:application --host 0.0.0.0 --port 8000
+clean-all: clean ## Remove all containers and volumes
+	docker-compose down -v
+	@echo "✓ All containers and volumes removed"
