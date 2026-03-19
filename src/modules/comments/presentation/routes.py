@@ -145,9 +145,9 @@ async def list_comments(
             following = False
             if current_user_id and comment_dto.author.name != current_user.get("name"):
                 # Get profile to check following status
-                profile = await profile_repo.get_by_user_id(comment_dto.id)
-                if profile:
-                    following = profile.is_following(current_user_id)
+                author_user = await user_repo.get_by_name(comment_dto.author.name)
+                if author_user:
+                    following = await profile_repo.is_following(current_user_id, author_user.id)  # type: ignore
 
             comment_schema = _comment_dto_to_schema(comment_dto, following)
             comment_schemas.append(comment_schema)

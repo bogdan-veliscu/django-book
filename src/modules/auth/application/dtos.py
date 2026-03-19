@@ -42,6 +42,7 @@ class LoginUserRequest(DTO):
 class UpdateUserRequest(DTO):
     """Request to update user profile."""
 
+    email: str | None = None
     name: str | None = None
     bio: str | None = None
     image: str | None = None

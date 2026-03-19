@@ -2,7 +2,7 @@
 
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from src.core.presentation.dependencies import (
     get_current_user_id,
@@ -11,7 +11,8 @@ from src.core.presentation.dependencies import (
 )
 from src.modules.auth.application.commands.login_user import LoginUser
 from src.modules.auth.application.commands.register_user import RegisterUser
-from src.modules.auth.application.dtos import LoginUserRequest, RegisterUserRequest
+from src.modules.auth.application.commands.update_user import UpdateUser
+from src.modules.auth.application.dtos import LoginUserRequest, RegisterUserRequest, UpdateUserRequest
 from src.modules.auth.domain.repositories import IUserRepository
 from src.modules.auth.infrastructure.jwt import JWTService
 from src.modules.auth.presentation.schemas import (
@@ -19,6 +20,7 @@ from src.modules.auth.presentation.schemas import (
     AuthResponseWrapper,
     LoginRequestWrapper,
     RegisterRequestWrapper,
+    UpdateUserRequestWrapper,
     UserResponse,
     UserResponseWrapper,
 )
@@ -144,5 +146,58 @@ async def get_current_user(
             image=user.image,
             created_at=user.created_at,
             updated_at=user.updated_at,
+        )
+    )
+
+
+@router.put(
+    "/user",
+    response_model=UserResponseWrapper,
+    summary="Update current user",
+)
+async def update_current_user(
+    request: UpdateUserRequestWrapper,
+    current_user_id: Annotated[int, Depends(get_current_user_id)],
+    user_repository: Annotated[IUserRepository, Depends(get_user_repository)],
+) -> UserResponseWrapper:
+    """Update the current authenticated user.
+
+    Args:
+        request: The update request with optional fields.
+        current_user_id: The current user's ID.
+        user_repository: The user repository.
+
+    Returns:
+        The updated user information.
+    """
+    use_case = UpdateUser(user_repository)
+
+    dto_request = UpdateUserRequest(
+        email=request.user.email,
+        name=request.user.name,
+        password=request.user.password,
+        bio=request.user.bio,
+        image=request.user.image,
+    )
+
+    try:
+        user_dto = await use_case.execute(current_user_id, dto_request)
+    except Exception as e:
+        from src.core.domain.exceptions import EntityAlreadyExistsException, EntityNotFoundException
+        if isinstance(e, EntityNotFoundException):
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+        if isinstance(e, EntityAlreadyExistsException):
+            raise HTTPException(status_code=status.HTTP_422_UNPROCESSABLE_ENTITY, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+    return UserResponseWrapper(
+        user=UserResponse(
+            id=user_dto.id,
+            email=user_dto.email,
+            name=user_dto.name,
+            bio=user_dto.bio,
+            image=user_dto.image,
+            created_at=user_dto.created_at,
+            updated_at=user_dto.updated_at,
         )
     )

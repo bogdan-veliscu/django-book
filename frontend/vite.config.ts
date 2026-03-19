@@ -62,7 +62,7 @@ export default defineConfig({
       workbox: {
         runtimeCaching: [
           {
-            urlPattern: /^https:\/\/api\.realworld\.io\//i,
+            urlPattern: /\/api\//i,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'api-cache',

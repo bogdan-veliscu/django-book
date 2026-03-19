@@ -142,9 +142,9 @@ async def get_article(
         # Check if following
         following = False
         if current_user_id:
-            profile = await profile_repo.get_by_user_id(article_dto.author.name)  # This needs fixing
-            if profile:
-                following = profile.is_following(current_user_id)
+            author_user = await user_repo.get_by_name(article_dto.author.name)
+            if author_user:
+                following = await profile_repo.is_following(current_user_id, author_user.id)  # type: ignore
 
         article_schema = _article_dto_to_schema(article_dto, following)
         return ArticleResponseSchema(article=article_schema)
@@ -259,9 +259,9 @@ async def favorite_article(
 
         # Check if following
         following = False
-        profile = await profile_repo.get_by_user_id(article_dto.author.name)  # This needs fixing
-        if profile:
-            following = profile.is_following(current_user["id"])
+        author_user = await user_repo.get_by_name(article_dto.author.name)
+        if author_user:
+            following = await profile_repo.is_following(current_user["id"], author_user.id)  # type: ignore
 
         article_schema = _article_dto_to_schema(article_dto, following)
         return ArticleResponseSchema(article=article_schema)
@@ -297,9 +297,9 @@ async def unfavorite_article(
 
         # Check if following
         following = False
-        profile = await profile_repo.get_by_user_id(article_dto.author.name)  # This needs fixing
-        if profile:
-            following = profile.is_following(current_user["id"])
+        author_user = await user_repo.get_by_name(article_dto.author.name)
+        if author_user:
+            following = await profile_repo.is_following(current_user["id"], author_user.id)  # type: ignore
 
         article_schema = _article_dto_to_schema(article_dto, following)
         return ArticleResponseSchema(article=article_schema)
@@ -460,17 +460,25 @@ async def get_feed(
 
     articles: list[ArticleDTO] = []
 
+    # Batch fetch all authors to avoid N+1 queries
+    author_ids = list({article.author_id for article in article_entities})
+    feed_authors_map = {}
+    if author_ids:
+        from sqlalchemy import select as sql_select
+        from src.modules.auth.infrastructure.models import UserModel
+
+        stmt = sql_select(UserModel).where(UserModel.id.in_(author_ids))
+        result = await session.execute(stmt)
+        feed_authors = result.scalars().all()
+        feed_authors_map = {author.id: author for author in feed_authors}
+
     for article_entity in article_entities:
-        # Get author
-        author_user = await user_repo.get(article_entity.author_id)
-        if not author_user:
+        author_model = feed_authors_map.get(article_entity.author_id)
+        if not author_model:
             continue
 
         # Check if favorited
         favorited_by_current = article_entity.is_favorited_by(current_user["id"])
-
-        # Following is always True for feed
-        following = True
 
         article_dto = ArticleDTO(
             id=article_entity.id,  # type: ignore
@@ -484,10 +492,10 @@ async def get_feed(
             favorited=favorited_by_current,
             favorites_count=article_entity.favorites_count(),
             author=ProfileSchema(
-                username=author_user.name,
-                bio=author_user.bio,
-                image=author_user.image,
-                following=following,
+                username=author_model.name,
+                bio=author_model.bio,
+                image=author_model.image,
+                following=True,  # Always True for feed (only followed authors)
             ),
         )
         articles.append(article_dto)

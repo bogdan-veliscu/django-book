@@ -793,3 +793,161 @@ class TestGetCurrentUser:
             assert response.status_code == 200
             data = response.json()
             assert data["user"]["email"] == test_user.email.value
+
+
+class TestUpdateCurrentUser:
+    """Tests for PUT /api/user (update current user endpoint)."""
+
+    @pytest.mark.asyncio
+    async def test_update_user_bio(
+        self,
+        authenticated_client: AsyncClient,
+        test_user: User,
+    ) -> None:
+        """Test updating user bio."""
+        response = await authenticated_client.put(
+            "/api/user",
+            json={"user": {"bio": "I love writing articles"}},
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert "user" in data
+        assert data["user"]["bio"] == "I love writing articles"
+        assert data["user"]["email"] == test_user.email.value
+
+    @pytest.mark.asyncio
+    async def test_update_user_image(
+        self,
+        authenticated_client: AsyncClient,
+    ) -> None:
+        """Test updating user image URL."""
+        response = await authenticated_client.put(
+            "/api/user",
+            json={"user": {"image": "https://example.com/avatar.png"}},
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["user"]["image"] == "https://example.com/avatar.png"
+
+    @pytest.mark.asyncio
+    async def test_update_user_name(
+        self,
+        authenticated_client: AsyncClient,
+    ) -> None:
+        """Test updating username."""
+        response = await authenticated_client.put(
+            "/api/user",
+            json={"user": {"name": "updatedusername"}},
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["user"]["name"] == "updatedusername"
+
+    @pytest.mark.asyncio
+    async def test_update_user_email(
+        self,
+        authenticated_client: AsyncClient,
+    ) -> None:
+        """Test updating user email address."""
+        response = await authenticated_client.put(
+            "/api/user",
+            json={"user": {"email": "newemail@example.com"}},
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["user"]["email"] == "newemail@example.com"
+
+    @pytest.mark.asyncio
+    async def test_update_user_password(
+        self,
+        authenticated_client: AsyncClient,
+        test_user: User,
+        client: AsyncClient,
+    ) -> None:
+        """Test that password can be changed and new password works for login."""
+        response = await authenticated_client.put(
+            "/api/user",
+            json={"user": {"password": "NewPassword456"}},
+        )
+        assert response.status_code == 200
+
+        # Verify new password works
+        login_response = await client.post(
+            "/api/users/login",
+            json={"user": {"email": test_user.email.value, "password": "NewPassword456"}},
+        )
+        assert login_response.status_code == 200
+
+    @pytest.mark.asyncio
+    async def test_update_user_multiple_fields(
+        self,
+        authenticated_client: AsyncClient,
+    ) -> None:
+        """Test updating multiple fields at once."""
+        response = await authenticated_client.put(
+            "/api/user",
+            json={
+                "user": {
+                    "bio": "Updated bio",
+                    "image": "https://example.com/new-avatar.png",
+                    "name": "updatedname",
+                }
+            },
+        )
+
+        assert response.status_code == 200
+        data = response.json()
+        assert data["user"]["bio"] == "Updated bio"
+        assert data["user"]["image"] == "https://example.com/new-avatar.png"
+        assert data["user"]["name"] == "updatedname"
+
+    @pytest.mark.asyncio
+    async def test_update_user_duplicate_email(
+        self,
+        authenticated_client: AsyncClient,
+        client: AsyncClient,
+        db_session,
+    ) -> None:
+        """Test that updating to an email already taken returns 422."""
+        # Create another user
+        await client.post(
+            "/api/users",
+            json={"user": {"email": "other@example.com", "name": "otheruser", "password": "Password123"}},
+        )
+
+        response = await authenticated_client.put(
+            "/api/user",
+            json={"user": {"email": "other@example.com"}},
+        )
+        assert response.status_code == 422
+
+    @pytest.mark.asyncio
+    async def test_update_user_requires_auth(
+        self,
+        client: AsyncClient,
+    ) -> None:
+        """Test that unauthenticated requests are rejected."""
+        response = await client.put(
+            "/api/user",
+            json={"user": {"bio": "test"}},
+        )
+        assert response.status_code == 401
+
+    @pytest.mark.asyncio
+    async def test_update_user_empty_body(
+        self,
+        authenticated_client: AsyncClient,
+        test_user: User,
+    ) -> None:
+        """Test that an empty update returns the unchanged user."""
+        response = await authenticated_client.put(
+            "/api/user",
+            json={"user": {}},
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert data["user"]["email"] == test_user.email.value

@@ -86,6 +86,15 @@ class User(TimestampedEntity):
 
         self.mark_updated()
 
+    def update_email(self, new_email: Email) -> None:
+        """Update user's email address.
+
+        Args:
+            new_email: The new email address.
+        """
+        self._email = new_email
+        self.mark_updated()
+
     def update_password(self, new_password: Password) -> None:
         """Update user's password.
 
