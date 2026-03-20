@@ -35,6 +35,8 @@
     "vite": "^5.0.0",
     "vite-plugin-pwa": "^0.17.0",
     "vitest": "^1.0.0",
+    "@vitest/coverage-v8": "^1.0.0",
+    "happy-dom": "^12.0.0",
     "workbox-window": "^7.0.0"
   }
 }
