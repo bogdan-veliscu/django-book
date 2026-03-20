@@ -12,3 +12,8 @@ htmlcov
 
 conduit/media
 .DS_Store
+
+# Frontend build artifacts and dependencies
+frontend/node_modules/
+frontend/dist/
+frontend/.vite/

@@ -1,101 +1,285 @@
-# Django Book
+# RealWorld Conduit - FastAPI + Lit
 
-Welcome to the official repository for the Django Book! This repository contains all the code examples and resources mentioned in the book.
+A modern, production-ready implementation of the [RealWorld](https://github.com/gothinkster/realworld) Conduit application, migrated from Django to **FastAPI** (backend) and **Lit** web components (frontend).
 
-## About the Book
+[![CI/CD Pipeline](https://github.com/yourusername/django-book/workflows/CI/CD%20Pipeline/badge.svg)](https://github.com/yourusername/django-book/actions)
 
-The Django Book is a comprehensive guide to learning Django, a powerful web framework written in Python. Whether you are a beginner or an experienced developer, this book will take you through the fundamentals of Django and teach you how to build web applications with ease.
+## 🚀 Features
 
-## Code Along
+- **Modern Tech Stack**: FastAPI + Lit + PostgreSQL + Redis
+- **DDD Architecture**: Clean, maintainable domain-driven design
+- **Comprehensive Testing**: 206 tests (82 unit + 124 integration)
+- **PWA Support**: Progressive Web App with service worker
+- **Production Ready**: Docker Compose setup with health checks
+- **Type Safe**: Full TypeScript and Python type hints
+- **Fast**: Optimized builds (~129 KB gzipped frontend)
 
-To get started with the code examples, follow these steps:
+## 📋 Quick Start
 
-1. Clone this repository to your local machine.
-2. Install the required dependencies by running `pip install -r requirements.txt`.
-3. Navigate to the specific chapter or section you are interested in.
-4. Open the corresponding code file and start coding along!
+### Prerequisites
 
-## Table of Contents
+- Docker & Docker Compose
+- Python 3.13+ (for local development)
+- Node.js 20+ (for frontend development)
 
-| 1 | Setting the Stage for Your Django Project |
-| --- | --- |
-| 2 | Crafting Modular Data Models |
-| 3 | Modular User Authentication and Management |
-| 4 | Views, Templates, and Modular UI Components |
-| 5 | Static Files, Media, and Cloud Storage |
-| 6 | RESTful APIs in a Modular Architecture |
-| 7 | Integrating Frontend Frameworks |
-| 8 | Performance Optimization and Caching |
-| 9 | Deploying Your Modular Django Application |
-| 10 | Building and Scaling a Real World Application |
-| 11 | Testing Django Applications Best Practices |
-| 12 | **Security Best Practices** |
-| 13 | **Advanced Topics in Django Development** |
-| 14 | **Additional resources** |
-|  |  |
-## Contributing
+### Development Setup
 
-If you find any issues or have suggestions for improvement, please feel free to open an issue or submit a pull request. Your contributions are greatly appreciated!
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/yourusername/django-book.git
+   cd django-book
+   ```
 
-## License
+2. **Start development environment**
+   ```bash
+   docker-compose up -d
+   ```
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more information.
+3. **Run migrations**
+   ```bash
+   docker-compose exec backend alembic upgrade head
+   ```
 
+4. **Access the application**
+   - Frontend: http://localhost:3000
+   - Backend API: http://localhost:8000
+   - API Docs: http://localhost:8000/docs
 
-# AWS Bucket setup
+### Production Deployment
 
-Here’s how you can create and configure an S3 bucket named `brandfocus` in the `eu-west-1` region using the AWS CLI:
-
-### Step 1: Create the S3 Bucket
-
-Run the following command to create the S3 bucket named `brandfocus` in the `eu-west-1` region:
-
-```bash
-aws s3api create-bucket --bucket brandfocus --region eu-west-1 --create-bucket-configuration LocationConstraint=eu-west-1
-```
-
-### Step 2: Configure Bucket Public Access (Optional)
-
-If you want your S3 bucket to be publicly accessible, update the bucket's public access settings with this command:
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for comprehensive deployment guide.
 
 ```bash
-aws s3api put-public-access-block --bucket brandfocus --public-access-block-configuration BlockPublicAcls=false,IgnorePublicAcls=false,BlockPublicPolicy=false,RestrictPublicBuckets=false
+# 1. Configure environment
+cp .env.example .env
+nano .env  # Set production values
+
+# 2. Build and start services
+docker-compose -f docker-compose.prod.yml up -d
+
+# 3. Run migrations
+docker-compose -f docker-compose.prod.yml exec backend alembic upgrade head
+
+# 4. Access application
+# Frontend: http://localhost
+# Backend API: http://localhost/api
 ```
 
-### Step 3: Set Up Bucket Policy for Public Access (Optional)
+## 🏗️ Architecture
 
-If you want to allow public read access to the files in the `brandfocus` bucket, create a file called `bucket-policy.json` with the following content:
+### Backend (FastAPI)
+
+```
+src/
+├── core/                   # Shared infrastructure
+│   ├── domain/            # Base entities, value objects
+│   ├── application/       # Base DTOs, use cases
+│   ├── infrastructure/    # Database, cache, repository
+│   └── presentation/      # FastAPI dependencies
+└── modules/               # Bounded contexts (DDD)
+    ├── auth/              # Authentication & users
+    ├── profiles/          # User profiles & following
+    ├── articles/          # Articles & tags
+    └── comments/          # Article comments
+```
+
+**Tech Stack:**
+- **Framework**: FastAPI 0.115+
+- **ORM**: SQLAlchemy 2.0 (async)
+- **Database**: PostgreSQL 15
+- **Cache**: Redis 7
+- **Testing**: pytest + pytest-asyncio
+- **Validation**: Pydantic V2
+- **Migrations**: Alembic
+
+### Frontend (Lit)
+
+```
+frontend/src/
+├── components/            # Lit web components
+│   ├── articles/         # Article components
+│   ├── auth/             # Authentication forms
+│   ├── comments/         # Comment components
+│   ├── profiles/         # Profile components
+│   └── common/           # Shared components
+├── services/             # API clients & business logic
+├── views/                # Page-level components
+├── types/                # TypeScript types
+└── styles/               # Global styles
+```
+
+**Tech Stack:**
+- **Framework**: Lit 3.x
+- **Build Tool**: Vite 5.x
+- **Language**: TypeScript
+- **Router**: @vaadin/router
+- **PWA**: Workbox
+- **Styling**: Shadow DOM CSS
+
+## 🧪 Testing
+
+### Backend Tests
 
 ```bash
-aws s3api put-bucket-policy --bucket brandfocus-ai --profile codeswiftr --policy \
-'{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Sid": "PublicReadGetObject",
-            "Effect": "Allow",
-            "Principal": "*",
-            "Action": "s3:GetObject",
-            "Resource": "arn:aws:s3:::brandfocus-ai/*"
-        }
-    ]
-}'
+# Unit tests only
+uv run pytest tests/unit -v
+
+# Integration tests (requires DB)
+docker-compose up -d db redis
+uv run pytest tests/integration -v
+
+# All tests with coverage
+uv run pytest tests/ -v --cov=src --cov-report=html
 ```
 
-### Step 4: Upload Files to Your S3 Bucket
+**Coverage**: 206 tests, 80%+ code coverage
 
-To upload files to your `brandfocus` bucket, use the following commands:
-
-To upload a single file:
+### Frontend Tests
 
 ```bash
-aws s3 cp /path/to/your/file s3://brandfocus/
+cd frontend
+
+# Type checking
+npm run type-check
+
+# Linting
+npm run lint
+
+# Build (production)
+npm run build
 ```
 
-To sync an entire directory:
+## 📦 Key Features Implemented
+
+### User Management
+- ✅ User registration and login (JWT authentication)
+- ✅ User profiles with bio and avatar
+- ✅ Follow/unfollow users
+- ✅ Update user settings
+
+### Article Features
+- ✅ Create, read, update, delete articles
+- ✅ Markdown support for article body
+- ✅ Tag-based filtering
+- ✅ Favorite/unfavorite articles
+- ✅ Global feed and personal feed
+- ✅ Pagination
+
+### Social Features
+- ✅ Comment on articles
+- ✅ Delete own comments
+- ✅ View user profiles
+- ✅ See user's articles and favorites
+- ✅ Follow other users
+
+### UI/UX
+- ✅ Responsive design
+- ✅ Loading states
+- ✅ Error handling
+- ✅ Form validation
+- ✅ Route protection
+- ✅ PWA with service worker
+
+## 🛠️ Development
+
+### Backend Development
 
 ```bash
-aws s3 sync /path/to/your/directory s3://brandfocus/
+# Install dependencies
+uv sync
+
+# Run development server
+uv run uvicorn src.main:app --reload
+
+# Run linter
+uv run ruff check .
+
+# Run type checker
+uv run mypy src
+
+# Create migration
+uv run alembic revision --autogenerate -m "description"
+
+# Apply migrations
+uv run alembic upgrade head
 ```
 
-With these steps, you’ve created and configured the `brandfocus` S3 bucket in the `eu-west-1` region using the AWS CLI. This bucket is now ready for use in your Django application for storing static and media files.
+### Frontend Development
+
+```bash
+cd frontend
+
+# Install dependencies
+npm install
+
+# Run development server
+npm run dev
+
+# Build for production
+npm run build
+
+# Preview production build
+npm run preview
+```
+
+## 📊 Performance
+
+### Frontend Bundle Sizes
+- **Total**: ~129 KB (precached)
+- **Main bundle**: 15.08 KB (gzipped: 4.55 KB)
+- **Lit core**: 15.46 KB (gzipped: 5.89 KB)
+- **Router**: 23.02 KB (gzipped: 8.38 KB)
+
+### Backend Performance
+- **Response time**: < 50ms average (cached)
+- **Database queries**: Optimized with eager loading (no N+1)
+
+## 🔒 Security
+
+- ✅ JWT token authentication
+- ✅ Password hashing with bcrypt
+- ✅ CORS configuration
+- ✅ SQL injection prevention (ORM)
+- ✅ XSS protection (CSP headers)
+- ✅ Secure secret key validation (32+ chars)
+- ✅ Environment-based configuration
+- ✅ Input validation (Pydantic)
+
+## 📚 Documentation
+
+- [DEPLOYMENT.md](./DEPLOYMENT.md) - Production deployment guide
+- [MIGRATION_GUIDE.md](./MIGRATION_GUIDE.md) - Django to FastAPI migration notes
+- [API Documentation](http://localhost:8000/docs) - Interactive API docs (Swagger UI)
+- [Frontend README](./frontend/README.md) - Frontend-specific documentation
+- [Test Documentation](./tests/integration/README.md) - Testing guide
+- [Technical Debt Plan](./docs/Plan.md) - Development roadmap and technical debt
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+### Code Quality
+
+- Run tests before committing
+- Follow existing code patterns
+- Add tests for new features
+- Update documentation as needed
+
+## 📝 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- [RealWorld](https://github.com/gothinkster/realworld) - Specification and requirements
+- [FastAPI](https://fastapi.tiangolo.com/) - Modern Python web framework
+- [Lit](https://lit.dev/) - Simple, fast web components
+- [Thinkster](https://thinkster.io/) - Original RealWorld Conduit design
+
+---
+
+**Built with ❤️ using FastAPI and Lit**

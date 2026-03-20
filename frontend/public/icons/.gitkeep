@@ -1,0 +1,3 @@
+# Icon files should be generated here
+# Run ./generate-icons.sh or ./generate-icons.js to create the PNG icons
+# See README.md for instructions
